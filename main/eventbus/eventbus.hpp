@@ -111,7 +111,27 @@ namespace BullsEye {
     };
 
     template<class _TEvent>
-    using FunctionalEventListener = EventListenerFunctionalStub<_TEvent>;
+    using FunctionalEventListener   = EventListenerFunctionalStub<_TEvent>;
+
+    // Event Handler Reference
+    template<class _TEvent>
+    class EventListenerReference : public EventListener<_TEvent> {
+    private:
+        EventListener<_TEvent>& ref;
+
+    public:
+        EventListenerReference(EventListener<_TEvent>& ref) noexcept;
+        virtual ~EventListenerReference() noexcept;
+
+        EventListener<_TEvent>&         GetReference() noexcept;
+        const EventListener<_TEvent>&   GetReference() const noexcept;
+
+        virtual void                    OnEvent(_TEvent& event) override;
+    };
+
+    template<class _TEvent>
+    using RefEventListener          = EventListenerReference<_TEvent>;
+
 }
 
 
@@ -319,5 +339,40 @@ namespace BullsEye {
     void EventListenerFunctionalStub<_TEvent>::OnEvent(_TEvent& event)
     {
         return func(event);
+    }
+}
+
+
+// Implementation of: template<class _TEvent> class EventListenerReference
+namespace BullsEye {
+    //
+    // EventListener<_TEvent>& ref;
+    //
+
+    template<class _TEvent>
+    EventListenerReference<_TEvent>::EventListenerReference(EventListener<_TEvent>& ref) noexcept
+        : ref   (ref)
+    { }
+
+    template<class _TEvent>
+    EventListenerReference<_TEvent>::~EventListenerReference() noexcept
+    { }
+
+    template<class _TEvent>
+    inline EventListener<_TEvent>& EventListenerReference<_TEvent>::GetReference() noexcept
+    {
+        return ref;
+    }
+
+    template<class _TEvent>
+    inline const EventListener<_TEvent>& EventListenerReference<_TEvent>::GetReference() const noexcept
+    {
+        return ref;
+    }
+
+    template<class _TEvent>
+    void EventListenerReference<_TEvent>::OnEvent(_TEvent& event)
+    {
+        ref.OnEvent(event);
     }
 }
