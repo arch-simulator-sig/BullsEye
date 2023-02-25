@@ -135,8 +135,8 @@ namespace BullsEye {
         std::list<BlockMetadata*>   blocks_info;
 
     protected:
-        static _TInitializer        INITIALZER;
-        static _TFinalizer          FINALIZER;
+        static const _TInitializer  INITIALZER;
+        static const _TFinalizer    FINALIZER;
 
     private:
         void                _NewBlock() noexcept;
@@ -570,9 +570,11 @@ namespace BullsEye {
         Block*         tail_block = blocks.back();
 
         if (tail_info->IsFull())
-            tail_info->DeactivateTail();
+            FINALIZER((*tail_block)[tail_info->DeactivateTail()]);
 
         size_t block_offset = tail_info->ActivateHead();
+
+        INITIALZER((*tail_block)[block_offset]);
 
         if (!tail_info->IncreaseLRUCounter())
         {
