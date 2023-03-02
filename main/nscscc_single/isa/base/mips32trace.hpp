@@ -18,8 +18,8 @@ namespace Jasse {
     // MIPS32 Trace Entity
     class MIPS32TraceEntity {
     public:
-        using Pool      = BullsEye::ObjectPool<MIPS32TraceEntity>;
-        using Reference = BullsEye::ObjectPool<MIPS32TraceEntity>::Reference;
+        using Pool      = BullsEye::RoundRobinObjectPool<MIPS32TraceEntity>;
+        using Reference = BullsEye::RoundRobinObjectPool<MIPS32TraceEntity>::Reference;
 
     private:
         MIPS32Instruction   insn;
@@ -53,11 +53,26 @@ namespace Jasse {
         const Reference&            GetSecondOperand() const noexcept;
     };
 
+    // MIPS32 Trace Entity History Collection
+    class MIPS32TraceHistory {
+    private:
+        const size_t    history_depth;
+
+    public:
+
+
+    };
+
 
     // MIPS32 GPR Tracer
     class MIPS32GPRTracer {
     private:
         static constexpr int    SIZE    = MIPS32_ARCH_REG_COUNT;
+
+    public:
+        MIPS32GPRTracer(size_t history_depth) noexcept;
+        MIPS32GPRTracer(const MIPS32GPRTracer& obj) = delete;
+
     };
     
     // MIPS32 Memory Tracer
