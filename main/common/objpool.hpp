@@ -107,18 +107,26 @@ namespace BullsEye {
     public:
         class Reference {
         private:
+            static const std::shared_ptr<bool>  CONSTANT_FALSE;
+
+        private:
             std::shared_ptr<bool>   valid_ref;
             _TObject*               ref;
 
         private:
             _TObject*           _ObserveRef() noexcept;
             const _TObject*     _ObserveRef() const noexcept;
-
+                
         private:
             Reference(std::shared_ptr<bool>& valid_ref, _TObject* ref) noexcept;
+
+        public:
+            Reference() noexcept;
            
         public:
             bool                IsValid() const noexcept;
+
+            void                Reset() const noexcept;
 
             _TObject&           operator*() noexcept;
             const _TObject&     operator*() const noexcept;
@@ -396,8 +404,19 @@ namespace BullsEye {
     //
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
+    const std::shared_ptr<bool> ObjectPool<_TObject, _TInitializer, _TFinalizer>
+        ::Reference::CONSTANT_FALSE = std::shared_ptr<bool>(new bool(false));
+
+    template<class _TObject, class _TInitializer, class _TFinalizer>
     ObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::Reference::Reference(std::shared_ptr<bool>& valid_ref, _TObject* ref)
+        ::Reference::Reference() noexcept
+        : valid_ref (CONSTANT_FALSE)
+        , ref       (ref)
+    { }
+
+    template<class _TObject, class _TInitializer, class _TFinalizer>
+    ObjectPool<_TObject, _TInitializer, _TFinalizer>
+        ::Reference::Reference(std::shared_ptr<bool>& valid_ref, _TObject* ref) noexcept
         : valid_ref (valid_ref)
         , ref       (ref)
     { }
@@ -421,6 +440,14 @@ namespace BullsEye {
         ::Reference::IsValid() const noexcept
     {
         return *valid_ref;
+    }
+
+    template<class _TObject, class _TInitializer, class _TFinalizer>
+    inline void ObjectPool<_TObject, _TInitializer, _TFinalizer>
+        ::Reference::Reset() const noexcept
+    {
+        valid_ref = CONSTANT_FALSE;
+        ref       = nullptr;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
