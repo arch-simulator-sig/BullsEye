@@ -26,6 +26,12 @@ namespace BullsEye {
     };
 
 
+    // Round-Robin Object Pool
+    // 
+    // Objects would be allocated by blocks. When the maximum block count was reached,
+    // allocation of new objects would reuse the oldest object slots.
+    // Allocated blocks were visited by round-robin when the pool was full.
+    //
     // *NOTICE: The _TObject type must implement the default zero parameter constructor.
     //          _TObject is required to be DefaultConstructible.
     //          _TObject is not required to be CopyConstructible, CopyAssignable.
@@ -33,7 +39,7 @@ namespace BullsEye {
     template<class _TObject,
              class _TInitializer    = ObjectPoolDefaultInitializer<_TObject>,
              class _TFinalizer      = ObjectPoolDefaultFinalizer<_TObject> >
-    class ObjectPool
+    class RoundRobinObjectPool
     {
     private:
         class Block {
@@ -152,10 +158,10 @@ namespace BullsEye {
         void                _Rotate() noexcept;
 
     public:
-        ObjectPool(size_t block_size, size_t block_max_count) noexcept;
-        ~ObjectPool() noexcept;
+        RoundRobinObjectPool(size_t block_size, size_t block_max_count) noexcept;
+        ~RoundRobinObjectPool() noexcept;
 
-        ObjectPool(const ObjectPool<_TObject, _TInitializer, _TFinalizer>& obj) = delete;
+        RoundRobinObjectPool(const RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>& obj) = delete;
 
         size_t              GetBlockSize() const noexcept;
         size_t              GetBlockMaxCount() const noexcept;
@@ -170,8 +176,11 @@ namespace BullsEye {
 
         void                Clear() noexcept;
 
-        void                operator=(const ObjectPool<_TObject, _TInitializer, _TFinalizer>& obj) = delete;
+        void                operator=(const RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>& obj) = delete;
     };
+
+
+    // 
 
 }
 
@@ -184,35 +193,35 @@ namespace BullsEye {
     //
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Block::Block(size_t size) noexcept
         : size  (size)
         , objs  (new _TObject[size])
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Block::~Block() noexcept
     {
         delete[] objs;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Block::GetSize() const noexcept
     {
         return size;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline _TObject& ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline _TObject& RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Block::operator[](int index) noexcept
     {
         return objs[index];
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline const _TObject& ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline const _TObject& RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Block::operator[](int index) const noexcept
     {
         return objs[index];
@@ -237,7 +246,7 @@ namespace BullsEye {
     //
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::BlockMetadata(size_t size) noexcept
         : size          (size)
         , valid_refset  (new std::shared_ptr<bool>*[size])
@@ -249,7 +258,7 @@ namespace BullsEye {
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::~BlockMetadata() noexcept
     {
         for (int i = 0; i < _IBlockSize; i++)
@@ -260,21 +269,21 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::GetSize() const noexcept
     {
         return size;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline bool ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline bool RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::IsFull() const noexcept
     {
         return (write_ptrb != read_ptrb) && (write_ptr == read_ptr);
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline bool ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline bool RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::IsActive(size_t index) const noexcept
     {
         return (write_ptrb == read_ptrb) ? (index < write_ptr && index >= read_ptr)
@@ -282,7 +291,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::GetFreeCount() const noexcept
     {
         return (write_ptrb == read_ptrb) ? (size - write_ptr + read_ptr)
@@ -290,7 +299,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::GetActiveCount() const noexcept
     {
         return (write_ptrb == read_ptrb) ? (write_ptr - read_ptr)
@@ -298,28 +307,28 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline std::shared_ptr<bool>* ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline std::shared_ptr<bool>* RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::GetValidRef(size_t index) noexcept
     {
         return valid_refset[index];
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::Head() const noexcept
     {
         return write_ptr;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::Tail() const noexcept
     {
         return read_ptr;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline void ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::_IncrReadPtr() noexcept
     {
         read_ptr++;
@@ -332,7 +341,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline void ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::_IncrWritePtr() noexcept
     {
         write_ptr++;
@@ -345,7 +354,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline void ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::_Deactivate(size_t index) noexcept
     {
         **(valid_refset[index]) = false;
@@ -355,14 +364,14 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline void ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::_Activate(size_t index) noexcept
     {
         valid_refset[index] = new std::shared_ptr<bool>(new bool(true));
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::ActivateHead() noexcept
     {
         _Activate(write_ptr);
@@ -370,7 +379,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::DeactivateTail() noexcept
     {
         _Deactivate(read_ptr);
@@ -378,14 +387,14 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::GetLRUCounter() const noexcept
     {
         return lru_counter;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::BlockMetadata::IncreaseLRUCounter() noexcept
     {
         if (++lru_counter == size)
@@ -404,46 +413,46 @@ namespace BullsEye {
     //
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    const std::shared_ptr<bool> ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    const std::shared_ptr<bool> RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::CONSTANT_FALSE = std::shared_ptr<bool>(new bool(false));
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::Reference() noexcept
         : valid_ref (CONSTANT_FALSE)
         , ref       (ref)
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::Reference(std::shared_ptr<bool>& valid_ref, _TObject* ref) noexcept
         : valid_ref (valid_ref)
         , ref       (ref)
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline _TObject* ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline _TObject* RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::_ObserveRef() noexcept
     {
         return (*valid_ref) ? ref : nullptr;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline const _TObject* ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline const _TObject* RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::_ObserveRef() const noexcept
     {
         return (*valid_ref) ? ref : nullptr;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline bool ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline bool RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::IsValid() const noexcept
     {
         return *valid_ref;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline void ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::Reset() const noexcept
     {
         valid_ref = CONSTANT_FALSE;
@@ -451,28 +460,28 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline _TObject& ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline _TObject& RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::operator*() noexcept
     {
         return *(_ObserveRef());
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline const _TObject& ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline const _TObject& RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::operator*() const noexcept
     {
         return *(_ObserveRef());
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline _TObject* ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline _TObject* RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::operator->() noexcept
     {
         return _ObserveRef();
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline const _TObject* ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline const _TObject* RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::operator->() const noexcept
     {
         return _ObserveRef();
@@ -491,8 +500,8 @@ namespace BullsEye {
     //
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    ObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::ObjectPool(size_t block_size, size_t block_max_count) noexcept
+    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+        ::RoundRobinObjectPool(size_t block_size, size_t block_max_count) noexcept
         : block_size        (block_size)
         , block_max_count   (block_max_count)
         , blocks            ()
@@ -500,8 +509,8 @@ namespace BullsEye {
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    ObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::~ObjectPool() noexcept
+    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+        ::~RoundRobinObjectPool() noexcept
     {
         for (BlockMetadata* metadata : blocks_info)
             delete metadata;
@@ -511,28 +520,28 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::GetBlockSize() const noexcept
     {
         return block_size;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::GetBlockMaxCount() const noexcept
     {
         return block_max_count;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::GetBlockCount() const noexcept
     {
         return blocks.size();
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    size_t ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::GetActiveCount() const noexcept
     {
         int count = 0;
@@ -544,21 +553,21 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline bool ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline bool RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::IsBlockSaturated() const noexcept
     {
         return GetBlockCount() >= block_max_count;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline bool ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline bool RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::IsObjectSaturated() const noexcept
     {
         return GetActiveCount() >= (block_size * block_max_count);
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline void ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::_NewBlock() noexcept
     {
         blocks.push_back(new Block(block_size));
@@ -566,7 +575,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline void ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::_NewBlockAndRotate() noexcept
     {
         _Rotate();
@@ -574,7 +583,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    inline void ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::_Rotate() noexcept
     {
         Block*         rotating_block    = blocks.back();
@@ -587,7 +596,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    ObjectPool<_TObject, _TInitializer, _TFinalizer>::Reference ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>::Reference RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Acquire() noexcept
     {
         if (blocks_info.empty())
@@ -618,7 +627,7 @@ namespace BullsEye {
 
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    void ObjectPool<_TObject, _TInitializer, _TFinalizer>
+    void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Clear() noexcept
     {
         for (BlockMetadata* metadata : blocks_info)
