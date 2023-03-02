@@ -23,13 +23,12 @@ namespace Jasse {
     private:
         static constexpr int    SIZE    = MIPS32_ARCH_REG_COUNT;
 
-        arch32_t*   gpr;
+        arch32_t    gpr[SIZE];
 
     public:
         MIPS32GPRs() noexcept;
         MIPS32GPRs(const MIPS32GPRs& obj) noexcept;
-        ~MIPS32GPRs() noexcept;
-
+        
         int             GetSize() const noexcept;
         bool            CheckBound(int index) const noexcept;
 
@@ -165,22 +164,17 @@ namespace Jasse {
 // Implementation of: class MIPS32GPRs
 namespace Jasse {
     //
-    // arch32_t*    gpr;
+    // arch32_t     gpr[SIZE];
     //
 
     MIPS32GPRs::MIPS32GPRs() noexcept
-        : gpr   (new arch32_t[SIZE])
+        : gpr   ()
     { }
 
     MIPS32GPRs::MIPS32GPRs(const MIPS32GPRs& obj) noexcept
-        : gpr   (new arch32_t[SIZE])
+        : gpr   ()
     {
         std::copy(obj.gpr, obj.gpr + SIZE, gpr);
-    }
-
-    MIPS32GPRs::~MIPS32GPRs() noexcept
-    {
-        delete[] gpr;
     }
 
     inline int MIPS32GPRs::GetSize() const noexcept
