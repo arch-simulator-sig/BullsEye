@@ -28,9 +28,9 @@ namespace BullsEye {
 
     // Round-Robin Object Pool
     // 
-    // Objects would be allocated by blocks. When the maximum block count was reached,
+    // Objects would be allocated by chunks. When the maximum chunk count was reached,
     // allocation of new objects would reuse the oldest object slots.
-    // Allocated blocks were visited by round-robin when the pool was full.
+    // Allocated chunks were visited by round-robin when the pool was full.
     //
     // *NOTICE: The _TObject type must implement the default zero parameter constructor.
     //          _TObject is required to be DefaultConstructible.
@@ -42,26 +42,26 @@ namespace BullsEye {
     class RoundRobinObjectPool
     {
     private:
-        class Block {
+        class Chunk {
         private:
             const size_t    size;
             _TObject*       objs;
 
         public:
-            Block(size_t size) noexcept;
-            ~Block() noexcept;
+            Chunk(size_t size) noexcept;
+            ~Chunk() noexcept;
 
-            Block(const Block& obj) = delete;
+            Chunk(const Chunk& obj) = delete;
 
             size_t              GetSize() const noexcept;
 
             _TObject&           operator[](int index) noexcept;
             const _TObject&     operator[](int index) const noexcept;
 
-            void                operator=(const Block& obj) = delete;
+            void                operator=(const Chunk& obj) = delete;
         };
 
-        class BlockMetadata {
+        class ChunkMetadata {
         private:
             const size_t                size;
 
@@ -82,10 +82,10 @@ namespace BullsEye {
             void                _Deactivate(size_t index) noexcept;
 
         public:
-            BlockMetadata(size_t size) noexcept;
-            ~BlockMetadata() noexcept;
+            ChunkMetadata(size_t size) noexcept;
+            ~ChunkMetadata() noexcept;
 
-            BlockMetadata(const BlockMetadata& obj) = delete;
+            ChunkMetadata(const ChunkMetadata& obj) = delete;
 
             size_t              GetSize() const noexcept;
             
@@ -107,7 +107,7 @@ namespace BullsEye {
             size_t              GetLRUCounter() const noexcept;
             size_t              IncreaseLRUCounter() noexcept;
             
-            void                operator=(const Block& obj) = delete;
+            void                operator=(const Chunk& obj) = delete;
         };
 
     public:
@@ -142,11 +142,11 @@ namespace BullsEye {
         };
 
     private:
-        const size_t                block_size;
-        const size_t                block_max_count;
+        const size_t                chunk_size;
+        const size_t                chunk_max_count;
 
-        std::list<Block*>           blocks;
-        std::list<BlockMetadata*>   blocks_info;
+        std::list<Chunk*>           chunks;
+        std::list<ChunkMetadata*>   chunks_info;
 
     protected:
         static const _TInitializer  INITIALZER;
@@ -158,18 +158,18 @@ namespace BullsEye {
         void                _Rotate() noexcept;
 
     public:
-        RoundRobinObjectPool(size_t block_size, size_t block_max_count) noexcept;
+        RoundRobinObjectPool(size_t chunk_size, size_t chunk_max_count) noexcept;
         ~RoundRobinObjectPool() noexcept;
 
         RoundRobinObjectPool(const RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>& obj) = delete;
 
-        size_t              GetBlockSize() const noexcept;
-        size_t              GetBlockMaxCount() const noexcept;
+        size_t              GetChunkSize() const noexcept;
+        size_t              GetChunkMaxCount() const noexcept;
 
-        size_t              GetBlockCount() const noexcept;
+        size_t              GetChunkCount() const noexcept;
         size_t              GetActiveCount() const noexcept;
 
-        bool                IsBlockSaturated() const noexcept;
+        bool                IsChunkSaturated() const noexcept;
         bool                IsObjectSaturated() const noexcept;
 
         Reference           Acquire() noexcept;
@@ -178,10 +178,6 @@ namespace BullsEye {
 
         void                operator=(const RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>& obj) = delete;
     };
-
-
-    // 
-
 }
 
 
@@ -194,35 +190,35 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::Block::Block(size_t size) noexcept
+        ::Chunk::Chunk(size_t size) noexcept
         : size  (size)
         , objs  (new _TObject[size])
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::Block::~Block() noexcept
+        ::Chunk::~Chunk() noexcept
     {
         delete[] objs;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::Block::GetSize() const noexcept
+        ::Chunk::GetSize() const noexcept
     {
         return size;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline _TObject& RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::Block::operator[](int index) noexcept
+        ::Chunk::operator[](int index) noexcept
     {
         return objs[index];
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline const _TObject& RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::Block::operator[](int index) const noexcept
+        ::Chunk::operator[](int index) const noexcept
     {
         return objs[index];
     }
@@ -247,7 +243,7 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::BlockMetadata(size_t size) noexcept
+        ::ChunkMetadata::ChunkMetadata(size_t size) noexcept
         : size          (size)
         , valid_refset  (new std::shared_ptr<bool>*[size])
         , read_ptr      (0)
@@ -259,7 +255,7 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::~BlockMetadata() noexcept
+        ::ChunkMetadata::~ChunkMetadata() noexcept
     {
         for (int i = 0; i < _IBlockSize; i++)
             if (valid_refset[i] && **(valid_refset[i]))
@@ -270,21 +266,21 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::GetSize() const noexcept
+        ::ChunkMetadata::GetSize() const noexcept
     {
         return size;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline bool RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::IsFull() const noexcept
+        ::ChunkMetadata::IsFull() const noexcept
     {
         return (write_ptrb != read_ptrb) && (write_ptr == read_ptr);
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline bool RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::IsActive(size_t index) const noexcept
+        ::ChunkMetadata::IsActive(size_t index) const noexcept
     {
         return (write_ptrb == read_ptrb) ? (index < write_ptr && index >= read_ptr)
                                          : (index < write_ptr || index >= read_ptr);
@@ -292,7 +288,7 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::GetFreeCount() const noexcept
+        ::ChunkMetadata::GetFreeCount() const noexcept
     {
         return (write_ptrb == read_ptrb) ? (size - write_ptr + read_ptr)
                                          : (read_ptr - write_ptr);
@@ -300,7 +296,7 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::GetActiveCount() const noexcept
+        ::ChunkMetadata::GetActiveCount() const noexcept
     {
         return (write_ptrb == read_ptrb) ? (write_ptr - read_ptr)
                                          : (size - read_ptr + write_ptr);
@@ -308,28 +304,28 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline std::shared_ptr<bool>* RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::GetValidRef(size_t index) noexcept
+        ::ChunkMetadata::GetValidRef(size_t index) noexcept
     {
         return valid_refset[index];
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::Head() const noexcept
+        ::ChunkMetadata::Head() const noexcept
     {
         return write_ptr;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::Tail() const noexcept
+        ::ChunkMetadata::Tail() const noexcept
     {
         return read_ptr;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::_IncrReadPtr() noexcept
+        ::ChunkMetadata::_IncrReadPtr() noexcept
     {
         read_ptr++;
 
@@ -342,7 +338,7 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::_IncrWritePtr() noexcept
+        ::ChunkMetadata::_IncrWritePtr() noexcept
     {
         write_ptr++;
 
@@ -355,7 +351,7 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::_Deactivate(size_t index) noexcept
+        ::ChunkMetadata::_Deactivate(size_t index) noexcept
     {
         **(valid_refset[index]) = false;
 
@@ -365,14 +361,14 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::_Activate(size_t index) noexcept
+        ::ChunkMetadata::_Activate(size_t index) noexcept
     {
         valid_refset[index] = new std::shared_ptr<bool>(new bool(true));
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::ActivateHead() noexcept
+        ::ChunkMetadata::ActivateHead() noexcept
     {
         _Activate(write_ptr);
         _IncrWritePtr();
@@ -380,7 +376,7 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::DeactivateTail() noexcept
+        ::ChunkMetadata::DeactivateTail() noexcept
     {
         _Deactivate(read_ptr);
         _IncrReadPtr();
@@ -388,14 +384,14 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::GetLRUCounter() const noexcept
+        ::ChunkMetadata::GetLRUCounter() const noexcept
     {
         return lru_counter;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::BlockMetadata::IncreaseLRUCounter() noexcept
+        ::ChunkMetadata::IncreaseLRUCounter() noexcept
     {
         if (++lru_counter == size)
             lru_counter = 0;
@@ -492,52 +488,52 @@ namespace BullsEye {
 // Implementation of: class ObjectPool
 namespace BullsEye {
     //
-    // const size_t                block_size;
-    // const size_t                block_max_count;
+    // const size_t                chunk_size;
+    // const size_t                chunk_max_count;
     //
-    // std::list<Block*>           blocks;
-    // std::list<BlockMetadata*>   blocks_info;
+    // std::list<Block*>           chunks;
+    // std::list<BlockMetadata*>   chunks_info;
     //
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::RoundRobinObjectPool(size_t block_size, size_t block_max_count) noexcept
-        : block_size        (block_size)
-        , block_max_count   (block_max_count)
-        , blocks            ()
-        , blocks_info       ()
+        ::RoundRobinObjectPool(size_t chunk_size, size_t chunk_max_count) noexcept
+        : chunk_size        (chunk_size)
+        , chunk_max_count   (chunk_max_count)
+        , chunks            ()
+        , chunks_info       ()
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::~RoundRobinObjectPool() noexcept
     {
-        for (BlockMetadata* metadata : blocks_info)
+        for (ChunkMetadata* metadata : chunks_info)
             delete metadata;
 
-        for (Block* block : blocks)
+        for (Chunk* block : chunks)
             delete block;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::GetBlockSize() const noexcept
+        ::GetChunkSize() const noexcept
     {
-        return block_size;
+        return chunk_size;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::GetBlockMaxCount() const noexcept
+        ::GetChunkMaxCount() const noexcept
     {
-        return block_max_count;
+        return chunk_max_count;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::GetBlockCount() const noexcept
+        ::GetChunkCount() const noexcept
     {
-        return blocks.size();
+        return chunks.size();
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
@@ -546,7 +542,7 @@ namespace BullsEye {
     {
         int count = 0;
 
-        for (BlockMetadata* metadata : blocks_info)
+        for (ChunkMetadata* metadata : chunks_info)
             count += metadata->GetActiveCount();
 
         return count;
@@ -554,24 +550,24 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline bool RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::IsBlockSaturated() const noexcept
+        ::IsChunkSaturated() const noexcept
     {
-        return GetBlockCount() >= block_max_count;
+        return GetChunkCount() >= chunk_max_count;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline bool RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::IsObjectSaturated() const noexcept
     {
-        return GetActiveCount() >= (block_size * block_max_count);
+        return GetActiveCount() >= (chunk_size * chunk_max_count);
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::_NewBlock() noexcept
     {
-        blocks.push_back(new Block(block_size));
-        blocks_info.push_back(new BlockMetadata(block_size));
+        chunks.push_back(new Chunk(chunk_size));
+        chunks_info.push_back(new ChunkMetadata(chunk_size));
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
@@ -586,24 +582,24 @@ namespace BullsEye {
     inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::_Rotate() noexcept
     {
-        Block*         rotating_block    = blocks.back();
-        blocks.pop_back();
-        blocks.push_front(rotating_block);
+        Chunk*         rotating_block    = chunks.back();
+        chunks.pop_back();
+        chunks.push_front(rotating_block);
         
-        BlockMetadata* rotating_metadata = blocks_info.back();
-        blocks_info.pop_back();
-        blocks_info.push_front(rotating_metadata);
+        ChunkMetadata* rotating_metadata = chunks_info.back();
+        chunks_info.pop_back();
+        chunks_info.push_front(rotating_metadata);
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>::Reference RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Acquire() noexcept
     {
-        if (blocks_info.empty())
+        if (chunks_info.empty())
             _NewBlock();
         
-        BlockMetadata* tail_info  = blocks_info.back();
-        Block*         tail_block = blocks.back();
+        ChunkMetadata* tail_info  = chunks_info.back();
+        Chunk*         tail_block = chunks.back();
 
         if (tail_info->IsFull())
             FINALIZER((*tail_block)[tail_info->DeactivateTail()]);
@@ -614,7 +610,7 @@ namespace BullsEye {
 
         if (!tail_info->IncreaseLRUCounter())
         {
-            if (IsBlockSaturated())
+            if (IsChunkSaturated())
                 _Rotate();
             else
                 _NewBlockAndRotate();
@@ -630,13 +626,13 @@ namespace BullsEye {
     void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Clear() noexcept
     {
-        for (BlockMetadata* metadata : blocks_info)
+        for (ChunkMetadata* metadata : chunks_info)
             delete metadata;
 
-        for (Block* block : blocks)
+        for (Chunk* block : chunks)
             delete block;
 
-        blocks.clear();
-        blocks_info.clear();
+        chunks.clear();
+        chunks_info.clear();
     }
 }
