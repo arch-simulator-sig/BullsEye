@@ -112,6 +112,8 @@ namespace BullsEye {
 
     public:
         class Reference {
+            friend class RoundRobinObjectPool;
+
         private:
             static const std::shared_ptr<bool>  CONSTANT_FALSE;
 
@@ -257,7 +259,7 @@ namespace BullsEye {
     RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::ChunkMetadata::~ChunkMetadata() noexcept
     {
-        for (int i = 0; i < _IBlockSize; i++)
+        for (int i = 0; i < size; i++)
             if (valid_refset[i] && **(valid_refset[i]))
                 _Deactivate(i);
 
@@ -370,16 +372,24 @@ namespace BullsEye {
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::ChunkMetadata::ActivateHead() noexcept
     {
-        _Activate(write_ptr);
+        size_t index = write_ptr;
+
+        _Activate(index);
         _IncrWritePtr();
+
+        return index;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::ChunkMetadata::DeactivateTail() noexcept
     {
-        _Deactivate(read_ptr);
+        size_t index = read_ptr;
+
+        _Deactivate(index);
         _IncrReadPtr();
+
+        return index;
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
@@ -592,7 +602,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>::Reference RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    typename RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>::Reference RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Acquire() noexcept
     {
         if (chunks_info.empty())
