@@ -265,16 +265,8 @@ namespace Jasse {
 
     inline MIPS32GPRs* MIPS32Architectural::SwapGPRs(MIPS32GPRs* obj) noexcept
     {
-        /*
-        gprs = (MIPS32GPRs*) (((uintptr_t) gprs) ^ ((uintptr_t) obj));
-        obj  = (MIPS32GPRs*) (((uintptr_t) gprs) ^ ((uintptr_t) obj));
-        gprs = (MIPS32GPRs*) (((uintptr_t) gprs) ^ ((uintptr_t) obj));
+        std::swap(gprs, obj);
         return obj;
-        */
-
-        MIPS32GPRs* temp = gprs;
-        gprs = obj;
-        return temp;
     }
 }
 
