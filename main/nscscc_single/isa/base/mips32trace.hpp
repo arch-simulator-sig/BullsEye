@@ -6,6 +6,7 @@
 //
 
 #include <memory>
+#include <algorithm>
 
 #include "mips32def.hpp"
 #include "mips32decode.hpp"
@@ -55,24 +56,39 @@ namespace Jasse {
 
     // MIPS32 Trace Entity History Collection
     class MIPS32TraceHistory {
-    private:
-        const size_t    history_depth;
+    private:       
+        const size_t                    history_depth;
+
+        size_t                          capacity;
+        size_t                          count;
+        size_t                          round_pointer;
+
+        MIPS32TraceEntity::Reference*   traces;
 
     public:
+        MIPS32TraceHistory(size_t history_depth) noexcept;
+        MIPS32TraceHistory(const MIPS32TraceHistory& obj) noexcept;
+        MIPS32TraceHistory(const MIPS32TraceHistory& obj, size_t new_history_depth) noexcept;
+        ~MIPS32TraceHistory() noexcept;
 
+        size_t                              GetDepth() const noexcept;
+        size_t                              GetCount() const noexcept;
 
+        MIPS32TraceEntity::Reference        Get(size_t index) noexcept;
+        const MIPS32TraceEntity::Reference  Get(size_t index) const noexcept;
+
+        void                                Append(const MIPS32TraceEntity::Reference& trace) noexcept;
+
+        MIPS32TraceEntity::Reference        operator[](size_t index) noexcept;
+        const MIPS32TraceEntity::Reference  operator[](size_t index) const noexcept;
+
+        MIPS32TraceHistory&                 operator=(const MIPS32TraceHistory& obj) = delete;
     };
 
 
     // MIPS32 GPR Tracer
     class MIPS32GPRTracer {
-    private:
-        static constexpr int    SIZE    = MIPS32_ARCH_REG_COUNT;
-
-    public:
-        MIPS32GPRTracer(size_t history_depth) noexcept;
-        MIPS32GPRTracer(const MIPS32GPRTracer& obj) = delete;
-
+        
     };
     
     // MIPS32 Memory Tracer
@@ -196,3 +212,113 @@ namespace Jasse {
     }
 }
 
+
+// Implementation of: class MIPS32TraceHistory
+namespace Jasse {
+    //
+    // const size_t                    history_depth;
+    //
+    // size_t                          capacity;
+    // size_t                          count;
+    // size_t                          round_pointer;
+    //
+    // MIPS32TraceEntity::Reference*   traces;
+    //
+
+    MIPS32TraceHistory::MIPS32TraceHistory(size_t history_depth) noexcept
+        : history_depth (history_depth)
+        , capacity      (0)
+        , count         (0)
+        , round_pointer (0)
+        , traces        (nullptr)
+    { }
+
+    MIPS32TraceHistory::MIPS32TraceHistory(const MIPS32TraceHistory& obj) noexcept
+        : history_depth (obj.history_depth)
+        , capacity      (obj.capacity)
+        , count         (obj.count)
+        , round_pointer (obj.round_pointer)
+        , traces        (nullptr)
+    { 
+        if (obj.traces)
+        {
+            traces = new MIPS32TraceEntity::Reference[obj.capacity];
+
+            std::copy(obj.traces, obj.traces + obj.capacity, traces);
+        }
+    }
+
+    MIPS32TraceHistory::MIPS32TraceHistory(const MIPS32TraceHistory& obj, size_t new_history_depth) noexcept
+        : history_depth (new_history_depth)
+        , capacity      (obj.capacity)
+        , count         (obj.count)
+        , round_pointer (0)
+        , traces        (nullptr)
+    {
+        if (obj.traces)
+        {
+            traces = new MIPS32TraceEntity::Reference[obj.capacity];
+
+            std::copy(obj.traces + obj.round_pointer, obj.traces + obj.capacity, traces);
+            std::copy(obj.traces, obj.traces + obj.round_pointer, traces + obj.capacity - obj.round_pointer);
+        }
+    }
+
+    MIPS32TraceHistory::~MIPS32TraceHistory() noexcept
+    {
+        if (traces)
+            delete[] traces;
+    }
+
+    inline size_t MIPS32TraceHistory::GetDepth() const noexcept
+    {
+        return history_depth;
+    }
+
+    inline size_t MIPS32TraceHistory::GetCount() const noexcept
+    {
+        return count;
+    }
+
+    inline MIPS32TraceEntity::Reference MIPS32TraceHistory::Get(size_t index) noexcept
+    {
+        return traces[index];
+    }
+
+    inline const MIPS32TraceEntity::Reference MIPS32TraceHistory::Get(size_t index) const noexcept
+    {
+        return traces[index];
+    }
+
+    void MIPS32TraceHistory::Append(const MIPS32TraceEntity::Reference& trace) noexcept
+    {
+        if (!traces)
+            traces = new MIPS32TraceEntity::Reference[capacity = 1];
+        else if (count == history_depth)
+            traces[round_pointer++] = trace;
+        else
+        {
+            if (count == capacity)
+            {
+                MIPS32TraceEntity::Reference* newArray 
+                    = new MIPS32TraceEntity::Reference[std::min(capacity << 1, history_depth)];
+                
+                std::copy(traces, traces + capacity, newArray);
+
+                traces = newArray;
+            }
+
+            traces[count++] = trace;
+        }
+    }
+
+    inline MIPS32TraceEntity::Reference MIPS32TraceHistory::operator[](size_t index) noexcept
+    {
+        return Get(index);
+    }
+
+    inline const MIPS32TraceEntity::Reference MIPS32TraceHistory::operator[](size_t index) const noexcept
+    {
+        return Get(index);
+    }
+}
