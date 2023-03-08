@@ -14,6 +14,7 @@
 #include "common/objpool.hpp"
 
 
+// Trace Base
 namespace Jasse {
 
     // MIPS32 Trace Entity
@@ -84,16 +85,64 @@ namespace Jasse {
 
         MIPS32TraceHistory&                 operator=(const MIPS32TraceHistory& obj) = delete;
     };
+}
 
 
+// Trace Memory Management
+namespace Jasse::MIPS32TraceHistoryManagement {
+
+    class Pretouch
+    {
+
+    };
+
+    class CompressedIncremental
+    {
+
+    };
+}
+
+
+// Specialized Tracers
+namespace Jasse {
     // MIPS32 GPR Tracer
     class MIPS32GPRTracer {
-        
+    private:
+        static constexpr int    SIZE   = MIPS32_ARCH_REG_COUNT;
+
+        const size_t            history_depth;
+
+        MIPS32TraceHistory*     gpr_traces[SIZE];
+
+    public:
+        MIPS32GPRTracer(size_t history_depth) noexcept;
+        MIPS32GPRTracer(const MIPS32GPRTracer& obj) noexcept;
+        MIPS32GPRTracer(const MIPS32GPRTracer& obj, size_t new_history_depth) noexcept;
+        ~MIPS32GPRTracer() noexcept;
+
+        size_t                      GetDepth() const noexcept;
+        size_t                      GetSize() const noexcept;
+        bool                        CheckBound(size_t index) const noexcept;
+
+        MIPS32TraceHistory&         Get(size_t index) noexcept;
+        const MIPS32TraceHistory&   Get(size_t index) const noexcept;
+
+        [[nodiscard("potential memory leak : caller swap object management")]]
+        MIPS32TraceHistory*         Swap(size_t index, MIPS32TraceHistory* obj) noexcept;
+
+        MIPS32TraceHistory&         operator[](size_t index) noexcept;
+        const MIPS32TraceHistory&   operator[](size_t index) const noexcept;
+
+        MIPS32GPRTracer&            operator=(const MIPS32GPRTracer& obj) = delete;
     };
     
+
     // MIPS32 Memory Tracer
     class MIPS32MemoryTracer {
+    private:
+        const size_t            size;
 
+        const size_t            history_depth;
     };
 }
 
@@ -257,10 +306,22 @@ namespace Jasse {
     {
         if (obj.traces)
         {
-            traces = new MIPS32TraceEntity::Reference[obj.capacity];
+            traces = new MIPS32TraceEntity::Reference[new_history_depth];
 
-            std::copy(obj.traces + obj.round_pointer, obj.traces + obj.capacity, traces);
-            std::copy(obj.traces, obj.traces + obj.round_pointer, traces + obj.capacity - obj.round_pointer);
+            if (new_history_depth >= obj.history_depth) // fully copied
+            {
+                std::copy(obj.traces + obj.round_pointer, obj.traces + obj.capacity, traces);
+                std::copy(obj.traces, obj.traces + obj.round_pointer, traces + obj.capacity - obj.round_pointer);
+            }
+            else if (new_history_depth <= (obj.capacity - obj.round_pointer)) // truncated on first segment
+            {
+                std::copy(obj.traces + obj.round_pointer, obj.traces + obj.round_pointer + new_history_depth, traces);
+            }
+            else // truncated on second segment
+            {
+                std::copy(obj.traces + obj.round_pointer, obj.traces + obj.capacity, traces);
+                std::copy(obj.traces, obj.traces + new_history_depth - (obj.capacity - obj.round_pointer), traces + obj.capacity - obj.round_pointer);
+            }
         }
     }
 
@@ -318,6 +379,89 @@ namespace Jasse {
     }
 
     inline const MIPS32TraceEntity::Reference MIPS32TraceHistory::operator[](size_t index) const noexcept
+    {
+        return Get(index);
+    }
+}
+
+
+// Implementation of: class MIPS32GPRTracer
+namespace Jasse {
+    //
+    // static constexpr int    SIZE;
+    //
+    // const size_t            history_depth;
+    //
+    // MIPS32TraceHistory*     gpr_traces[SIZE];
+    //
+
+    MIPS32GPRTracer::MIPS32GPRTracer(size_t history_depth) noexcept
+        : history_depth (history_depth)
+        , gpr_traces    ()
+    {
+        for (MIPS32TraceHistory*& trace : gpr_traces)
+            trace = new MIPS32TraceHistory(history_depth);
+    }
+
+    MIPS32GPRTracer::MIPS32GPRTracer(const MIPS32GPRTracer& obj) noexcept
+        : history_depth (obj.history_depth)
+        , gpr_traces    ()
+    {
+        for (size_t i = 0; i < SIZE; i++)
+            gpr_traces[i] = new MIPS32TraceHistory(*(obj.gpr_traces[i]));
+    }
+
+    MIPS32GPRTracer::MIPS32GPRTracer(const MIPS32GPRTracer& obj, size_t new_history_depth) noexcept
+        : history_depth (new_history_depth)
+        , gpr_traces    ()
+    {
+        for (size_t i = 0; i < SIZE; i++)
+            gpr_traces[i] = new MIPS32TraceHistory(*(obj.gpr_traces[i]), new_history_depth);
+    }
+
+    MIPS32GPRTracer::~MIPS32GPRTracer() noexcept
+    {
+        for (MIPS32TraceHistory*& trace : gpr_traces)
+            delete trace;
+    }
+
+    inline size_t MIPS32GPRTracer::GetDepth() const noexcept
+    {
+        return history_depth;
+    }
+    
+    inline size_t MIPS32GPRTracer::GetSize() const noexcept
+    {
+        return SIZE;
+    }
+
+    inline bool MIPS32GPRTracer::CheckBound(size_t index) const noexcept
+    {
+        return index >= 0 && index < SIZE;
+    }
+
+    inline MIPS32TraceHistory& MIPS32GPRTracer::Get(size_t index) noexcept
+    {
+        return *(gpr_traces[index]);
+    }
+
+    inline const MIPS32TraceHistory& MIPS32GPRTracer::Get(size_t index) const noexcept
+    {
+        return *(gpr_traces[index]);
+    }
+
+    inline MIPS32TraceHistory* MIPS32GPRTracer::Swap(size_t index, MIPS32TraceHistory* obj) noexcept
+    {
+        std::swap(gpr_traces[index], obj);
+        return obj;
+    }
+
+    inline MIPS32TraceHistory& MIPS32GPRTracer::operator[](size_t index) noexcept
+    {
+        return Get(index);
+    }
+
+    inline const MIPS32TraceHistory& MIPS32GPRTracer::operator[](size_t index) const noexcept
     {
         return Get(index);
     }
