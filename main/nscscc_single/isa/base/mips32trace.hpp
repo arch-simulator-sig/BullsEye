@@ -110,12 +110,24 @@ namespace Jasse::MIPS32TraceHistoryManagement {
 
     class Pretouch
     {
+    private:
+        const size_t    size;
 
+    public:
+        Pretouch(size_t size) noexcept;
+        ~Pretouch() noexcept;
     };
 
+
+    template<unsigned int _CompressRatio>
     class CompressedIncremental
     {
+    private:
+        const size_t    max_size;
 
+    public:
+        CompressedIncremental(size_t max_size) noexcept;
+        ~CompressedIncremental() noexcept;
     };
 }
 
