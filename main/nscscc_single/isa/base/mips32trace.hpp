@@ -89,8 +89,8 @@ namespace Jasse {
 
         void                                SetDepth(size_t new_history_depth) noexcept;
 
-        MIPS32TraceEntity::Reference        Get(size_t index) noexcept;
-        const MIPS32TraceEntity::Reference  Get(size_t index) const noexcept;
+        MIPS32TraceEntity::Reference        Get(size_t index = 0) noexcept;
+        const MIPS32TraceEntity::Reference  Get(size_t index = 0) const noexcept;
 
         void                                Append(const MIPS32TraceEntity::Reference& trace) noexcept;
 
@@ -411,12 +411,12 @@ namespace Jasse {
 
     inline MIPS32TraceEntity::Reference MIPS32TraceHistory::Get(size_t index) noexcept
     {
-        return traces[index];
+        return traces[(round_pointer + count - 1 - index) % capacity];
     }
 
     inline const MIPS32TraceEntity::Reference MIPS32TraceHistory::Get(size_t index) const noexcept
     {
-        return traces[index];
+        return traces[(round_pointer + count - 1 - index) % capacity];
     }
 
     void MIPS32TraceHistory::Append(const MIPS32TraceEntity::Reference& trace) noexcept
