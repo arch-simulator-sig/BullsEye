@@ -7,6 +7,9 @@
 
 #include <memory>
 #include <algorithm>
+#include <optional>
+#include <functional>
+#include <utility>
 
 #include "mips32def.hpp"
 #include "mips32decode.hpp"
@@ -111,23 +114,92 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     class Pretouch
     {
     private:
-        const size_t    size;
+        const size_t        size;
+
+        MIPS32TraceHistory* vector;
 
     public:
+        Pretouch(const Pretouch& obj) = delete;
+        Pretouch(Pretouch&& obj) = delete;
         Pretouch(size_t size) noexcept;
         ~Pretouch() noexcept;
+
+        std::optional<std::reference_wrapper<MIPS32TraceHistory>>       Get(size_t address) noexcept;
+        std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Get(size_t address) const noexcept;
+
+        void                        Set(size_t address, const MIPS32TraceHistory& obj) noexcept;
+        bool                        SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept;
+
+        void                        Emplace(size_t address, MIPS32TraceHistory&& obj) noexcept;
+        bool                        EmplaceIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
+
+        bool                        SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept;
+
+        MIPS32TraceHistory&         Acquire(size_t address) noexcept;
+
+        void                        operator=(const Pretouch& obj) = delete;
+        void                        operator=(Pretouch&& obj) = delete;
     };
 
 
-    template<unsigned int _CompressRatio>
+    template<unsigned int _CompressRatio = 6>
     class CompressedIncremental
     {
     private:
+        class Chunk {
+        private:
+            MIPS32TraceHistory* vector;
+
+            size_t              capacity;
+            size_t              count;
+
+        public: 
+            Chunk();
+            ~Chunk();
+
+            MIPS32TraceHistory*         Get(size_t address) noexcept;
+            MIPS32TraceHistory* const   Get(size_t address) const noexcept;
+
+            void                        Set(size_t address, const MIPS32TraceHistory& obj) noexcept;
+            bool                        SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept;
+
+            void                        Emplace(size_t address, MIPS32TraceHistory&& obj) noexcept;
+            bool                        EmplaceIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
+
+            bool                        SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept;
+
+            MIPS32TraceHistory&         Acquire(size_t address) noexcept;
+        };
+
+    private:
         const size_t    max_size;
 
+        Chunk*          chunks;
+
     public:
+        CompressedIncremental(const CompressedIncremental& obj) = delete;
+        CompressedIncremental(CompressedIncremental&& obj) = delete;
         CompressedIncremental(size_t max_size) noexcept;
         ~CompressedIncremental() noexcept;
+
+        Pretouch(size_t size) noexcept;
+        ~Pretouch() noexcept;
+
+        std::optional<std::reference_wrapper<MIPS32TraceHistory>>       Get(size_t address) noexcept;
+        std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Get(size_t address) const noexcept;
+
+        void                        Set(size_t address, const MIPS32TraceHistory& obj) noexcept;
+        bool                        SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept;
+
+        void                        Emplace(size_t address, MIPS32TraceHistory&& obj) noexcept;
+        bool                        EmplaceIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
+
+        bool                        SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept;
+
+        MIPS32TraceHistory&         Acquire(size_t address) noexcept;
+
+        void                        operator=(const CompressedIncremental& obj) = delete;
+        void                        operator=(CompressedIncremental&& obj) = delete;
     };
 }
 
@@ -515,6 +587,71 @@ namespace Jasse {
 }
 
 
+
+// Implementation of: class MIPS32TraceHistoryManagement::Pretouch
+namespace Jasse::MIPS32TraceHistoryManagement {
+    //
+    // const size_t        size;
+    //
+    // MIPS32TraceHistory* vector;
+    //
+
+    Pretouch::Pretouch(size_t size) noexcept
+        : size      (size)
+        , vector    (new MIPS32TraceHistory[size])
+    { }
+
+    Pretouch::~Pretouch() noexcept
+    {
+        delete[] vector;
+    }
+    
+    inline std::optional<std::reference_wrapper<MIPS32TraceHistory>> Pretouch::Get(size_t address) noexcept
+    {
+        return { std::ref(vector[address]) };
+    }
+
+    inline std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Pretouch::Get(size_t address) const noexcept
+    {
+        return { std::cref(vector[address]) };
+    }
+
+    inline void Pretouch::Set(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        vector[address] = obj;
+    }
+
+    inline bool Pretouch::SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        Set(address, obj);
+        return true;
+    }
+
+    inline void Pretouch::Emplace(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        vector[address] = obj;
+    }
+
+    inline bool Pretouch::EmplaceIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        Emplace(address, std::move(obj));
+        return true;
+    }
+
+    inline bool Pretouch::SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept
+    {
+        std::swap(vector[address], obj);
+        return true;
+    }
+
+    inline MIPS32TraceHistory& Pretouch::Acquire(size_t address) noexcept
+    {
+        return vector[address];
+    }
+}
+
+
+
 // Implementation of: class MIPS32GPRTracer
 namespace Jasse {
     //
@@ -596,3 +733,5 @@ namespace Jasse {
         return Get(index);
     }
 }
+
+
