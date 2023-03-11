@@ -7,9 +7,12 @@
 
 #include <memory>
 #include <algorithm>
+#include <bitset>
 #include <optional>
 #include <functional>
 #include <utility>
+#include <limits>
+#include <stdexcept>
 
 #include "mips32def.hpp"
 #include "mips32decode.hpp"
@@ -148,17 +151,25 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     private:
         class Chunk {
         private:
-            MIPS32TraceHistory* vector;
+            MIPS32TraceHistory*     vector;
+            size_t*                 address_table;
 
-            size_t              capacity;
-            size_t              count;
+            size_t                  capacity_exponent;
+            size_t                  count;
+
+        private:
+            std::optional<size_t>       _Find(size_t address, size_t* slot_hint = nullptr) const noexcept;
+            size_t                      _FindSlot(size_t address, size_t slot_hint = 0) const noexcept;
+           
+            void                        _Initialize() noexcept;
+            void                        _Expand(size_t reserved_slot) noexcept;
 
         public: 
             Chunk();
             ~Chunk();
 
-            MIPS32TraceHistory*         Get(size_t address) noexcept;
-            MIPS32TraceHistory* const   Get(size_t address) const noexcept;
+            std::optional<std::reference_wrapper<MIPS32TraceHistory>>       Get(size_t address) noexcept;
+            std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Get(size_t address) const noexcept;
 
             void                        Set(size_t address, const MIPS32TraceHistory& obj) noexcept;
             bool                        SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept;
@@ -181,9 +192,6 @@ namespace Jasse::MIPS32TraceHistoryManagement {
         CompressedIncremental(CompressedIncremental&& obj) = delete;
         CompressedIncremental(size_t max_size) noexcept;
         ~CompressedIncremental() noexcept;
-
-        Pretouch(size_t size) noexcept;
-        ~Pretouch() noexcept;
 
         std::optional<std::reference_wrapper<MIPS32TraceHistory>>       Get(size_t address) noexcept;
         std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Get(size_t address) const noexcept;
@@ -648,6 +656,168 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     {
         return vector[address];
     }
+}
+
+
+
+// Implementation of: class MIPS32TraceHistoryManagement::CompressedIncremental::Chunk
+namespace Jasse::MIPS32TraceHistoryManagement {
+    //
+    // MIPS32TraceHistory* vector;
+    // size_t*             address_table;
+    //
+    // size_t              capacity_exponent;
+    // size_t              count;
+    //
+
+    template<unsigned int _CompressRatio>
+    CompressedIncremental<_CompressRatio>::Chunk::Chunk()
+        : vector            (nullptr)
+        , address_table     (nullptr)
+        , capacity_exponent (0)
+        , count             (0)
+    { }
+
+    template<unsigned int _CompressRatio>
+    CompressedIncremental<_CompressRatio>::Chunk::~Chunk()
+    {
+        if (vector)
+            delete[] vector;
+
+        if (address_table)
+            delete[] address_table;
+    }
+
+    template<unsigned int _CompressRatio>
+    std::optional<size_t> CompressedIncremental<_CompressRatio>::Chunk::_Find(size_t address, size_t* slot_hint) const noexcept
+    {
+        if (!address_table)
+            return std::nullopt;
+
+        if (!count)
+            return std::nullopt;
+
+        // check pivot
+        size_t pivot = !capacity_exponent ? 0 
+            : (address & (std::numeric_limits<size_t>::max() >> ((sizeof(size_t) << 3) - capacity_exponent)));
+
+        size_t lptr, rptr;
+
+        if (pivot < count)
+        {
+            if (address_table[pivot] == address)
+                return { pivot }; // direct hit
+
+            // select side of pivot
+            if (address_table[pivot] < address)
+            {
+                lptr = pivot + 1;
+                rptr = count - 1;
+            }
+            else if (pivot)
+            {
+                lptr = 0;
+                rptr = pivot - 1;
+            }
+            else
+                return std::nullopt;
+        }
+        else
+        {
+            lptr = 0;
+            rptr = count - 1;
+        }
+
+        // binary search on selected side of pivot
+        while (lptr <= rptr)
+        {
+            pivot = (lptr + rptr) >> 1;
+
+            if (address_table[pivot] == address)
+                return { pivot };
+            else if (address_table[pivot] < address)
+                lptr = pivot + 1;
+            else if (pivot)
+                rptr = pivot - 1;
+            else
+                return std::nullopt;
+        }
+
+        if (slot_hint)
+            *slot_hint = pivot;
+
+        return std::nullopt;
+    }
+
+    template<unsigned int _CompressRatio>
+    size_t CompressedIncremental<_CompressRatio>::Chunk::_FindSlot(size_t address, size_t slot_hint) const noexcept
+    {
+        if (address_table[slot_hint] < address) // search right
+        {
+            if (slot_hint == count)
+                return slot_hint;
+
+            do { slot_hint++; } while (slot_hint < count && address_table[slot_hint] < address);
+        }
+        else // search left
+        {
+            if (slot_hint == 0)
+                return slot_hint;
+
+            do { slot_hint--; } while (slot_hint >= 0    && address_table[slot_hint] > address);
+
+            slot_hint++; // compensation for left slot insertion
+        }
+
+        return slot_hint;
+    }
+
+    template<unsigned int _CompressRatio>
+    inline void CompressedIncremental<_CompressRatio>::Chunk::_Initialize() noexcept
+    {
+        vector        = new MIPS32TraceHistory[1];
+        address_table = new size_t[1];
+    }
+
+    template<unsigned int _CompressRatio>
+    void CompressedIncremental<_CompressRatio>::Chunk::_Expand(size_t reserved_slot) noexcept
+    {
+        size_t capacity = 1 << capacity_exponent;
+
+        // construct & move vector
+        MIPS32TraceHistory* newVector = new MIPS32TraceHistory[capacity << 1];
+
+        if (reserved_slot == 0)
+            std::move(vector, vector + capacity, newVector + 1);
+        else if (reserved_slot == capacity)
+            std::move(vector, vector + capacity, newVector);
+        else
+        {
+            std::move(vector, vector + reserved_slot, newVector);
+            std::move(vector + reserved_slot, vector + capacity, newVector + reserved_slot + 1);
+        }
+
+        delete[] vector;
+        vector = newVector;
+
+        // construct & move address table
+        size_t* newAddressTable = new size_t[capacity << 1];
+
+        if (reserved_slot == 0)
+            std::move(address_table, address_table + capacity, newAddressTable + 1);
+        else if (reserved_slot == capacity)
+            std::move(address_table, address_table + capacity, newAddressTable);
+        else
+        {
+            std::move(address_table, address_table + reserved_slot, newAddressTable);
+            std::move(address_table + reserved_slot, address_table + capacity, newAddressTable + reserved_slot + 1);
+        }
+
+        delete[] address_table;
+        address_table = newAddressTable;
+    }
+ 
+    // TODO
 }
 
 
