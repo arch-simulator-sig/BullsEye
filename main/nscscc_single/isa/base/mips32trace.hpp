@@ -461,8 +461,11 @@ namespace Jasse {
             size_t seg1copy = std::min(new_capacity, src_capacity - src_round_pointer);
             size_t seg2copy = std::min(new_capacity - seg1copy, src_round_pointer);
 
-            std::copy(src + src_round_pointer, src + src_round_pointer + seg1copy, newArray);
-            std::copy(src, src + seg2copy, newArray + seg1copy);
+            if (seg1copy)
+                std::copy(src + src_round_pointer, src + src_round_pointer + seg1copy, newArray);
+            
+            if (seg2copy)
+                std::copy(src, src + seg2copy, newArray + seg1copy);
 
             return newArray;
         }
