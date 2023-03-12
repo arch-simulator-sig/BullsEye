@@ -131,10 +131,11 @@ namespace Jasse::MIPS32TraceHistoryManagement {
         std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Get(size_t address) const noexcept;
 
         void                        Set(size_t address, const MIPS32TraceHistory& obj) noexcept;
+        void                        Set(size_t address, MIPS32TraceHistory&& obj) noexcept;
         bool                        SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept;
-
-        void                        Emplace(size_t address, MIPS32TraceHistory&& obj) noexcept;
-        bool                        EmplaceIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
+        bool                        SetIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
+        bool                        SetIfAbsent(size_t address, const MIPS32TraceHistory& obj) noexcept;
+        bool                        SetIfAbsent(size_t address, MIPS32TraceHistory&& obj) noexcept;
 
         bool                        SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept;
 
@@ -638,21 +639,31 @@ namespace Jasse::MIPS32TraceHistoryManagement {
         vector[address] = obj;
     }
 
+    inline void Pretouch::Set(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        vector[address] = std::move(obj);
+    }
+
     inline bool Pretouch::SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept
     {
         Set(address, obj);
         return true;
     }
 
-    inline void Pretouch::Emplace(size_t address, MIPS32TraceHistory&& obj) noexcept
+    inline bool Pretouch::SetIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept
     {
-        vector[address] = obj;
+        Set(address, std::move(obj));
+        return true;
     }
 
-    inline bool Pretouch::EmplaceIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept
+    constexpr bool Pretouch::SetIfAbsent(size_t address, const MIPS32TraceHistory& obj) noexcept
     {
-        Emplace(address, std::move(obj));
-        return true;
+        return false;
+    }
+
+    constexpr bool Pretouch::SetIfAbsent(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        return false;
     }
 
     inline bool Pretouch::SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept
