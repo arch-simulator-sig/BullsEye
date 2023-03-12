@@ -164,6 +164,11 @@ namespace Jasse::MIPS32TraceHistoryManagement {
             void                        _Initialize() noexcept;
             void                        _Expand(size_t reserved_slot) noexcept;
 
+            MIPS32TraceHistory&         _NewSlot(size_t address, size_t slot_hint) noexcept;
+
+            template<bool _EnableOnExists, bool _EnableOnAbsent, class _T>
+            bool                        _Set(size_t address, _T&& obj) noexcept;
+
         public: 
             Chunk();
             ~Chunk();
@@ -172,10 +177,11 @@ namespace Jasse::MIPS32TraceHistoryManagement {
             std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Get(size_t address) const noexcept;
 
             void                        Set(size_t address, const MIPS32TraceHistory& obj) noexcept;
+            void                        Set(size_t address, MIPS32TraceHistory&& obj) noexcept;
             bool                        SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept;
-
-            void                        Emplace(size_t address, MIPS32TraceHistory&& obj) noexcept;
-            bool                        EmplaceIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
+            bool                        SetIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
+            bool                        SetIfAbsent(size_t address, const MIPS32TraceHistory& obj) noexcept;
+            bool                        SetIfAbsent(size_t address, MIPS32TraceHistory&& obj) noexcept;
 
             bool                        SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept;
 
@@ -816,8 +822,128 @@ namespace Jasse::MIPS32TraceHistoryManagement {
         delete[] address_table;
         address_table = newAddressTable;
     }
- 
-    // TODO
+
+    template<unsigned int _CompressRatio>
+    inline MIPS32TraceHistory& CompressedIncremental<_CompressRatio>::Chunk::_NewSlot(size_t address, size_t slot_hint) noexcept
+    {
+        size_t new_slot_index = _FindSlot(address, slot_hint);
+
+        if (count == (1 << capacity_exponent))
+            _Expand(new_slot_index);
+        else if (new_slot_index != count)
+            std::move_backward(vector + new_slot_index, vector + count, vector + new_slot_index + 1);
+
+        return vector[new_slot_index];
+    }
+
+    template<unsigned int _CompressRatio>
+    inline std::optional<std::reference_wrapper<MIPS32TraceHistory>> CompressedIncremental<_CompressRatio>::Chunk::Get(size_t address) noexcept
+    {
+        std::optional<size_t> index = _Find(address);
+
+        if (index)
+            return { std::ref(vector[*index]) };
+        
+        return std::nullopt;
+    }
+
+    template<unsigned int _CompressRatio>
+    inline std::optional<std::reference_wrapper<const MIPS32TraceHistory>> CompressedIncremental<_CompressRatio>::Chunk::Get(size_t address) const noexcept
+    {
+        std::optional<size_t> index = _Find(address);
+
+        if (index)
+            return { std::cref(vector[*index]) };
+
+        return std::nullopt;
+    }
+
+    template<unsigned int _CompressRatio>
+    template<bool _EnableOnExists, bool _EnableOnAbsent, class _T>
+    inline bool CompressedIncremental<_CompressRatio>::Chunk::_Set(size_t address, _T&& obj) noexcept
+    {
+        size_t slot_hint;
+
+        std::optional<size_t> index = _Find(address, &slot_hint);
+
+        if (!index)
+        {
+            if constexpr (_EnableOnAbsent)
+                _NewSlot(address, slot_hint) = std::forward<_T>(obj);
+            else
+                return false;
+        }
+        else
+        {
+            if constexpr (_EnableOnExists)
+                vector[*index] = std::forward<_T>(obj);
+            else
+                return false;
+        }
+
+        return true;
+    }
+
+    template<unsigned int _CompressRatio>
+    inline void CompressedIncremental<_CompressRatio>::Chunk::Set(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        _Set<true, true>(address, obj);
+    }
+
+    template<unsigned int _CompressRatio>
+    inline void CompressedIncremental<_CompressRatio>::Chunk::Set(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        _Set<true, true>(address, std::move(obj));
+    }
+
+    template<unsigned int _CompressRatio>
+    inline bool CompressedIncremental<_CompressRatio>::Chunk::SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        return _Set<true, false>(address, obj);
+    }
+
+    template<unsigned int _CompressRatio>
+    inline bool CompressedIncremental<_CompressRatio>::Chunk::SetIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        return _Set<true, false>(address, std::move(obj));
+    }
+
+    template<unsigned int _CompressRatio>
+    inline bool CompressedIncremental<_CompressRatio>::Chunk::SetIfAbsent(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        return _Set<false, true>(address, obj);
+    }
+
+    template<unsigned int _CompressRatio>
+    inline bool CompressedIncremental<_CompressRatio>::Chunk::SetIfAbsent(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        return _Set<false, true>(address, std::move(obj));
+    }
+
+    template<unsigned int _CompressRatio>
+    inline bool CompressedIncremental<_CompressRatio>::Chunk::SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept
+    {
+        std::optional<size_t> index = _Find(address);
+
+        if (!index)
+            return false;
+
+        std::swap(vector[*index], obj);
+        return true;
+    }
+
+    template<unsigned int _CompressRatio>
+    inline MIPS32TraceHistory& CompressedIncremental<_CompressRatio>::Chunk::Acquire(size_t address) noexcept
+    {
+        size_t slot_hint;
+
+        std::optional<size_t> index = _Find(address, &slot_hint);
+
+        if (index)
+            return vector[*index];
+        else
+            return _NewSlot(address, slot_hint);
+    }
 }
 
 
