@@ -204,10 +204,11 @@ namespace Jasse::MIPS32TraceHistoryManagement {
         std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Get(size_t address) const noexcept;
 
         void                        Set(size_t address, const MIPS32TraceHistory& obj) noexcept;
+        void                        Set(size_t address, MIPS32TraceHistory&& obj) noexcept;
         bool                        SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept;
-
-        void                        Emplace(size_t address, MIPS32TraceHistory&& obj) noexcept;
-        bool                        EmplaceIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
+        bool                        SetIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
+        bool                        SetIfAbsent(size_t address, const MIPS32TraceHistory& obj) noexcept;
+        bool                        SetIfAbsent(size_t address, MIPS32TraceHistory&& obj) noexcept;
 
         bool                        SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept;
 
@@ -960,6 +961,11 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     }
 }
 
+
+// Implementation of: class MIPS32TraceHistoryManagement::CompressIncremental
+namespace Jasse::MIPS32TraceHistoryManagement {
+
+}
 
 
 // Implementation of: class MIPS32GPRTracer
