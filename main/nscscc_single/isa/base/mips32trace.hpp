@@ -964,7 +964,13 @@ namespace Jasse::MIPS32TraceHistoryManagement {
 
 // Implementation of: class MIPS32TraceHistoryManagement::CompressIncremental
 namespace Jasse::MIPS32TraceHistoryManagement {
+    //
+    // const size_t    max_size;
+    //
+    // Chunk*          chunks;
+    //
 
+    
 }
 
 
