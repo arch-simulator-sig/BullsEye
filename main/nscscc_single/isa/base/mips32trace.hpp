@@ -192,7 +192,12 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     private:
         const size_t    max_size;
 
+        const size_t    chunk_count;
         Chunk*          chunks;
+
+    private:
+        static size_t               _ToChunkAddress(size_t address) noexcept;
+        static size_t               _ToAddressInChunk(size_t address) noexcept
 
     public:
         CompressedIncremental(const CompressedIncremental& obj) = delete;
@@ -967,10 +972,95 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     //
     // const size_t    max_size;
     //
+    // const size_t    chunk_count;
     // Chunk*          chunks;
     //
 
-    
+    template<unsigned int _CompressRatio>
+    CompressedIncremental<_CompressRatio>::CompressedIncremental(size_t max_size) noexcept
+        : max_size      (max_size)
+        , chunk_count   ((max_size >> _CompressRatio) + 1)
+        , chunks        (new Chunk[chunk_count])
+    { }
+
+    template<unsigned int _CompressRatio>
+    CompressedIncremental<_CompressRatio>::~CompressedIncremental() noexcept
+    {
+        delete[] chunks;
+    }
+
+    template<unsigned int _CompressRatio>
+    static inline constexpr size_t CompressedIncremental<_CompressRatio>::_ToChunkAddress(size_t address) noexcept
+    {
+        return address >> _CompressRatio;
+    }
+
+    template<unsigned int _CompressRatio>
+    static inline constexpr size_t CompressedIncremental<_CompressRatio>::_ToAddressInChunk(size_t address) noexcept
+    {
+        return address;
+        // return (address & (std::numeric_limits<size_t>::max() >> ((sizeof(size_t) << 3) - _CompressRatio)));
+    }
+
+    template<unsigned int _CompressRatio>
+    std::optional<std::reference_wrapper<MIPS32TraceHistory>> CompressedIncremental<_CompressRatio>::Get(size_t address) noexcept
+    {
+        return chunks[_ToChunkAddress(address)].Get(_ToAddressInChunk(address));
+    }
+
+    template<unsigned int _CompressRatio>
+    std::optional<std::reference_wrapper<const MIPS32TraceHistory>> CompressedIncremental<_CompressRatio>::Get(size_t address) const noexcept
+    {
+        return chunks[_ToChunkAddress(address)].Get(_ToAddressInChunk(address));
+    }
+
+    template<unsigned int _CompressRatio>
+    void CompressedIncremental<_CompressRatio>::Set(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        chunks[_ToChunkAddress(address)].Set(address, obj);
+    }
+
+    template<unsigned int _CompressRatio>
+    void CompressedIncremental<_CompressRatio>::Set(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        chunks[_ToChunkAddress(address)].Set(address, std::move(obj));
+    }
+
+    template<unsigned int _CompressRatio>
+    bool CompressedIncremental<_CompressRatio>::SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        return chunks[_ToChunkAddress(address)].SetIfExists(address, obj);
+    }
+
+    template<unsigned int _CompressRatio>
+    bool CompressedIncremental<_CompressRatio>::SetIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        return chunks[_ToChunkAddress(address)].SetIfExists(address, std::move(obj));
+    }
+
+    template<unsigned int _CompressRatio>
+    bool CompressedIncremental<_CompressRatio>::SetIfAbsent(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        return chunks[_ToChunkAddress(address)].SetIfAbsent(address, obj);
+    }
+
+    template<unsigned int _CompressRatio>
+    bool CompressedIncremental<_CompressRatio>::SetIfAbsent(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        return chunks[_ToChunkAddress(address)].SetIfAbsent(address, std::move(obj));
+    }
+
+    template<unsigned int _CompressRatio>
+    bool CompressedIncremental<_CompressRatio>::SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept
+    {
+        return chunks[_ToChunkAddress(address)].SwapIfExists(address, obj);
+    }
+
+    template<unsigned int _CompressRatio>
+    MIPS32TraceHistory& CompressedIncremental<_CompressRatio>::Acquire(size_t address) noexcept
+    {
+        return chunks[_ToChunkAddress(address)].Acquire(address);
+    }
 }
 
 
