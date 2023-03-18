@@ -121,11 +121,16 @@ namespace Jasse::MIPS32TraceHistoryManagement {
 
         MIPS32TraceHistory* vector;
 
+        size_t              default_depth;
+
     public:
         Pretouch(const Pretouch& obj) = delete;
         Pretouch(Pretouch&& obj) = delete;
-        Pretouch(size_t size) noexcept;
+        Pretouch(size_t size, size_t default_depth = 1) noexcept;
         ~Pretouch() noexcept;
+
+        size_t                      GetDefaultDepth() const noexcept;
+        void                        SetDefaultDepth(size_t val) noexcept;
 
         std::optional<std::reference_wrapper<MIPS32TraceHistory>>       Get(size_t address) noexcept;
         std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Get(size_t address) const noexcept;
@@ -186,7 +191,7 @@ namespace Jasse::MIPS32TraceHistoryManagement {
 
             bool                        SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept;
 
-            MIPS32TraceHistory&         Acquire(size_t address) noexcept;
+            MIPS32TraceHistory&         Acquire(size_t address, size_t default_depth) noexcept;
         };
 
     private:
@@ -195,6 +200,8 @@ namespace Jasse::MIPS32TraceHistoryManagement {
         const size_t    chunk_count;
         Chunk*          chunks;
 
+        size_t          default_depth;
+
     private:
         static size_t               _ToChunkAddress(size_t address) noexcept;
         static size_t               _ToAddressInChunk(size_t address) noexcept
@@ -202,8 +209,11 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     public:
         CompressedIncremental(const CompressedIncremental& obj) = delete;
         CompressedIncremental(CompressedIncremental&& obj) = delete;
-        CompressedIncremental(size_t max_size) noexcept;
+        CompressedIncremental(size_t max_size, size_t default_depth = 1) noexcept;
         ~CompressedIncremental() noexcept;
+
+        size_t                      GetDefaultDepth() const noexcept;
+        void                        SetDefaultDepth(size_t val) noexcept;
 
         std::optional<std::reference_wrapper<MIPS32TraceHistory>>       Get(size_t address) noexcept;
         std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Get(size_t address) const noexcept;
@@ -492,6 +502,9 @@ namespace Jasse {
 
     void MIPS32TraceHistory::SetDepth(size_t new_history_depth) noexcept
     {
+        if (new_history_depth == history_depth)
+            return;
+
         auto newArray = _ModifyDepth(traces,
                                      capacity,
                                      count,
@@ -619,15 +632,35 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     //
     // MIPS32TraceHistory* vector;
     //
+    // size_t              default_depth;
+    //
 
-    Pretouch::Pretouch(size_t size) noexcept
-        : size      (size)
-        , vector    (new MIPS32TraceHistory[size])
-    { }
+    Pretouch::Pretouch(size_t size, size_t default_depth) noexcept
+        : size          (size)
+        , vector        (new MIPS32TraceHistory[size])
+        , default_depth (default_depth)
+    {
+        for (int i = 0; i < size; i++)
+            vector[i].SetDepth(default_depth);
+    }
 
     Pretouch::~Pretouch() noexcept
     {
         delete[] vector;
+    }
+
+    inline size_t Pretouch::GetDefaultDepth() const noexcept
+    {
+        return default_depth;
+    }
+
+    inline void Pretouch::SetDefaultDepth(size_t val) noexcept
+    {
+        default_depth = val;
+
+        // *NOTICE: In fact, nothing other than the field 'default_depth' would be effected after this 
+        //          operation because all the default history depth of MIPS32TraceHistory instances were 
+        //          set on construction time for Pretouch Management.
     }
     
     inline std::optional<std::reference_wrapper<MIPS32TraceHistory>> Pretouch::Get(size_t address) noexcept
@@ -953,7 +986,7 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     }
 
     template<unsigned int _CompressRatio>
-    inline MIPS32TraceHistory& CompressedIncremental<_CompressRatio>::Chunk::Acquire(size_t address) noexcept
+    inline MIPS32TraceHistory& CompressedIncremental<_CompressRatio>::Chunk::Acquire(size_t address, size_t default_depth) noexcept
     {
         size_t slot_hint;
 
@@ -962,7 +995,12 @@ namespace Jasse::MIPS32TraceHistoryManagement {
         if (index)
             return vector[*index];
         else
-            return _NewSlot(address, slot_hint);
+        {
+            MIPS32TraceHistory& obj = _NewSlot(address, slot_hint);
+
+            obj.SetDepth(default_depth);
+            return obj;
+        }
     }
 }
 
@@ -975,18 +1013,33 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     // const size_t    chunk_count;
     // Chunk*          chunks;
     //
+    // size_t          default_depth;
+    //
 
     template<unsigned int _CompressRatio>
-    CompressedIncremental<_CompressRatio>::CompressedIncremental(size_t max_size) noexcept
+    CompressedIncremental<_CompressRatio>::CompressedIncremental(size_t max_size, size_t default_depth) noexcept
         : max_size      (max_size)
         , chunk_count   ((max_size >> _CompressRatio) + 1)
         , chunks        (new Chunk[chunk_count])
+        , default_depth (default_depth)
     { }
 
     template<unsigned int _CompressRatio>
     CompressedIncremental<_CompressRatio>::~CompressedIncremental() noexcept
     {
         delete[] chunks;
+    }
+
+    template<unsigned int _CompressRatio>
+    inline size_t CompressedIncremental<_CompressRatio>::GetDefaultDepth() const noexcept
+    {
+        return default_depth;
+    }
+
+    template<unsigned int _CompressRatio>
+    inline void CompressedIncremental<_CompressRatio>::SetDefaultDepth(size_t val) noexcept
+    {
+        default_depth = val;
     }
 
     template<unsigned int _CompressRatio>
