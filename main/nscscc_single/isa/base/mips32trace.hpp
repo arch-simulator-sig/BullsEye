@@ -237,8 +237,43 @@ namespace Jasse::MIPS32TraceHistoryManagement {
 
 // Specialized Tracers
 namespace Jasse {
-    // MIPS32 GPR Tracer
+
+    //
+    template<class _HistoryManager = MIPS32TraceHistoryManagement::Pretouch>
     class MIPS32GPRTracer {
+    private:
+        static constexpr size_t SIZE    = MIPS32_ARCH_REG_COUNT;
+
+    private:
+        mutable _HistoryManager manager;
+
+    public:
+        MIPS32GPRTracer(const MIPS32GPRTracer& obj) = delete;
+        MIPS32GPRTracer(MIPS32GPRTracer&& obj) = delete;
+        MIPS32GPRTracer(size_t default_depth) noexcept;
+        ~MIPS32GPRTracer() noexcept;
+
+        size_t                      GetDefaultDepth() const noexcept;
+        void                        SetDefaultDepth(size_t depth) noexcept;
+
+        size_t                      GetSize() const noexcept;
+        bool                        CheckBound(size_t index) const noexcept;
+
+        MIPS32TraceHistory&         Get(size_t index) noexcept;
+        const MIPS32TraceHistory&   Get(size_t index) const noexcept;
+
+        void                        Swap(size_t index, MIPS32TraceHistory& obj) noexcept;
+
+        MIPS32TraceHistory&         operator[](size_t index) noexcept;
+        const MIPS32TraceHistory&   operator[](size_t index) const noexcept;
+
+        MIPS32GPRTracer&            operator=(const MIPS32GPRTracer& obj) = delete;
+        MIPS32GPRTracer&            operator=(MIPS32GPRTracer&& obj) = delete;
+    };
+
+
+    // MIPS32 GPR Tracer (Deprecated)
+    class MIPS32GPRTracer__deprecated__ {
     private:
         static constexpr int    SIZE   = MIPS32_ARCH_REG_COUNT;
 
@@ -247,10 +282,10 @@ namespace Jasse {
         MIPS32TraceHistory*     gpr_traces[SIZE];
 
     public:
-        MIPS32GPRTracer(size_t history_depth) noexcept;
-        MIPS32GPRTracer(const MIPS32GPRTracer& obj) noexcept;
-        MIPS32GPRTracer(const MIPS32GPRTracer& obj, size_t new_history_depth) noexcept;
-        ~MIPS32GPRTracer() noexcept;
+        MIPS32GPRTracer__deprecated__(size_t history_depth) noexcept;
+        MIPS32GPRTracer__deprecated__(const MIPS32GPRTracer__deprecated__& obj) noexcept;
+        MIPS32GPRTracer__deprecated__(const MIPS32GPRTracer__deprecated__& obj, size_t new_history_depth) noexcept;
+        ~MIPS32GPRTracer__deprecated__() noexcept;
 
         size_t                      GetDepth() const noexcept;
         size_t                      GetSize() const noexcept;
@@ -265,7 +300,7 @@ namespace Jasse {
         MIPS32TraceHistory&         operator[](size_t index) noexcept;
         const MIPS32TraceHistory&   operator[](size_t index) const noexcept;
 
-        MIPS32GPRTracer&            operator=(const MIPS32GPRTracer& obj) = delete;
+        MIPS32GPRTracer__deprecated__&            operator=(const MIPS32GPRTracer__deprecated__& obj) = delete;
     };
     
 
@@ -1112,7 +1147,7 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     template<unsigned int _CompressRatio>
     MIPS32TraceHistory& CompressedIncremental<_CompressRatio>::Acquire(size_t address) noexcept
     {
-        return chunks[_ToChunkAddress(address)].Acquire(address);
+        return chunks[_ToChunkAddress(address)].Acquire(address, default_depth);
     }
 }
 
@@ -1120,83 +1155,70 @@ namespace Jasse::MIPS32TraceHistoryManagement {
 // Implementation of: class MIPS32GPRTracer
 namespace Jasse {
     //
-    // static constexpr int    SIZE;
-    //
-    // const size_t            history_depth;
-    //
-    // MIPS32TraceHistory*     gpr_traces[SIZE];
+    // mutable _HistoryManager  manager;
     //
 
-    MIPS32GPRTracer::MIPS32GPRTracer(size_t history_depth) noexcept
-        : history_depth (history_depth)
-        , gpr_traces    ()
+    template<class _HistoryManager>
+    MIPS32GPRTracer<_HistoryManager>::MIPS32GPRTracer(size_t default_depth) noexcept
+        : manager   (SIZE, default_depth)
+    { }
+
+    template<class _HistoryManager>
+    MIPS32GPRTracer<_HistoryManager>::~MIPS32GPRTracer() noexcept
+    { }
+
+    template<class _HistoryManager>
+    inline size_t MIPS32GPRTracer<_HistoryManager>::GetDefaultDepth() const noexcept
     {
-        for (MIPS32TraceHistory*& trace : gpr_traces)
-            trace = new MIPS32TraceHistory(history_depth);
+        return manager.GetDefaultDepth();
     }
 
-    MIPS32GPRTracer::MIPS32GPRTracer(const MIPS32GPRTracer& obj) noexcept
-        : history_depth (obj.history_depth)
-        , gpr_traces    ()
+    template<class _HistoryManager>
+    inline void MIPS32GPRTracer<_HistoryManager>::SetDefaultDepth(size_t depth) noexcept
     {
-        for (size_t i = 0; i < SIZE; i++)
-            gpr_traces[i] = new MIPS32TraceHistory(*(obj.gpr_traces[i]));
+        manager.SetDefaultDepth(depth);
     }
 
-    MIPS32GPRTracer::MIPS32GPRTracer(const MIPS32GPRTracer& obj, size_t new_history_depth) noexcept
-        : history_depth (new_history_depth)
-        , gpr_traces    ()
-    {
-        for (size_t i = 0; i < SIZE; i++)
-            gpr_traces[i] = new MIPS32TraceHistory(*(obj.gpr_traces[i]), new_history_depth);
-    }
-
-    MIPS32GPRTracer::~MIPS32GPRTracer() noexcept
-    {
-        for (MIPS32TraceHistory*& trace : gpr_traces)
-            delete trace;
-    }
-
-    inline size_t MIPS32GPRTracer::GetDepth() const noexcept
-    {
-        return history_depth;
-    }
-    
-    inline size_t MIPS32GPRTracer::GetSize() const noexcept
+    template<class _HistoryManager>
+    inline constexpr size_t MIPS32GPRTracer<_HistoryManager>::GetSize() const noexcept
     {
         return SIZE;
     }
 
-    inline bool MIPS32GPRTracer::CheckBound(size_t index) const noexcept
+    template<class _HistoryManager>
+    inline constexpr bool MIPS32GPRTracer<_HistoryManager>::CheckBound(size_t index) const noexcept
     {
         return index >= 0 && index < SIZE;
     }
 
-    inline MIPS32TraceHistory& MIPS32GPRTracer::Get(size_t index) noexcept
+    template<class _HistoryManager>
+    inline MIPS32TraceHistory& MIPS32GPRTracer<_HistoryManager>::Get(size_t index) noexcept
     {
-        return *(gpr_traces[index]);
+        return manager.Acquire(index);
     }
 
-    inline const MIPS32TraceHistory& MIPS32GPRTracer::Get(size_t index) const noexcept
+    template<class _HistoryManager>
+    inline const MIPS32TraceHistory& MIPS32GPRTracer<_HistoryManager>::Get(size_t index) const noexcept
     {
-        return *(gpr_traces[index]);
+        return manager.Acquire(index);
     }
 
-    inline MIPS32TraceHistory* MIPS32GPRTracer::Swap(size_t index, MIPS32TraceHistory* obj) noexcept
+    template<class _HistoryManager>
+    inline void MIPS32GPRTracer<_HistoryManager>::Swap(size_t index, MIPS32TraceHistory& obj) noexcept
     {
-        std::swap(gpr_traces[index], obj);
-        return obj;
+        if (!manager.SwapIfExists(address, obj))
+            std::swap(manager.Acquire(address), obj);
     }
 
-    inline MIPS32TraceHistory& MIPS32GPRTracer::operator[](size_t index) noexcept
+    template<class _HistoryManager>
+    inline MIPS32TraceHistory& MIPS32GPRTracer<_HistoryManager>::operator[](size_t index) noexcept
     {
         return Get(index);
     }
 
-    inline const MIPS32TraceHistory& MIPS32GPRTracer::operator[](size_t index) const noexcept
+    template<class _HistoryManager>
+    inline const MIPS32TraceHistory& MIPS32GPRTracer<_HistoryManager>::operator[](size_t index) const noexcept
     {
         return Get(index);
     }
 }
-
-
