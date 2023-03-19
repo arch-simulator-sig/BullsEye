@@ -116,7 +116,7 @@ namespace Jasse {
 namespace Jasse {
 
     template<class T>
-    concept MIPS32TraceHistoryManager = requires(T x, const T c,
+    concept MIPS32TraceHistoryManager = requires (T x, const T c,
         size_t  size,
         size_t  default_depth,
         size_t  address,
@@ -355,8 +355,36 @@ namespace Jasse {
     
 
     // MIPS32 Memory Tracer
+    template<MIPS32TraceHistoryManager _HistoryManager
+        = MIPS32TraceHistoryManagement::CompressedIncremental<>>
     class MIPS32MemoryTracer {
     private:
+        const size_t            size;
+
+        mutable _HistoryManager manager;
+
+    public:
+        MIPS32MemoryTracer(const MIPS32MemoryTracer& obj) = delete;
+        MIPS32MemoryTracer(MIPS32MemoryTracer&& obj) = delete;
+        MIPS32MemoryTracer(size_t size, size_t default_depth) noexcept;
+        ~MIPS32MemoryTracer() noexcept;
+
+        size_t                      GetDefaultDepth() const noexcept;
+        void                        SetDefaultDepth(size_t depth) noexcept;
+
+        size_t                      GetSize() const noexcept;
+        bool                        CheckBound(size_t address) const noexcept;
+
+        std::optional<std::reference_wrapper<MIPS32TraceHistory>>       Get(size_t address) noexcept;
+        std::optional<std::reference_wrapper<const MIPS32TraceHistory>> Get(size_t address) const noexcept;
+
+        MIPS32TraceHistory&         Acquire(size_t address) noexcept;
+        const MIPS32TraceHistory&   Acquire(size_t address) const noexcept;
+
+        bool                        SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept;
+
+        MIPS32MemoryTracer&         operator=(const MIPS32MemoryTracer& obj) = delete;
+        MIPS32MemoryTracer&         operator=(MIPS32MemoryTracer&& obj) = delete;
     };
 }
 
@@ -1199,6 +1227,7 @@ namespace Jasse::MIPS32TraceHistoryManagement {
 }
 
 
+
 // Implementation of: class MIPS32GPRTracer
 namespace Jasse {
     //
@@ -1267,5 +1296,81 @@ namespace Jasse {
     inline const MIPS32TraceHistory& MIPS32GPRTracer<_HistoryManager>::operator[](size_t index) const noexcept
     {
         return Get(index);
+    }
+}
+
+
+// Implementation of: class MIPS32MemoryTracer
+namespace Jasse {
+    //
+    // const size_t            size;
+    //
+    // mutable _HistoryManager manager;
+    //
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    MIPS32MemoryTracer<_HistoryManager>::MIPS32MemoryTracer(size_t size, size_t default_depth)
+        : size      (size)
+        , manager   (size, default_depth)
+    { }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    MIPS32MemoryTracer<_HistoryManager>::~MIPS32MemoryTracer()
+    { }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline size_t MIPS32MemoryTracer<_HistoryManager>::GetDefaultDepth() const noexcept
+    {
+        return manager.GetDefaultDepth();
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline void MIPS32MemoryTracer<_HistoryManager>::SetDefaultDepth(size_t depth) noexcept
+    {
+        manager.SetDefaultDepth(depth);
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline size_t MIPS32MemoryTracer<_HistoryManager>::GetSize() const noexcept
+    {
+        return size;
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline bool MIPS32MemoryTracer<_HistoryManager>::CheckBound(size_t address) const noexcept
+    {
+        return address >= 0 && address < size;
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline std::optional<std::reference_wrapper<MIPS32TraceHistory>> MIPS32MemoryTracer<_HistoryManager>::Get(size_t address) noexcept
+    {
+        auto __from_get = manager.Get(address);
+        return __from_get ? { std::ref(*__from_get) } : std::nullopt;
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline std::optional<std::reference_wrapper<const MIPS32TraceHistory>> MIPS32MemoryTracer<_HistoryManager>::Get(size_t address) const noexcept
+    {
+        auto __from_const_get = std::as_const(manager).Get(address);
+        return __from_const_get ? { std::cref(*__from_const_get) } : std::nullopt;
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline MIPS32TraceHistory& MIPS32MemoryTracer<_HistoryManager>::Acquire(size_t address) noexcept
+    {
+        return manager.Acquire(address);
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline const MIPS32TraceHistory& MIPS32MemoryTracer<_HistoryManager>::Acquire(size_t address) const noexcept
+    {
+        return manager.Acquire(address);
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline bool MIPS32MemoryTracer<_HistoryManager>::SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept
+    {
+        return manager.SwapIfExists(address, obj);
     }
 }
