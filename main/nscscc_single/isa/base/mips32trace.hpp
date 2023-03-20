@@ -320,38 +320,6 @@ namespace Jasse {
         MIPS32GPRTracer&            operator=(const MIPS32GPRTracer& obj) = delete;
         MIPS32GPRTracer&            operator=(MIPS32GPRTracer&& obj) = delete;
     };
-
-
-    // MIPS32 GPR Tracer (Deprecated)
-    class MIPS32GPRTracer__deprecated__ {
-    private:
-        static constexpr int    SIZE   = MIPS32_ARCH_REG_COUNT;
-
-        const size_t            history_depth;
-
-        MIPS32TraceHistory*     gpr_traces[SIZE];
-
-    public:
-        MIPS32GPRTracer__deprecated__(size_t history_depth) noexcept;
-        MIPS32GPRTracer__deprecated__(const MIPS32GPRTracer__deprecated__& obj) noexcept;
-        MIPS32GPRTracer__deprecated__(const MIPS32GPRTracer__deprecated__& obj, size_t new_history_depth) noexcept;
-        ~MIPS32GPRTracer__deprecated__() noexcept;
-
-        size_t                      GetDepth() const noexcept;
-        size_t                      GetSize() const noexcept;
-        bool                        CheckBound(size_t index) const noexcept;
-
-        MIPS32TraceHistory&         Get(size_t index) noexcept;
-        const MIPS32TraceHistory&   Get(size_t index) const noexcept;
-
-        [[nodiscard("potential memory leak : caller swap object management")]]
-        MIPS32TraceHistory*         Swap(size_t index, MIPS32TraceHistory* obj) noexcept;
-
-        MIPS32TraceHistory&         operator[](size_t index) noexcept;
-        const MIPS32TraceHistory&   operator[](size_t index) const noexcept;
-
-        MIPS32GPRTracer__deprecated__&            operator=(const MIPS32GPRTracer__deprecated__& obj) = delete;
-    };
     
 
     // MIPS32 Memory Tracer
