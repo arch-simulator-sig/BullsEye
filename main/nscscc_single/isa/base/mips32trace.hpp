@@ -312,6 +312,9 @@ namespace Jasse {
         MIPS32TraceHistory&         Get(size_t index) noexcept;
         const MIPS32TraceHistory&   Get(size_t index) const noexcept;
 
+        void                        Set(size_t index, const MIPS32TraceHistory& obj) noexcept;
+        void                        Set(size_t index, MIPS32TraceHistory&& obj) noexcept;
+
         void                        Swap(size_t index, MIPS32TraceHistory& obj) noexcept;
 
         MIPS32TraceHistory&         operator[](size_t index) noexcept;
@@ -348,6 +351,13 @@ namespace Jasse {
 
         MIPS32TraceHistory&         Acquire(size_t address) noexcept;
         const MIPS32TraceHistory&   Acquire(size_t address) const noexcept;
+
+        void                        Set(size_t address, const MIPS32TraceHistory& obj) noexcept;
+        void                        Set(size_t address, MIPS32TraceHistory&& obj) noexcept;
+        bool                        SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept;
+        bool                        SetIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
+        bool                        SetIfAbsent(size_t address, const MIPS32TraceHistory& obj) noexcept;
+        bool                        SetIfAbsent(size_t address, MIPS32TraceHistory&& obj) noexcept;
 
         bool                        SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept;
 
@@ -1248,6 +1258,18 @@ namespace Jasse {
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
+    inline void MIPS32GPRTracer<_HistoryManager>::Set(size_t index, const MIPS32TraceHistory& obj) noexcept
+    {
+        manager.Set(index, obj);
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline void MIPS32GPRTracer<_HistoryManager>::Set(size_t index, MIPS32TraceHistory&& obj) noexcept
+    {
+        manager.Set(index, std::move(obj));
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
     inline void MIPS32GPRTracer<_HistoryManager>::Swap(size_t index, MIPS32TraceHistory& obj) noexcept
     {
         if (!manager.SwapIfExists(address, obj))
@@ -1334,6 +1356,42 @@ namespace Jasse {
     inline const MIPS32TraceHistory& MIPS32MemoryTracer<_HistoryManager>::Acquire(size_t address) const noexcept
     {
         return manager.Acquire(address);
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline void MIPS32MemoryTracer<_HistoryManager>::Set(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        manager.Set(address, obj);
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline void MIPS32MemoryTracer<_HistoryManager>::Set(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        manager.Set(address, std::move(obj));
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline bool MIPS32MemoryTracer<_HistoryManager>::SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        return manager.SetIfExists(address, obj);
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline bool MIPS32MemoryTracer<_HistoryManager>::SetIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        return manager.SetIfExists(address, std::move(obj));
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline bool MIPS32MemoryTracer<_HistoryManager>::SetIfAbsent(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        return manager.SetIfAbsent(address, obj);
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline bool MIPS32MemoryTracer<_HistoryManager>::SetIfAbsent(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        return manager.SetIfAbsent(address, std::move(obj));
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
