@@ -972,7 +972,12 @@ namespace Jasse::MIPS32TraceHistoryManagement {
         if (count == (1 << capacity_exponent))
             _Expand(new_slot_index);
         else if (new_slot_index != count)
+        {
             std::move_backward(vector + new_slot_index, vector + count, vector + new_slot_index + 1);
+            std::move_backward(address_table + new_slot_index, address_table + count, address_table + new_slot_index + 1);
+        }
+
+        address_table[new_slot_index] = address;
 
         return vector[new_slot_index];
     }
