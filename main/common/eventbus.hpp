@@ -40,10 +40,6 @@ namespace BullsEye {
         static void                 UnregisterAll() noexcept;
 
     public:
-        virtual ~Event() noexcept;
-
-        virtual const std::string&  GetName() const noexcept = 0;
-
         void                        Fire() final;
         void                        Fire(EventBus<_TEvent>& eventbus) final;
     };
@@ -177,11 +173,6 @@ namespace BullsEye {
     {
         GetEventBus().UnregisterAll();
     }
-
-    //
-    template<class _TEvent>
-    Event<_TEvent>::~Event() noexcept
-    { }
 
     template<class _TEvent>
     inline void Event<_TEvent>::Fire()
