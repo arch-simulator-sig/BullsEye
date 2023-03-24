@@ -44,6 +44,18 @@ namespace BullsEye {
         void                        Fire(EventBus<_TEvent>& eventbus) final;
     };
 
+    // Cancellable Event
+    class CancellableEvent {
+    private:
+        bool    cancelled;
+
+    public:
+        CancellableEvent() noexcept;
+
+        void                        SetCancelled(bool cancalled = true) noexcept;
+        bool                        IsCancelled() const noexcept;
+    };
+
 
     // Event Handler
     template<class _TEvent>
@@ -184,6 +196,28 @@ namespace BullsEye {
     inline void Event<_TEvent>::Fire(EventBus<_TEvent>& eventbus)
     {
         eventbus.FireEvent(*this);
+    }
+}
+
+
+// Implementation of: class CancellableEvent
+namespace BullsEye {
+    //
+    // bool    cancelled;
+    //
+
+    CancellableEvent::CancellableEvent() noexcept
+        : cancelled (false)
+    { }
+
+    inline void CancellableEvent::SetCancelled(bool cancelled) noexcept
+    {
+        this->cancelled = cancelled;
+    }
+
+    inline bool CancellableEvent::IsCancelled() const noexcept
+    {
+        return this->cancelled;
     }
 }
 
