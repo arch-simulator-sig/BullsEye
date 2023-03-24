@@ -120,6 +120,12 @@ namespace Jasse {
         FETCH_DEVICE_ERROR,
 
 
+        // Decode Procedure Cancelled by Emulator.
+        DECODE_EMULATION_CANCELLED,
+
+        // Decode Procedure Error occurred in Emulator.
+        DECODE_EMULATION_ERROR,
+
         // Execution Procedure Cancelled by Emulator.
         EXEC_EMULATION_CANCELLED,
 
