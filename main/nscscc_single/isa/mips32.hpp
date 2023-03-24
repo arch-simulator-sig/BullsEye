@@ -14,6 +14,7 @@
 #include "base/mips32code.hpp"
 #include "base/mips32decode.hpp"
 #include "base/mips32mem.hpp"
+#include "base/mips32event.hpp"
 
 
 namespace Jasse {
@@ -347,6 +348,9 @@ namespace Jasse {
     MIPS32ExecOutcome MIPS32Instance::Eval()
     {
         // Instruction fetch
+        if (MIPS32InstructionPreFetchEvent(*this, arch.PC()).Fire().IsCancelled())
+            return { FETCH_EMULATION_CANCELLED, ECANCELED };
+
         memdata_t fetched;
         MIPS32MOPOutcome mopoutcome = mem->ReadInsn(arch.PC(), MOPW_WORD, &fetched);
 
@@ -379,7 +383,11 @@ namespace Jasse {
         }
 
         // Instruction decode
-        MIPS32Instruction insn(fetched.data32);
+        MIPS32Instruction insn(
+            MIPS32InstructionPostFetchEvent(*this, arch.PC(), fetched.data32).Fire().GetInstruction());
+
+        if (MIPS32InstructionPreDecodeEvent(*this, arch.PC(), insn).Fire().IsCancelled())
+            return { DECODE_EMULATION_CANCELLED, ECANCELED };
 
         if (!decoders.Decode(insn))
             return { EXEC_NOT_DECODED, ECANCELED };
@@ -387,7 +395,12 @@ namespace Jasse {
         if (!insn.GetExecutor())
             return { EXEC_NOT_IMPLEMENTED, ECANCELED };
 
+        MIPS32InstructionPostDecodeEvent(*this, arch.PC(), insn).Fire();
+
         // Instruction execution
+        if (MIPS32InstructionPreExecutionEvent(*this, arch.PC(), insn).Fire().IsCancelled())
+            return { EXEC_EMULATION_CANCELLED, ECANCELED };
+
         MIPS32ExecOutcome outcome_exec = insn.GetExecutor()(insn, *this);
 
         // - note: @see MIPS32ExecStatus
@@ -397,14 +410,41 @@ namespace Jasse {
         ASSERT(outcome_exec.status != EXEC_NOT_DECODED);
         ASSERT(outcome_exec.status != EXEC_NOT_IMPLEMENTED);
 
-        if (outcome_last.status == EXEC_DELAYSLOT) // delay slot
-            if (IsBranchTaken())
-                arch.SetPC(GetBranchTargetPC());
-            else
-                arch.SetPC(arch.PC() + 4);
-        else if (outcome_last.status == EXEC_SEQUENTIAL || outcome_last.status == EXEC_DELAYSLOT)
-            arch.SetPC(arch.PC() + 4);
+        MIPS32InstructionPostExecutionEvent(*this, arch.PC(), insn, outcome_exec).Fire();
 
+        // PC iteration
+        pc_t                            new_pc;
+        MIPS32PCIterationEvent::Action  pc_action;
+
+        if (outcome_last.status == EXEC_DELAYSLOT) // delay slot
+        {
+            if (IsBranchTaken())
+            {
+                new_pc      = GetBranchTargetPC();
+                pc_action   = MIPS32PCIterationEvent::Action::BRANCH_TAKEN;
+            }
+            else
+            {
+                new_pc      = arch.PC() + 4;
+                pc_action   = MIPS32PCIterationEvent::Action::BRANCH_NOT_TAKEN;
+            }
+        }
+        else if (outcome_exec.status == EXEC_SEQUENTIAL)
+        {
+            new_pc      = arch.PC() + 4;
+            pc_action   = MIPS32PCIterationEvent::Action::SEQUENTIAL;
+        }
+        else if (outcome_exec.status == EXEC_DELAYSLOT)
+        {
+            new_pc      = arch.PC() + 4;
+            pc_action   = MIPS32PCIterationEvent::Action::DELAY_SLOT;
+        }
+
+        MIPS32PCIterationEvent(*this, arch.PC(), new_pc, pc_action).Fire();
+
+        arch.SetPC(new_pc);
+
+        //
         return (outcome_last = outcome_exec);
     }
 
