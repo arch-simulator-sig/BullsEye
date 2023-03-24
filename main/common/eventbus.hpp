@@ -27,8 +27,6 @@ namespace BullsEye {
     // Event Instance Interface
     template<class _TEvent>
     class Event {
-        static_assert(std::is_convertible_v<_TEvent, Event<_TEvent>>, CERR_EB3001);
-
     public:
         static EventBus<_TEvent>&   GetEventBus() noexcept;
 
@@ -42,6 +40,10 @@ namespace BullsEye {
     public:
         void                        Fire() final;
         void                        Fire(EventBus<_TEvent>& eventbus) final;
+
+    private:
+        static void                 __STATIC_ASSERT_PLACEHOLDER() const noexcept
+        { static_assert(std::is_base_of_v<Event<_TEvent>, _TEvent>, CERR_EB3001); }
     };
 
     // Cancellable Event
