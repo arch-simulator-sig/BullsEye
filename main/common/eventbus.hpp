@@ -38,8 +38,8 @@ namespace BullsEye {
         static void                 UnregisterAll() noexcept;
 
     public:
-        void                        Fire() final;
-        void                        Fire(EventBus<_TEvent>& eventbus) final;
+        _TEvent&                    Fire() final;
+        _TEvent&                    Fire(EventBus<_TEvent>& eventbus) final;
 
     private:
         static void                 __STATIC_ASSERT_PLACEHOLDER() const noexcept
@@ -100,7 +100,7 @@ namespace BullsEye {
         bool                        UnregisterOnce(const std::string& name) noexcept;
         void                        UnregisterAll() noexcept;
 
-        void                        FireEvent(_TEvent& event);
+        _TEvent&                    FireEvent(_TEvent& event);
     };
 
 
@@ -189,15 +189,15 @@ namespace BullsEye {
     }
 
     template<class _TEvent>
-    inline void Event<_TEvent>::Fire()
+    inline _TEvent& Event<_TEvent>::Fire()
     {
-        GetEventBus().FireEvent(*this);
+        return GetEventBus().FireEvent(*this);
     }
 
     template<class _TEvent>
-    inline void Event<_TEvent>::Fire(EventBus<_TEvent>& eventbus)
+    inline _TEvent& Event<_TEvent>::Fire(EventBus<_TEvent>& eventbus)
     {
-        eventbus.FireEvent(*this);
+        return eventbus.FireEvent(*this);
     }
 }
 
@@ -335,10 +335,12 @@ namespace BullsEye {
     }
     
     template<class _TEvent>
-    void EventBus<_TEvent>::FireEvent(_TEvent& event)
+    _TEvent& EventBus<_TEvent>::FireEvent(_TEvent& event)
     {
         for (EventListener<_TEvent> listener : list)
             listener.OnEvent(event);
+
+        return event;
     }
 }
 
