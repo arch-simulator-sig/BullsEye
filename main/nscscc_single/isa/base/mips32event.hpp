@@ -66,6 +66,17 @@ namespace Jasse {
         void                        SetInstruction(const MIPS32Instruction& insn) noexcept;
     };
 
+    // MIPS32 Constant Instruction related Event Base
+    class MIPS32ConstInstructionEventBase {
+    private:
+        const MIPS32Instruction& insn;
+
+    public:
+        MIPS32ConstInstructionEventBase(const MIPS32Instruction& insn) noexcept;
+
+        const MIPS32Instruction&    GetInstruction() const noexcept;
+    };
+
     // MIPS32 Raw Instruction related Event Base
     class MIPS32RawInstructionEventBase {
     private:
@@ -76,6 +87,18 @@ namespace Jasse {
 
         insnraw_t                   GetInstruction() const noexcept;
         void                        SetInstruction(insnraw_t insn) noexcept;
+    };
+
+    // MIPS32 Execution Outcome related Event Base
+    class MIPS32ExecOutcomeEventBase {
+    private:
+        MIPS32ExecOutcome   outcome;
+
+    public:
+        MIPS32ExecOutcomeEventBase(MIPS32ExecOutcome outcome) noexcept;
+
+        MIPS32ExecOutcome           GetOutcome() const noexcept;
+        void                        SetOutcome(MIPS32ExecOutcome outcome) noexcept;
     };
 
 
@@ -151,20 +174,15 @@ namespace Jasse {
     class MIPS32InstructionPostExecutionEvent 
         : public MIPS32InstanceEventBase
         , public MIPS32PCEventBase
-        , public MIPS32InstructionEventBase
+        , public MIPS32ConstInstructionEventBase
+        , public MIPS32ExecOutcomeEventBase
         , public BullsEye::Event<MIPS32InstructionPostExecutionEvent> {
-    private:
-        MIPS32ExecOutcome   outcome;
-
     public:
         MIPS32InstructionPostExecutionEvent(
-            MIPS32Instance&     instance, 
-            pc_t                pc, 
-            MIPS32Instruction&  insn,
-            MIPS32ExecOutcome   outcome) noexcept;
-
-        MIPS32ExecOutcome           GetOutcome() const noexcept;
-        void                        SetOutcome(MIPS32ExecOutcome outcome) noexcept;
+            MIPS32Instance&             instance, 
+            pc_t                        pc, 
+            const MIPS32Instruction&    insn,
+            MIPS32ExecOutcome           outcome) noexcept;
     };
 
 
@@ -303,6 +321,23 @@ namespace Jasse {
 }
 
 
+// Implementation of: class MIPS32ConstInstructionEventBase
+namespace Jasse {
+    //
+    // const MIPS32Instruction& insn;
+    //
+
+    MIPS32ConstInstructionEventBase::MIPS32ConstInstructionEventBase(const MIPS32Instruction& insn) noexcept
+        : insn  (insn)
+    { }
+
+    inline const MIPS32Instruction& MIPS32ConstInstructionEventBase::GetInstruction() const noexcept
+    {
+        return insn;
+    }
+}
+
+
 // Implementation of: class MIPS32RawInstructionEventBase
 namespace Jasse {
     //
@@ -321,6 +356,28 @@ namespace Jasse {
     inline void MIPS32RawInstructionEventBase::SetInstruction(insnraw_t insn) noexcept
     {
         this->insn = insn;
+    }
+}
+
+
+// Implementation of: class MIPS32ExecOutcomeEventBase
+namespace Jasse {
+    //
+    // MIPS32ExecOutcome   outcome;
+    //
+
+    MIPS32ExecOutcomeEventBase::MIPS32ExecOutcomeEventBase(MIPS32ExecOutcome outcome) noexcept
+        : outcome   (outcome)
+    { }
+
+    inline MIPS32ExecOutcome MIPS32ExecOutcomeEventBase::GetOutcome() const noexcept
+    {
+        return outcome;
+    }
+
+    inline void MIPS32ExecOutcomeEventBase::SetOutcome(MIPS32ExecOutcome outcome) noexcept
+    {
+        this->outcome = outcome;
     }
 }
 
@@ -396,30 +453,17 @@ namespace Jasse {
 
 // Implementation of: class MIPS32InstructionPostExecutionEvent
 namespace Jasse {
-    //
-    // MIPS32ExecOutcome   outcome;
-    //
 
     MIPS32InstructionPostExecutionEvent::MIPS32InstructionPostExecutionEvent(
-            MIPS32Instance&     instance, 
-            pc_t                pc, 
-            MIPS32Instruction&  insn,
-            MIPS32ExecOutcome   outcome) noexcept
-        : MIPS32InstanceEventBase       (instance)
-        , MIPS32PCEventBase             (pc)
-        , MIPS32InstructionEventBase    (insn)
-        , outcome                       (outcome)
+            MIPS32Instance&             instance, 
+            pc_t                        pc, 
+            const MIPS32Instruction&    insn,
+            MIPS32ExecOutcome           outcome) noexcept
+        : MIPS32InstanceEventBase           (instance)
+        , MIPS32PCEventBase                 (pc)
+        , MIPS32ConstInstructionEventBase   (insn)
+        , MIPS32ExecOutcomeEventBase        (outcome)
     { }
-
-    inline MIPS32ExecOutcome MIPS32InstructionPostExecutionEvent::GetOutcome() const noexcept
-    {
-        return outcome;
-    }
-
-    inline void MIPS32InstructionPostExecutionEvent::SetOutcome(MIPS32ExecOutcome outcome) noexcept
-    {
-        this->outcome = outcome;
-    }
 }
 
 
