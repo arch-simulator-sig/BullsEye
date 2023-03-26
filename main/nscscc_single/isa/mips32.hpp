@@ -410,7 +410,8 @@ namespace Jasse {
         ASSERT(outcome_exec.status != EXEC_NOT_DECODED);
         ASSERT(outcome_exec.status != EXEC_NOT_IMPLEMENTED);
 
-        MIPS32InstructionPostExecutionEvent(*this, arch.PC(), insn, outcome_exec).Fire();
+        outcome_exec =
+            (MIPS32InstructionPostExecutionEvent(*this, arch.PC(), insn, outcome_exec).Fire()).GetOutcome();
 
         // PC iteration
         pc_t                            new_pc;
