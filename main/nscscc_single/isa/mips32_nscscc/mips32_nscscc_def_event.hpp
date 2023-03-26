@@ -71,15 +71,24 @@ namespace Jasse::MIPS32PreExecutionEvents {
     eventdecl(SW    );
 }
 
+#undef eventdecl
+
+
+#define eventdecl(name) \
+    class name : public Base, public BullsEye::Event<name> { \
+    public: \
+        name(MIPS32Instance& instance, pc_t pc, const MIPS32Instruction& insn, MIPS32ExecOutcome outcome) noexcept; \
+    };
 
 namespace Jasse::MIPS32PostExecutionEvents {
 
     class Base 
         : public MIPS32InstanceEventBase
         , public MIPS32PCEventBase
-        , public MIPS32InstructionEventBase {
+        , public MIPS32ConstInstructionEventBase
+        , public MIPS32ExecOutcomeEventBase {
     public:
-        Base(MIPS32Instance& instance, pc_t pc, MIPS32Instruction& insn) noexcept;
+        Base(MIPS32Instance& instance, pc_t pc, const MIPS32Instruction& insn, MIPS32ExecOutcome outcome) noexcept;
     };
 
 

@@ -71,14 +71,22 @@ namespace Jasse::MIPS32PreExecutionEvents {
     implevent(SW    );
 }
 
+#undef implevent
+
+
+#define implevent(name) \
+    name::name(MIPS32Instance& instance, pc_t pc, const MIPS32Instruction& insn, MIPS32ExecOutcome outcome) noexcept \
+        : Base(instance, pc, insn, outcome) \
+    { } \
 
 // Implementation of: class MIPS32PostExecutionEvents::Base
 namespace Jasse::MIPS32PostExecutionEvents {
 
-    Base::Base(MIPS32Instance& instance, pc_t pc, MIPS32Instruction& insn) noexcept
-        : MIPS32InstanceEventBase       (instance)
-        , MIPS32PCEventBase             (pc)
-        , MIPS32InstructionEventBase    (insn)
+    Base::Base(MIPS32Instance& instance, pc_t pc, const MIPS32Instruction& insn, MIPS32ExecOutcome outcome) noexcept
+        : MIPS32InstanceEventBase           (instance)
+        , MIPS32PCEventBase                 (pc)
+        , MIPS32ConstInstructionEventBase   (insn)
+        , MIPS32ExecOutcomeEventBase        (outcome)
     { }
 }
 
