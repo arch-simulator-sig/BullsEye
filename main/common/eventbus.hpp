@@ -38,11 +38,11 @@ namespace BullsEye {
         static void                 UnregisterAll() noexcept;
 
     public:
-        _TEvent&                    Fire() final;
-        _TEvent&                    Fire(EventBus<_TEvent>& eventbus) final;
+        _TEvent&                    Fire();
+        _TEvent&                    Fire(EventBus<_TEvent>& eventbus);
 
     private:
-        static void                 __STATIC_ASSERT_PLACEHOLDER() const noexcept
+        static void                 __STATIC_ASSERT_PLACEHOLDER()
         { static_assert(std::is_base_of_v<Event<_TEvent>, _TEvent>, CERR_EB3001); }
     };
 
@@ -84,17 +84,16 @@ namespace BullsEye {
         static_assert(std::is_convertible_v<_TEvent, Event<_TEvent>>, CERR_EB3001);
 
     private:
-        std::vector<EventListener<_TEvent>>  list;
+        std::vector<EventListener<_TEvent>*> list;
 
     private:
-        std::vector<EventListener<_TEvent>>::const_iterator _NextPos(int priority) noexcept;
+        typename std::vector<EventListener<_TEvent>*>::const_iterator _NextPos(int priority) noexcept;
 
     public:
         EventBus() noexcept;
         ~EventBus() noexcept;
 
-        void                        Register(const EventListener<_TEvent>& listener) noexcept;
-        void                        Register(EventListener<_TEvent>&& listener) noexcept;
+        void                        Register(EventListener<_TEvent>* listener) noexcept;
 
         int                         Unregister(const std::string& name) noexcept;
         bool                        UnregisterOnce(const std::string& name) noexcept;
@@ -151,7 +150,7 @@ namespace BullsEye {
 
     //
     template<class _TEvent>
-    inline static EventBus<_TEvent>& Event<_TEvent>::GetEventBus() noexcept
+    inline EventBus<_TEvent>& Event<_TEvent>::GetEventBus() noexcept
     {
         static EventBus<_TEvent> global_eventbus;
 
@@ -159,31 +158,31 @@ namespace BullsEye {
     }
 
     template<class _TEvent>
-    inline static void Event<_TEvent>::Register(const EventListener<_TEvent>& listener) noexcept
+    inline void Event<_TEvent>::Register(const EventListener<_TEvent>& listener) noexcept
     {
         GetEventBus().Register(listener);
     }
 
     template<class _TEvent>
-    inline static void Event<_TEvent>::Register(EventListener<_TEvent>&& listener) noexcept
+    inline void Event<_TEvent>::Register(EventListener<_TEvent>&& listener) noexcept
     {
         GetEventBus().Register(listener);
     }
 
     template<class _TEvent>
-    inline static int Event<_TEvent>::Unregister(const std::string& name) noexcept
+    inline int Event<_TEvent>::Unregister(const std::string& name) noexcept
     {
         return GetEventBus().Unregister(name);
     }
 
     template<class _TEvent>
-    inline static bool Event<_TEvent>::UnregisterOnce(const std::string& name) noexcept
+    inline bool Event<_TEvent>::UnregisterOnce(const std::string& name) noexcept
     {
         return GetEventBus().UnregisterOnce(name);
     }
 
     template<class _TEvent>
-    inline static void Event<_TEvent>::UnregisterAll() noexcept
+    inline void Event<_TEvent>::UnregisterAll() noexcept
     {
         GetEventBus().UnregisterAll();
     }
@@ -191,13 +190,13 @@ namespace BullsEye {
     template<class _TEvent>
     inline _TEvent& Event<_TEvent>::Fire()
     {
-        return GetEventBus().FireEvent(*this);
+        return GetEventBus().FireEvent(static_cast<_TEvent&>(*this));
     }
 
     template<class _TEvent>
     inline _TEvent& Event<_TEvent>::Fire(EventBus<_TEvent>& eventbus)
     {
-        return eventbus.FireEvent(*this);
+        return eventbus.FireEvent(static_cast<_TEvent&>(*this));
     }
 }
 
@@ -258,15 +257,15 @@ namespace BullsEye {
 // Implementation of: template<class _TEvent> class EventBus
 namespace BullsEye {
     //
-    // std::vector<EventListener<_TEvent>>  list;
+    // std::vector<EventListener<_TEvent>>* list;
     //
 
     template<class _TEvent>
-    std::vector<EventListener<_TEvent>>::const_iterator EventBus<_TEvent>::_NextPos(int priority) noexcept
+    typename std::vector<EventListener<_TEvent>*>::const_iterator EventBus<_TEvent>::_NextPos(int priority) noexcept
     {
         auto iter = list.begin();
         for (; iter != list.end(); iter++)
-            if (iter->GetPriority() > listener.GetPriority())
+            if (iter->GetPriority() > (*iter).GetPriority())
                 break;
 
         return iter;
@@ -282,23 +281,17 @@ namespace BullsEye {
     { }
     
     template<class _TEvent>
-    inline void EventBus<_TEvent>::Register(const EventListener<_TEvent>& listener) noexcept
+    inline void EventBus<_TEvent>::Register(EventListener<_TEvent>* listener) noexcept
     {
-        list.insert(_NextPos(listener.GetPriority()), listener);
-    }
-
-    template<class _TEvent>
-    inline void EventBus<_TEvent>::Register(EventListener<_TEvent>&& listener) noexcept
-    {
-        list.insert(_NextPos(listener.GetPriority()), listener);
+        list.insert(_NextPos(listener->GetPriority()), listener);
     }
 
     template<class _TEvent>
     int EventBus<_TEvent>::Unregister(const std::string& name) noexcept
     {
         auto epos = std::remove_if(list.begin(), list.end(), 
-            [name](const EventListener<_TEvent>& obj) -> bool {
-                return obj.GetName() == name;
+            [name](EventListener<_TEvent>* obj) -> bool {
+                return obj->GetName() == name;
             });
 
         int count = std::distance(epos, list.end());
@@ -315,7 +308,7 @@ namespace BullsEye {
 
         auto epos = list.begin();
         for (; epos != list.end(); epos++)
-            if (epos->GetName() == name)
+            if ((*epos)->GetName() == name)
             {
                 found = true;
                 break;
@@ -337,8 +330,8 @@ namespace BullsEye {
     template<class _TEvent>
     _TEvent& EventBus<_TEvent>::FireEvent(_TEvent& event)
     {
-        for (EventListener<_TEvent> listener : list)
-            listener.OnEvent(event);
+        for (EventListener<_TEvent>* listener : list)
+            listener->OnEvent(event);
 
         return event;
     }
@@ -356,8 +349,8 @@ namespace BullsEye {
             const std::string&              name, 
             int                             priority, 
             std::function<void(_TEvent&)>   func) noexcept
-        : EventListener(name, priority)
-        , func  (func)
+        : EventListener<_TEvent>(name, priority)
+        , func                  (func)
     { }
 
     template<class _TEvent>
