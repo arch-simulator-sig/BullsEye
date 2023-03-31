@@ -9,6 +9,7 @@
 
 #include "mips32_nscscc_impl_decode.hpp"
 #include "mips32_nscscc_impl_execute.hpp"
+#include "mips32_nscscc_impl_event.hpp"
 
 
 namespace Jasse {
