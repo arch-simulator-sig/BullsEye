@@ -130,17 +130,20 @@ namespace BullsEye {
 
         public:
             Reference() noexcept;
+            Reference(const Reference& obj) noexcept;
            
         public:
             bool                IsValid() const noexcept;
 
-            void                Reset() const noexcept;
+            void                Reset() noexcept;
 
             _TObject&           operator*() noexcept;
             const _TObject&     operator*() const noexcept;
 
             _TObject*           operator->() noexcept;
             const _TObject*     operator->() const noexcept;
+
+            Reference&          operator=(const Reference& obj) noexcept;
         };
 
     private:
@@ -437,6 +440,13 @@ namespace BullsEye {
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
+    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+        ::Reference::Reference(const Reference& obj) noexcept
+        : valid_ref (obj.valid_ref)
+        , ref       (obj.ref)
+    { }
+
+    template<class _TObject, class _TInitializer, class _TFinalizer>
     inline _TObject* RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::_ObserveRef() noexcept
     {
@@ -459,7 +469,7 @@ namespace BullsEye {
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
-        ::Reference::Reset() const noexcept
+        ::Reference::Reset() noexcept
     {
         valid_ref = CONSTANT_FALSE;
         ref       = nullptr;
@@ -491,6 +501,15 @@ namespace BullsEye {
         ::Reference::operator->() const noexcept
     {
         return _ObserveRef();
+    }
+
+    template<class _TObject, class _TInitializer, class _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>::Reference& RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+        ::Reference::operator=(const Reference& obj) noexcept
+    {
+        valid_ref = obj.valid_ref;
+        ref       = obj.ref;
+        return *this;
     }
 }
 
