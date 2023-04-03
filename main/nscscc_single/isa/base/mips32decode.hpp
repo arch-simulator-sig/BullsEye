@@ -22,7 +22,7 @@ namespace Jasse {
         const MIPS32Codepoint*  codepoint;
 
     public:
-        MIPS32Instruction(insnraw_t insn) noexcept;
+        MIPS32Instruction(insnraw_t insn = 0) noexcept;
         MIPS32Instruction(insnraw_t insn, const MIPS32Codepoint* codepoint) noexcept;
         MIPS32Instruction(const MIPS32Instruction& obj) noexcept;
         ~MIPS32Instruction() noexcept;
