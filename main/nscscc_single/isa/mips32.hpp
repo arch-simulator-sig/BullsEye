@@ -85,21 +85,37 @@ namespace Jasse {
 
     using MIPS32MemoryTracer    = MIPS32MemoryTracerSubtrate<MIPS32TraceHistoryManagement::CompressedIncremental<>>;
 
+    using MIPS32PCTracer        = MIPS32PCTracerSubtrate;
+
 
     // MIPS32 Tracer Container
     class MIPS32TracerContainer {
     private:
+        MIPS32PCTracer*         pc_tracer;
+
         MIPS32GPRTracer*        gpr_tracer;
 
         MIPS32MemoryTracer*     memory_tracer;
 
     public:
         MIPS32TracerContainer() noexcept;
-        MIPS32TracerContainer(MIPS32GPRTracer* gpr_tracer, MIPS32MemoryTracer* memory_tracer) noexcept;
         MIPS32TracerContainer(MIPS32TracerContainer&& obj) noexcept;
         ~MIPS32TracerContainer() noexcept;
 
+        MIPS32TracerContainer(MIPS32PCTracer*       pc_tracer, 
+                              MIPS32GPRTracer*      gpr_tracer, 
+                              MIPS32MemoryTracer*   memory_tracer) noexcept;
+
         MIPS32TracerContainer(const MIPS32TracerContainer& obj) = delete;
+
+        //
+        bool                            HasPCTracer() const noexcept;
+        MIPS32PCTracer*                 GetPCTracer() noexcept;
+        const MIPS32PCTracer*           GetPCTracer() const noexcept;
+        void                            DestroyPCTracer() noexcept;
+
+        [[nodiscard("potential memory leak : caller swap object management")]]
+        MIPS32PCTracer*                 SwapPCTracer(MIPS32PCTracer* obj) noexcept;
 
         //
         bool                            HasGPRTracer() const noexcept;
@@ -206,12 +222,15 @@ namespace Jasse {
         size_t                  trace_unit;
         size_t                  trace_max_factor;
 
-        bool                    tracer_enabled_memory;
-        size_t                  tracer_depth_memory;
-        size_t                  tracer_size_memory;
+        bool                    tracer_enabled_pc;
+        size_t                  tracer_depth_pc;
 
         bool                    tracer_enabled_gpr;
         size_t                  tracer_depth_gpr;
+
+        bool                    tracer_enabled_memory;
+        size_t                  tracer_depth_memory;
+        size_t                  tracer_size_memory;
 
     public:
         Builder() noexcept;
@@ -228,15 +247,25 @@ namespace Jasse {
 
         Builder&                        MI(MIPS32MemoryInterface* MI) noexcept;
 
+        //
         Builder&                        EnableTrace(size_t unit, size_t max_factor) noexcept;
         Builder&                        DisableTrace() noexcept;
 
+        //
+        Builder&                        EnablePCTracer() noexcept;
+        Builder&                        EnablePCTracer(size_t depth) noexcept;
+        Builder&                        DisablePCTracer() noexcept;
+
+        Builder&                        PCTracerDepth(size_t depth) noexcept;
+
+        //
         Builder&                        EnableGPRTracer() noexcept;
         Builder&                        EnableGPRTracer(size_t depth) noexcept;
         Builder&                        DisableGPRTracer() noexcept;
 
         Builder&                        GPRTracerDepth(size_t depth) noexcept;
 
+        //
         Builder&                        EnableMemoryTracer() noexcept;
         Builder&                        EnableMemoryTracer(size_t size, size_t depth) noexcept;
         Builder&                        DisableMemoryTracer() noexcept;
@@ -244,6 +273,7 @@ namespace Jasse {
         Builder&                        MemoryTracerDepth(size_t depth) noexcept;
         Builder&                        MemoryTracerSize(size_t size) noexcept;
 
+        //
         arch32_t                        GPR(int index) const noexcept;
         MIPS32DecoderCollection&        Decoders() noexcept;
         const MIPS32DecoderCollection&  Decoders() const noexcept;
@@ -258,10 +288,15 @@ namespace Jasse {
         size_t                          GetTraceMaxFactor() const noexcept;
         void                            SetTraceMaxFactor(size_t max_factor) noexcept;
 
+        bool                            IsPCTracerEnabled() const noexcept;
+        void                            SetPCTracerEnabled(bool enabled) noexcept;
         bool                            IsGPRTracerEnabled() const noexcept;
         void                            SetGPRTracerEnabled(bool enabled) noexcept;
         bool                            IsMemoryTracerEnabled() const noexcept;
         void                            SetMemoryTracerEnabled(bool enabled) noexcept;
+
+        size_t                          GetPCTracerDepth() const noexcept;
+        void                            SetPCTracerDepth(size_t depth) noexcept;
         
         size_t                          GetGPRTracerDepth() const noexcept;
         void                            SetGPRTracerDepth(size_t depth) noexcept;
@@ -396,27 +431,64 @@ namespace Jasse {
     //
 
     MIPS32TracerContainer::MIPS32TracerContainer() noexcept
-        : gpr_tracer    (nullptr)
+        : pc_tracer     (nullptr)
+        , gpr_tracer    (nullptr)
         , memory_tracer (nullptr)
     { }
 
-    MIPS32TracerContainer::MIPS32TracerContainer(MIPS32GPRTracer* gpr_tracer, MIPS32MemoryTracer* memory_tracer) noexcept
-        : gpr_tracer    (gpr_tracer)
+    MIPS32TracerContainer::MIPS32TracerContainer(MIPS32PCTracer*        pc_tracer, 
+                                                 MIPS32GPRTracer*       gpr_tracer, 
+                                                 MIPS32MemoryTracer*    memory_tracer) noexcept
+        : pc_tracer     (pc_tracer)
+        , gpr_tracer    (gpr_tracer)
         , memory_tracer (memory_tracer)
     { }
 
     MIPS32TracerContainer::MIPS32TracerContainer(MIPS32TracerContainer&& obj) noexcept
-        : gpr_tracer    (obj.gpr_tracer)
+        : pc_tracer     (obj.pc_tracer)
+        , gpr_tracer    (obj.gpr_tracer)
         , memory_tracer (obj.memory_tracer)
     {
+        obj.pc_tracer       = nullptr;
         obj.gpr_tracer      = nullptr;
         obj.memory_tracer   = nullptr;
     }
 
     MIPS32TracerContainer::~MIPS32TracerContainer() noexcept
     {
+        DestroyPCTracer();
         DestroyGPRTracer();
         DestroyMemoryTracer();
+    }
+
+    inline bool MIPS32TracerContainer::HasPCTracer() const noexcept
+    {
+        return pc_tracer != nullptr;
+    }
+
+    inline MIPS32PCTracer* MIPS32TracerContainer::GetPCTracer() noexcept
+    {
+        return pc_tracer;
+    }
+
+    inline const MIPS32PCTracer* MIPS32TracerContainer::GetPCTracer() const noexcept
+    {
+        return pc_tracer;
+    }
+
+    inline void MIPS32TracerContainer::DestroyPCTracer() noexcept
+    {
+        if (pc_tracer)
+        {
+            delete pc_tracer;
+            pc_tracer = nullptr;
+        }
+    }
+
+    inline MIPS32PCTracer* MIPS32TracerContainer::SwapPCTracer(MIPS32PCTracer* obj) noexcept
+    {
+        std::swap(obj, pc_tracer);
+        return obj;
     }
 
     inline bool MIPS32TracerContainer::HasGPRTracer() const noexcept
@@ -741,12 +813,15 @@ namespace Jasse {
     // size_t                  trace_unit;
     // size_t                  trace_max_factor;
     //
-    // bool                    tracer_enabled_memory;
-    // size_t                  tracer_depth_memory;
-    // size_t                  tracer_size_memory;
+    // bool                    tracer_enabled_pc;
+    // size_t                  tracer_depth_pc;
     //
     // bool                    tracer_enabled_gpr;
     // size_t                  tracer_depth_gpr;
+    //
+    // bool                    tracer_enabled_memory;
+    // size_t                  tracer_depth_memory;
+    // size_t                  tracer_size_memory;
     //
 
     MIPS32Instance::Builder::Builder() noexcept
@@ -755,7 +830,9 @@ namespace Jasse {
         , decoders              ()
         , trace_enabled         (false)
         , trace_unit            (0)
-        , trace_max_factor          (0)
+        , trace_max_factor      (0)
+        , tracer_enabled_pc     (false)
+        , tracer_depth_pc       (0)
         , tracer_enabled_gpr    (false)
         , tracer_depth_gpr      (0)
         , tracer_enabled_memory (false)
@@ -821,6 +898,31 @@ namespace Jasse {
     inline MIPS32Instance::Builder& MIPS32Instance::Builder::DisableTrace() noexcept
     {
         trace_enabled = false;
+        return *this;
+    }
+
+    inline MIPS32Instance::Builder& MIPS32Instance::Builder::EnablePCTracer() noexcept
+    {
+        tracer_enabled_pc = true;
+        return *this;
+    }
+
+    inline MIPS32Instance::Builder& MIPS32Instance::Builder::EnablePCTracer(size_t depth) noexcept
+    {
+        tracer_enabled_pc   = true;
+        tracer_depth_pc     = depth;
+        return *this;
+    }
+
+    inline MIPS32Instance::Builder& MIPS32Instance::Builder::DisablePCTracer() noexcept
+    {
+        tracer_enabled_pc = false;
+        return *this;
+    }
+
+    inline MIPS32Instance::Builder& MIPS32Instance::Builder::PCTracerDepth(size_t depth) noexcept
+    {
+        tracer_depth_pc = depth;
         return *this;
     }
 
@@ -936,6 +1038,16 @@ namespace Jasse {
         trace_max_factor = max_factor;
     }
 
+    inline bool MIPS32Instance::Builder::IsPCTracerEnabled() const noexcept
+    {
+        return tracer_enabled_pc;
+    }
+
+    inline void MIPS32Instance::Builder::SetPCTracerEnabled(bool enabled) noexcept
+    {
+        tracer_enabled_pc = enabled;
+    }
+
     inline bool MIPS32Instance::Builder::IsGPRTracerEnabled() const noexcept
     {
         return tracer_enabled_gpr;
@@ -954,6 +1066,16 @@ namespace Jasse {
     inline void MIPS32Instance::Builder::SetMemoryTracerEnabled(bool enabled) noexcept
     {
         tracer_enabled_memory = enabled;
+    }
+
+    inline size_t MIPS32Instance::Builder::GetPCTracerDepth() const noexcept
+    {
+        return tracer_depth_pc;
+    }
+
+    inline void MIPS32Instance::Builder::SetPCTracerDepth(size_t depth) noexcept
+    {
+        tracer_depth_pc = depth;
     }
 
     inline size_t MIPS32Instance::Builder::GetGPRTracerDepth() const noexcept
@@ -995,6 +1117,7 @@ namespace Jasse {
             mem,
             trace_enabled ? new MIPS32TraceEntity::Pool(trace_unit, trace_max_factor) : nullptr,
             MIPS32TracerContainer(
+                trace_enabled && tracer_enabled_pc       ? new MIPS32PCTracer(tracer_depth_pc) : nullptr,
                 trace_enabled && tracer_enabled_gpr      ? new MIPS32GPRTracer(tracer_depth_gpr) : nullptr,
                 trace_enabled && tracer_enabled_memory   ? new MIPS32MemoryTracer(tracer_size_memory, tracer_depth_memory) : nullptr
             ));
