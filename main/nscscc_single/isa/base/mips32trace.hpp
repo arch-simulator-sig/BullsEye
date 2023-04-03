@@ -40,6 +40,7 @@ namespace Jasse {
         Reference           op1;
 
     public:
+        MIPS32TraceEntity() noexcept;
         MIPS32TraceEntity(pc_t pc, const MIPS32Instruction& insn, arch32_t value) noexcept;
         MIPS32TraceEntity(pc_t pc, const MIPS32Instruction& insn, arch32_t value, const Reference& op0) noexcept;
         MIPS32TraceEntity(pc_t pc, const MIPS32Instruction& insn, arch32_t value, const Reference& op0, const Reference& op1) noexcept;
@@ -287,7 +288,45 @@ namespace Jasse::MIPS32TraceHistoryManagement {
 // Specialized Tracers
 namespace Jasse {
 
-    //
+    // MIPS32 PC Tracer
+    class MIPS32PCTracerSubtrate {
+    private:
+        MIPS32TraceHistory              traces;
+
+        MIPS32TraceEntity::Reference    delayed_trace;
+
+    public:
+        MIPS32PCTracerSubtrate(const MIPS32PCTracerSubtrate& obj) = delete;
+        MIPS32PCTracerSubtrate(MIPS32PCTracerSubtrate&& obj) = delete;
+        MIPS32PCTracerSubtrate(size_t default_depth) noexcept;
+        ~MIPS32PCTracerSubtrate() noexcept;
+
+        size_t                      GetDefaultDepth() const noexcept;
+        void                        SetDefaultDepth(size_t depth) noexcept;
+
+        MIPS32TraceHistory&         Get() noexcept;
+        const MIPS32TraceHistory&   Get() const noexcept;
+
+        void                        Set(const MIPS32TraceHistory& obj) noexcept;
+        void                        Set(MIPS32TraceHistory&& obj) noexcept;
+
+        void                        Swap(MIPS32TraceHistory& obj) noexcept;
+
+        //
+        void                                SetDelayedTrace(const MIPS32TraceEntity::Reference& trace) noexcept;
+        MIPS32TraceEntity::Reference&       GetDelayedTrace() noexcept;
+        const MIPS32TraceEntity::Reference& GetDelayedTrace() const noexcept;
+
+        void                                ConfirmDelayedTrace() noexcept;
+        void                                ResetDelayedTrace() noexcept;
+
+        //
+        MIPS32PCTracerSubtrate&     operator=(const MIPS32PCTracerSubtrate& obj) = delete;
+        MIPS32PCTracerSubtrate&     operator=(MIPS32PCTracerSubtrate&& obj) = delete;;
+    };
+
+
+    // MIPS32 GPR Tracer
     template<MIPS32TraceHistoryManager _HistoryManager 
         = MIPS32TraceHistoryManagement::Pretouch>
     class MIPS32GPRTracerSubtrate {
@@ -378,6 +417,14 @@ namespace Jasse {
     // Reference           op0;
     // Reference           op1;
     //
+
+    MIPS32TraceEntity::MIPS32TraceEntity() noexcept
+        : pc    ()
+        , insn  ()
+        , value ()
+        , op0   ()
+        , op1   ()
+    { }
 
     MIPS32TraceEntity::MIPS32TraceEntity(
             pc_t                        pc, 
@@ -1209,6 +1256,84 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     }
 }
 
+
+
+// Implementation of: class MIPS32PCTraceSubtrate
+namespace Jasse {
+    // 
+    // MIPS32TraceHistory              traces;
+    //
+    // MIPS32TraceEntity::Reference    delayed_trace;
+    //
+
+    MIPS32PCTracerSubtrate::MIPS32PCTracerSubtrate(size_t default_depth) noexcept
+        : traces        (default_depth)
+        , delayed_trace ()
+    { }
+
+    MIPS32PCTracerSubtrate::~MIPS32PCTracerSubtrate() noexcept
+    { }
+
+    inline size_t MIPS32PCTracerSubtrate::GetDefaultDepth() const noexcept
+    {
+        return traces.GetDepth();
+    }
+
+    inline void MIPS32PCTracerSubtrate::SetDefaultDepth(size_t depth) noexcept
+    {
+        traces.SetDepth(depth);
+    }
+
+    inline MIPS32TraceHistory& MIPS32PCTracerSubtrate::Get() noexcept
+    {
+        return traces;
+    }
+
+    inline const MIPS32TraceHistory& MIPS32PCTracerSubtrate::Get() const noexcept
+    {
+        return traces;
+    }
+
+    inline void MIPS32PCTracerSubtrate::Set(const MIPS32TraceHistory& obj) noexcept
+    {
+        traces = obj;
+    }
+
+    inline void MIPS32PCTracerSubtrate::Set(MIPS32TraceHistory&& obj) noexcept
+    {
+        traces = std::move(obj);
+    }
+
+    inline void MIPS32PCTracerSubtrate::Swap(MIPS32TraceHistory& obj) noexcept
+    {
+        std::swap(traces, obj);
+    }
+
+    inline void MIPS32PCTracerSubtrate::SetDelayedTrace(const MIPS32TraceEntity::Reference& trace) noexcept
+    {
+        delayed_trace = trace;
+    }
+
+    inline MIPS32TraceEntity::Reference& MIPS32PCTracerSubtrate::GetDelayedTrace() noexcept
+    {
+        return delayed_trace;
+    }
+
+    inline const MIPS32TraceEntity::Reference& MIPS32PCTracerSubtrate::GetDelayedTrace() const noexcept
+    {
+        return delayed_trace;
+    }
+
+    inline void MIPS32PCTracerSubtrate::ConfirmDelayedTrace() noexcept
+    {
+        traces.Append(delayed_trace);
+    }
+
+    inline void MIPS32PCTracerSubtrate::ResetDelayedTrace() noexcept
+    {
+        delayed_trace.Reset();
+    }
+}
 
 
 // Implementation of: class MIPS32GPRTracerSubtrate
