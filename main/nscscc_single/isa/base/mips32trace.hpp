@@ -655,20 +655,31 @@ namespace Jasse {
 
     inline MIPS32TraceEntity::Reference MIPS32TraceHistory::Get(size_t index) noexcept
     {
-        return traces[(round_pointer + count - 1 - index) % capacity];
+        if (capacity)
+            return traces[(round_pointer + count - 1 - index) % capacity];
+        else
+            return MIPS32TraceEntity::Reference();
     }
 
     inline const MIPS32TraceEntity::Reference MIPS32TraceHistory::Get(size_t index) const noexcept
     {
-        return traces[(round_pointer + count - 1 - index) % capacity];
+        if (capacity)
+            return traces[(round_pointer + count - 1 - index) % capacity];
+        else
+            return MIPS32TraceEntity::Reference();
     }
 
     void MIPS32TraceHistory::Append(const MIPS32TraceEntity::Reference& trace) noexcept
     {
         if (!traces)
-            traces = new MIPS32TraceEntity::Reference[capacity = 1];
+            (traces = new MIPS32TraceEntity::Reference[count = capacity = 1])[0] = trace;
         else if (count == history_depth)
+        {
             traces[round_pointer++] = trace;
+
+            if (round_pointer == history_depth)
+                round_pointer = 0;
+        }
         else
         {
             if (count == capacity)
@@ -946,6 +957,9 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     template<unsigned int _CompressRatio>
     size_t CompressedIncremental<_CompressRatio>::Chunk::_FindSlot(size_t address, size_t slot_hint) const noexcept
     {
+        if (!address_table)
+            return 0;
+
         if (address_table[slot_hint] < address) // search right
         {
             if (slot_hint == count)
@@ -1009,6 +1023,8 @@ namespace Jasse::MIPS32TraceHistoryManagement {
 
         delete[] address_table;
         address_table = newAddressTable;
+
+        capacity_exponent++;
     }
 
     template<unsigned int _CompressRatio>
@@ -1016,7 +1032,9 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     {
         size_t new_slot_index = _FindSlot(address, slot_hint);
 
-        if (count == (1 << capacity_exponent))
+        if (!address_table)
+            _Initialize();
+        else if (count == (1 << capacity_exponent))
             _Expand(new_slot_index);
         else if (new_slot_index != count)
         {
@@ -1055,7 +1073,7 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     template<bool _EnableOnExists, bool _EnableOnAbsent, class _T>
     inline bool CompressedIncremental<_CompressRatio>::Chunk::_Set(size_t address, _T&& obj) noexcept
     {
-        size_t slot_hint;
+        size_t slot_hint = 0;
 
         std::optional<size_t> index = _Find(address, &slot_hint);
 
@@ -1128,7 +1146,7 @@ namespace Jasse::MIPS32TraceHistoryManagement {
     template<unsigned int _CompressRatio>
     inline MIPS32TraceHistory& CompressedIncremental<_CompressRatio>::Chunk::Acquire(size_t address, size_t default_depth) noexcept
     {
-        size_t slot_hint;
+        size_t slot_hint = 0;
 
         std::optional<size_t> index = _Find(address, &slot_hint);
 
