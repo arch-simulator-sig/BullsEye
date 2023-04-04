@@ -36,12 +36,13 @@
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(value); \
-        trace_ref->SetFirstOperand  (gpr_tracer->Get(src0).Get()); \
-        trace_ref->SetSecondOperand (gpr_tracer->Get(src1).Get()); \
-        \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(value); \
+            trace_ref->SetFirstOperand  (gpr_tracer->Get(src0).Get()); \
+            trace_ref->SetSecondOperand (gpr_tracer->Get(src1).Get()); \
+        } \
         gpr_tracer->Get(dst).Append(trace_ref); \
     } \
     return { EXEC_SEQUENTIAL }; \
@@ -58,11 +59,12 @@
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(value); \
-        trace_ref->SetFirstOperand  (gpr_tracer->Get(src0).Get()); \
-        \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(value); \
+            trace_ref->SetFirstOperand  (gpr_tracer->Get(src0).Get()); \
+        } \
         gpr_tracer->Get(dst).Append(trace_ref); \
     } \
     return { EXEC_SEQUENTIAL }; \
@@ -79,10 +81,11 @@
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(value); \
-        \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(value); \
+        } \
         gpr_tracer->Get(dst).Append(trace_ref); \
     } \
     return { EXEC_SEQUENTIAL }; \
@@ -95,13 +98,15 @@
     if (pred && inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(target); \
-        if (inst.Tracers().HasGPRTracer()) { \
-            MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-            trace_ref->SetFirstOperand  (gpr_tracer->Get(src0).Get()); \
-            trace_ref->SetSecondOperand (gpr_tracer->Get(src1).Get()); \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(target); \
+            if (inst.Tracers().HasGPRTracer()) { \
+                MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+                trace_ref->SetFirstOperand  (gpr_tracer->Get(src0).Get()); \
+                trace_ref->SetSecondOperand (gpr_tracer->Get(src1).Get()); \
+            } \
         } \
         pc_tracer->SetDelayedTrace(trace_ref); \
     } \
@@ -118,12 +123,14 @@
     if (pred && inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(target); \
-        if (inst.Tracers().HasGPRTracer()) { \
-            MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-            trace_ref->SetFirstOperand(gpr_tracer->Get(src0).Get()); \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(target); \
+            if (inst.Tracers().HasGPRTracer()) { \
+                MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+                trace_ref->SetFirstOperand(gpr_tracer->Get(src0).Get()); \
+            } \
         } \
         pc_tracer->SetDelayedTrace(trace_ref); \
     } \
@@ -141,22 +148,25 @@
     if (inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(target); \
-        if (inst.Tracers().HasGPRTracer()) { \
-            MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-            trace_ref->SetFirstOperand(gpr_tracer->Get(src0).Get()); \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(target); \
+            if (inst.Tracers().HasGPRTracer()) { \
+                MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+                trace_ref->SetFirstOperand(gpr_tracer->Get(src0).Get()); \
+            } \
         } \
         pc_tracer->SetDelayedTrace(trace_ref); \
     } \
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(link); \
-        \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(link); \
+        } \
         gpr_tracer->Get(dst).Append(trace_ref); \
     } \
     return { EXEC_DELAYSLOT }; \
@@ -170,19 +180,21 @@
     if (inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(target); \
-        \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(target); \
+        } \
         pc_tracer->SetDelayedTrace(trace_ref); \
     } \
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(link); \
-        \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(link); \
+        } \
         gpr_tracer->Get(dst).Append(trace_ref); \
     } \
     return { EXEC_DELAYSLOT }; \
@@ -195,12 +207,14 @@
     if (inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(target); \
-        if (inst.Tracers().HasGPRTracer()) { \
-            MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-            trace_ref->SetFirstOperand(gpr_tracer->Get(src0).Get()); \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(target); \
+            if (inst.Tracers().HasGPRTracer()) { \
+                MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+                trace_ref->SetFirstOperand(gpr_tracer->Get(src0).Get()); \
+            } \
         } \
         pc_tracer->SetDelayedTrace(trace_ref); \
     } \
@@ -214,10 +228,11 @@
     if (inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(target); \
-        \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(target); \
+        } \
         pc_tracer->SetDelayedTrace(trace_ref); \
     } \
     return { EXEC_DELAYSLOT }; \
@@ -239,15 +254,17 @@
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(value); \
-        trace_ref->SetFirstOperand(gpr_tracer->Get(src0).Get()); \
-        if (inst.Tracers().HasMemoryTracer()) { \
-            MIPS32MemoryTracer* memory_tracer = inst.Tracers().GetMemoryTracer(); \
-            auto memory_trace_history = memory_tracer->Get(address); \
-            if (memory_trace_history) \
-                trace_ref->SetSecondOperand(((MIPS32TraceHistory&) *memory_trace_history).Get()); \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(value); \
+            trace_ref->SetFirstOperand(gpr_tracer->Get(src0).Get()); \
+            if (inst.Tracers().HasMemoryTracer()) { \
+                MIPS32MemoryTracer* memory_tracer = inst.Tracers().GetMemoryTracer(); \
+                auto memory_trace_history = memory_tracer->Get(address); \
+                if (memory_trace_history) \
+                    trace_ref->SetSecondOperand(((MIPS32TraceHistory&) *memory_trace_history).Get()); \
+            } \
         } \
         gpr_tracer->Get(dst).Append(trace_ref); \
     } \
@@ -273,13 +290,15 @@
     if (inst.IsTraceEnabled() && inst.Tracers().HasMemoryTracer()) { \
         MIPS32MemoryTracer* memory_tracer = inst.Tracers().GetMemoryTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
-        trace_ref->SetInstruction(insn); \
-        trace_ref->SetPC(PC); \
-        trace_ref->SetValue(value); \
-        if (inst.Tracers().HasGPRTracer()) { \
-            MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-            trace_ref->SetFirstOperand  (gpr_tracer->Get(src0).Get()); \
-            trace_ref->SetSecondOperand (gpr_tracer->Get(src1).Get()); \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(value); \
+            if (inst.Tracers().HasGPRTracer()) { \
+                MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+                trace_ref->SetFirstOperand  (gpr_tracer->Get(src0).Get()); \
+                trace_ref->SetSecondOperand (gpr_tracer->Get(src1).Get()); \
+            } \
         } \
         memory_tracer->Acquire(address).Append(trace_ref); \
     } \
