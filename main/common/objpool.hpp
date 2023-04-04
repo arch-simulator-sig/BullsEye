@@ -507,8 +507,8 @@ namespace BullsEye {
     inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>::Reference& RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::operator=(const Reference& obj) noexcept
     {
-        valid_ref = obj.valid_ref;
-        ref       = obj.ref;
+        valid_ref   = obj.valid_ref;
+        ref         = obj.ref;
         return *this;
     }
 }
@@ -523,6 +523,14 @@ namespace BullsEye {
     // std::list<Block*>           chunks;
     // std::list<BlockMetadata*>   chunks_info;
     //
+
+    template<class _TObject, class _TInitializer, class _TFinalizer>
+    const _TInitializer RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+        ::INITIALZER = _TInitializer();
+
+    template<class _TObject, class _TInitializer, class _TFinalizer>
+    const _TFinalizer RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+        ::FINALIZER = _TFinalizer();
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
     RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
