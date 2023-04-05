@@ -9,15 +9,28 @@
 
 namespace BullsEye {
 
+
+    // 
+    template<class _T>
+    struct DFFResetZero
+    {
+        inline constexpr _T operator() const noexcept { return _T(0); }
+    };
+
+
     // Normal DFF
-    template<class _T, _T _ResetValue>
+    template<class _T, class _TResetRoutine = DFFResetZero<_T>>
     class DFF {
+    private:
+        static const _TResetRoutine     RESET_ROUTINE;
+
     private:
         _T  val;
 
     public:
-        DFF(const _T& val = _ResetValue) noexcept;
-        DFF(const DFF<_T, _ResetValue>& obj) noexcept;
+        DFF() noexcept;
+        DFF(const _T& val) noexcept;
+        DFF(const DFF<_T, _TResetRoutine>& obj) noexcept;
 
         ~DFF() noexcept;
 
@@ -33,15 +46,19 @@ namespace BullsEye {
 
 
     // Stepping DFF (Better for overall emulation)
-    template<class _T, _T _ResetValue>
+    template<class _T, class _TResetRoutine = DFFResetZero<_T>>
     class SteppingDFF {
+    private:
+        static const _TResetRoutine     RESET_ROUTINE;
+
     private:
         _T  val;
         _T  next;
 
     public:
-        SteppingDFF(const _T& val = _ResetValue) noexcept;
-        SteppingDFF(const SteppingDFF<_T, _ResetValue>& obj) noexcept;
+        SteppingDFF() noexcept;
+        SteppingDFF(const _T& val) noexcept;
+        SteppingDFF(const SteppingDFF<_T, _TResetRoutine>& obj) noexcept;
 
         ~SteppingDFF() noexcept;
 
@@ -68,52 +85,57 @@ namespace BullsEye {
     // _T  val;
     //
 
-    template<class _T, _T _ResetValue>
-    DFF<_T, _ResetValue>::DFF(const _T& val) noexcept
+    template<class _T, class _TResetRoutine>
+    DFF<_T, _TResetRoutine>::DFF() noexcept
+        : val   (RESET_ROUTINE())
+    { }
+
+    template<class _T, class _TResetRoutine>
+    DFF<_T, _TResetRoutine>::DFF(const _T& val) noexcept
         : val   (val)
     { }
 
-    template<class _T, _T _ResetValue>
-    DFF<_T, _ResetValue>::DFF(const DFF<_T, _ResetValue>& obj) noexcept
+    template<class _T, class _TResetRoutine>
+    DFF<_T, _TResetRoutine>::DFF(const DFF<_T, _TResetRoutine>& obj) noexcept
         : val   (obj.val)
     { }
 
-    template<class _T, _T _ResetValue>
-    DFF<_T, _ResetValue>::~DFF() noexcept
+    template<class _T, class _TResetRoutine>
+    DFF<_T, _TResetRoutine>::~DFF() noexcept
     { }
 
-    template<class _T, _T _ResetValue>
-    inline _T& DFF<_T, _ResetValue>::Get() noexcept
+    template<class _T, class _TResetRoutine>
+    inline _T& DFF<_T, _TResetRoutine>::Get() noexcept
     {
         return val;
     }
 
-    template<class _T, _T _ResetValue>
-    inline const _T& DFF<_T, _ResetValue>::Get() const noexcept
+    template<class _T, class _TResetRoutine>
+    inline const _T& DFF<_T, _TResetRoutine>::Get() const noexcept
     {
         return val;
     }
 
-    template<class _T, _T _ResetValue>
-    inline void DFF<_T, _ResetValue>::Set(const _T& val) noexcept
+    template<class _T, class _TResetRoutine>
+    inline void DFF<_T, _TResetRoutine>::Set(const _T& val) noexcept
     {
         this->val = val;
     }
 
-    template<class _T, _T _ResetValue>
-    inline void DFF<_T, _ResetValue>::Swap(_T& val) noexcept
+    template<class _T, class _TResetRoutine>
+    inline void DFF<_T, _TResetRoutine>::Swap(_T& val) noexcept
     {
         std::swap(this->val, val);
     }
 
-    template<class _T, _T _ResetValue>
-    inline void DFF<_T, _ResetValue>::Reset() noexcept
+    template<class _T, class _TResetRoutine>
+    inline void DFF<_T, _TResetRoutine>::Reset() noexcept
     {
-        val = _ResetValue;
+        val = RESET_ROUTINE();
     }
 
-    template<class _T, _T _ResetValue>
-    inline void DFF<_T, _ResetValue>::Eval(const _T& val, bool enable) noexcept
+    template<class _T, class _TResetRoutine>
+    inline void DFF<_T, _TResetRoutine>::Eval(const _T& val, bool enable) noexcept
     {
         if (enable)
             this->val = val;
@@ -128,79 +150,85 @@ namespace BullsEye {
     // _T  next;
     //
 
-    template<class _T, _T _ResetValue>
-    SteppingDFF<_T, _ResetValue>::SteppingDFF(const _T& val) noexcept
+    template<class _T, class _TResetRoutine>
+    SteppingDFF<_T, _TResetRoutine>::SteppingDFF() noexcept
+        : val   (RESET_ROUTINE())
+        , next  (RESET_ROUTINE())
+    { }
+
+    template<class _T, class _TResetRoutine>
+    SteppingDFF<_T, _TResetRoutine>::SteppingDFF(const _T& val) noexcept
         : val   (val)
         , next  (val)
     { }
 
-    template<class _T, _T _ResetValue>
-    SteppingDFF<_T, _ResetValue>::SteppingDFF(const SteppingDFF<_T, _ResetValue>& obj) noexcept
+    template<class _T, class _TResetRoutine>
+    SteppingDFF<_T, _TResetRoutine>::SteppingDFF(const SteppingDFF<_T, _TResetRoutine>& obj) noexcept
         : val   (obj.val)
         , next  (obj.next)
     { }
 
-    template<class _T, _T _ResetValue>
-    SteppingDFF<_T, _ResetValue>::~SteppingDFF() noexcept
+    template<class _T, class _TResetRoutine>
+    SteppingDFF<_T, _TResetRoutine>::~SteppingDFF() noexcept
     { }
 
-    template<class _T, _T _ResetValue>
-    inline _T& SteppingDFF<_T, _ResetValue>::Get() noexcept
+    template<class _T, class _TResetRoutine>
+    inline _T& SteppingDFF<_T, _TResetRoutine>::Get() noexcept
     {
         return val;
     }
 
-    template<class _T, _T _ResetValue>
-    inline const _T& SteppingDFF<_T, _ResetValue>::Get() const noexcept
+    template<class _T, class _TResetRoutine>
+    inline const _T& SteppingDFF<_T, _TResetRoutine>::Get() const noexcept
     {
         return val;
     }
 
-    template<class _T, _T _ResetValue>
-    inline void SteppingDFF<_T, _ResetValue>::Set(const _T& val) noexcept
+    template<class _T, class _TResetRoutine>
+    inline void SteppingDFF<_T, _TResetRoutine>::Set(const _T& val) noexcept
     {
         this->val = val;
     }
 
-    template<class _T, _T _ResetValue>
-    inline void SteppingDFF<_T, _ResetValue>::Swap(_T& val) noexcept
+    template<class _T, class _TResetRoutine>
+    inline void SteppingDFF<_T, _TResetRoutine>::Swap(_T& val) noexcept
     {
         std::swap(this->val, val);
     }
 
-    template<class _T, _T _ResetValue>
-    inline _T& SteppingDFF<_T, _ResetValue>::Next() noexcept
+    template<class _T, class _TResetRoutine>
+    inline _T& SteppingDFF<_T, _TResetRoutine>::Next() noexcept
     {
         return next;
     }
 
-    template<class _T, _T _ResetValue>
-    inline const _T& SteppingDFF<_T, _ResetValue>::Next() const noexcept
+    template<class _T, class _TResetRoutine>
+    inline const _T& SteppingDFF<_T, _TResetRoutine>::Next() const noexcept
     {
         return next;
     }
 
-    template<class _T, _T _ResetValue>
-    inline void SteppingDFF<_T, _ResetValue>::Next(const _T& val) noexcept
+    template<class _T, class _TResetRoutine>
+    inline void SteppingDFF<_T, _TResetRoutine>::Next(const _T& val) noexcept
     {
         next = val;
     }
 
-    template<class _T, _T _ResetValue>
-    inline void SteppingDFF<_T, _ResetValue>::NextReset() noexcept
+    template<class _T, class _TResetRoutine>
+    inline void SteppingDFF<_T, _TResetRoutine>::NextReset() noexcept
     {
-        next = _ResetValue;
+        next = RESET_ROUTINE();
     }
 
-    template<class _T, _T _ResetValue>
-    inline void SteppingDFF<_T, _ResetValue>::Reset() noexcept
+    template<class _T, class _TResetRoutine>
+    inline void SteppingDFF<_T, _TResetRoutine>::Reset() noexcept
     {
-        val  = _ResetValue;
-        next = _ResetValue;
+        val  = RESET_ROUTINE();
+        next = RESET_ROUTINE();
     }
 
-    template<class _T, _T _ResetValue>
-    inline void SteppingDFF<_T, _ResetValue>::Eval(bool enable) noexcept
+    template<class _T, class _TResetRoutine>
+    inline void SteppingDFF<_T, _TResetRoutine>::Eval(bool enable) noexcept
     {
         if (enable)
             val = next;
