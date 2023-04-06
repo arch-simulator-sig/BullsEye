@@ -187,8 +187,8 @@ namespace Jasse {
         MIPS32MemoryInterface*&         MI() noexcept;
         const MIPS32MemoryInterface*    MI() const noexcept;
 
-        MIPS32TraceEntity::Pool*&       TracePool() noexcept;
-        const MIPS32TraceEntity::Pool*  TracePool() const noexcept;
+        MIPS32TraceEntity::Pool&        TracePool() noexcept;
+        const MIPS32TraceEntity::Pool&  TracePool() const noexcept;
 
         MIPS32TracerContainer&          Tracers() noexcept;
         const MIPS32TracerContainer&    Tracers() const noexcept;
@@ -599,7 +599,10 @@ namespace Jasse {
     { }
 
     MIPS32Instance::~MIPS32Instance()
-    { }
+    { 
+        if (trace_pool)
+            delete trace_pool;
+    }
     
     inline bool MIPS32Instance::IsBranchTaken() const noexcept
     {
@@ -647,14 +650,14 @@ namespace Jasse {
         return mem;
     }
 
-    inline MIPS32TraceEntity::Pool*& MIPS32Instance::TracePool() noexcept
+    inline MIPS32TraceEntity::Pool& MIPS32Instance::TracePool() noexcept
     {
-        return trace_pool;
+        return *trace_pool;
     }
 
-    inline const MIPS32TraceEntity::Pool* MIPS32Instance::TracePool() const noexcept
+    inline const MIPS32TraceEntity::Pool& MIPS32Instance::TracePool() const noexcept
     {
-        return trace_pool;
+        return *trace_pool;
     }
 
     inline MIPS32TracerContainer& MIPS32Instance::Tracers() noexcept
