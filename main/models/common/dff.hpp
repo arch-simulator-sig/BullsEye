@@ -65,11 +65,13 @@ namespace BullsEye {
         _T&                 Get() noexcept;
         const _T&           Get() const noexcept;
 
+        _T&                 GetNext() noexcept;
+        const _T&           GetNext() const noexcept;
+
         void                Set(const _T& val) noexcept;
         void                Swap(_T& val) noexcept;
 
-        _T&                 Next() noexcept; 
-        const _T&           Next() const noexcept;
+        void                Next() noexcept;
         void                Next(const _T& val) noexcept;
         void                NextReset() noexcept;
 
@@ -185,6 +187,18 @@ namespace BullsEye {
     }
 
     template<class _T, class _TResetRoutine>
+    inline _T& SteppingDFF<_T, _TResetRoutine>::GetNext() noexcept
+    {
+        return next;
+    }
+
+    template<class _T, class _TResetRoutine>
+    inline const _T& SteppingDFF<_T, _TResetRoutine>::GetNext() const noexcept
+    {
+        return next;
+    }
+
+    template<class _T, class _TResetRoutine>
     inline void SteppingDFF<_T, _TResetRoutine>::Set(const _T& val) noexcept
     {
         this->val = val;
@@ -197,15 +211,9 @@ namespace BullsEye {
     }
 
     template<class _T, class _TResetRoutine>
-    inline _T& SteppingDFF<_T, _TResetRoutine>::Next() noexcept
+    inline void SteppingDFF<_T, _TResetRoutine>::Next() noexcept
     {
-        return next;
-    }
-
-    template<class _T, class _TResetRoutine>
-    inline const _T& SteppingDFF<_T, _TResetRoutine>::Next() const noexcept
-    {
-        return next;
+        next = val;
     }
 
     template<class _T, class _TResetRoutine>
