@@ -35,7 +35,7 @@
     value = GPR(dst) = expr; \
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -58,7 +58,7 @@
     value = GPR(dst) = expr; \
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -80,7 +80,7 @@
     value = GPR(dst) = expr; \
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -97,7 +97,7 @@
     arch32_t target = PC + 4 + (IMM16_SEXT << 2); \
     if (pred && inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -122,7 +122,7 @@
     arch32_t target = PC + 4 + (IMM16_SEXT << 2); \
     if (pred && inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -147,7 +147,7 @@
     inst.SetBranchTarget(true, target); \
     if (inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -161,7 +161,7 @@
     } \
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -179,7 +179,7 @@
     inst.SetBranchTarget(true, target); \
     if (inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -189,7 +189,7 @@
     } \
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -206,7 +206,7 @@
     inst.SetBranchTarget(true, target); \
     if (inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -227,7 +227,7 @@
     inst.SetBranchTarget(true, target); \
     if (inst.IsTraceEnabled() && inst.Tracers().HasPCTracer()) { \
         MIPS32PCTracer* pc_tracer = inst.Tracers().GetPCTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -253,7 +253,7 @@
     arch32_t value = GPR(dst) = SEXT32_##width(memdata); \
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
@@ -289,7 +289,7 @@
     arch32_t value = memdata.data32 & MOPW_##width.mask; \
     if (inst.IsTraceEnabled() && inst.Tracers().HasMemoryTracer()) { \
         MIPS32MemoryTracer* memory_tracer = inst.Tracers().GetMemoryTracer(); \
-        MIPS32TraceEntity::Reference trace_ref = inst.TracePool()->Acquire(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
         if (trace_ref.IsValid()) { \
             trace_ref->SetInstruction(insn); \
             trace_ref->SetPC(PC); \
