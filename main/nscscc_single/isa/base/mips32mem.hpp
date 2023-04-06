@@ -41,6 +41,9 @@ namespace Jasse {
         uint16_t    length;
     } MIPS32MOPWidth;
 
+    bool operator==(const MIPS32MOPWidth& lhs, const MIPS32MOPWidth& rhs) noexcept;
+    bool operator!=(const MIPS32MOPWidth& lhs, const MIPS32MOPWidth& rhs) noexcept;
+
     static constexpr MIPS32MOPWidth MOPW_BYTE           = { 0x000000FFU, 0x00U, 1 };
     static constexpr MIPS32MOPWidth MOPW_HALF_WORD      = { 0x0000FFFFU, 0x01U, 2 };
     static constexpr MIPS32MOPWidth MOPW_WORD           = { 0xFFFFFFFFU, 0x03U, 4 };
@@ -74,6 +77,20 @@ namespace Jasse {
     };
 }
 
+
+// Implementation of: struct MIPS32MOPWidth
+namespace Jasse {
+
+    inline bool operator==(const MIPS32MOPWidth& lhs, const MIPS32MOPWidth& rhs) noexcept
+    {
+        return lhs.mask == rhs.mask && lhs.alignment == rhs.alignment && lhs.length == rhs.length;
+    }
+
+    inline bool operator!=(const MIPS32MOPWidth& lhs, const MIPS32MOPWidth& rhs) noexcept
+    {
+        return !(lhs == rhs);
+    }
+}
 
 
 // Implementation of: union memdata_t
