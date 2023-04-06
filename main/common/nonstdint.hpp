@@ -94,8 +94,8 @@ namespace BullsEye {
 
         constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator~() const noexcept;
 
-        constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator<<(unsigned) const noexcept;
-        constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator>>(unsigned) const noexcept;
+        constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator<<(int) const noexcept;
+        constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator>>(int) const noexcept;
 
         template<class _Tother>
         constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator&(const _Tother&) const noexcept;
@@ -154,17 +154,14 @@ namespace BullsEye {
         template<class _Tother>
         constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator^=(const _Tother&) noexcept;
 
-        constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator<<=(unsigned) noexcept;
-        constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator>>=(unsigned) noexcept;
+        constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator<<=(int) noexcept;
+        constexpr _truncated_uint_base<_Tsv, _Tuv, _L>  operator>>=(int) noexcept;
 
         _truncated_uint_base<_Tsv, _Tuv, _L>            to_unsigned() const noexcept;
         _truncated_int_base<_Tsv, _Tuv, _L>             to_signed() const noexcept;
 
         constexpr operator      _truncated_int_base<_Tsv, _Tuv, _L>() const noexcept;
-
-        constexpr operator      _Tsv() const noexcept;
         constexpr operator      _Tuv() const noexcept;
-        constexpr operator      bool() const noexcept;
     };
 
 
@@ -205,8 +202,8 @@ namespace BullsEye {
 
         constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator~() const noexcept;
 
-        constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator<<(unsigned) const noexcept;
-        constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator>>(unsigned) const noexcept;
+        constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator<<(int) const noexcept;
+        constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator>>(int) const noexcept;
 
         template<class _Tother>
         constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator&(const _Tother&) const noexcept;
@@ -265,17 +262,14 @@ namespace BullsEye {
         template<class _Tother>
         constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator^=(const _Tother&) noexcept;
 
-        constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator<<=(unsigned) noexcept;
-        constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator>>=(unsigned) noexcept;
+        constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator<<=(int) noexcept;
+        constexpr _truncated_int_base<_Tsv, _Tuv, _L>   operator>>=(int) noexcept;
 
         _truncated_uint_base<_Tsv, _Tuv, _L>            to_unsigned() const noexcept;
         _truncated_int_base<_Tsv, _Tuv, _L>             to_signed() const noexcept;
 
         constexpr operator      _truncated_uint_base<_Tsv, _Tuv, _L>() const noexcept;
-
         constexpr operator      _Tsv() const noexcept;
-        constexpr operator      _Tuv() const noexcept;
-        constexpr operator      bool() const noexcept;
     };
 }
 
@@ -360,13 +354,13 @@ namespace BullsEye {
     }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L> _truncated_uint_base<_Tsv, _Tuv, _L>::operator<<(unsigned n) const noexcept
+    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L> _truncated_uint_base<_Tsv, _Tuv, _L>::operator<<(int n) const noexcept
     {
         return _truncated_uint_base<_Tsv, _Tuv, _L>(val << n);
     }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L> _truncated_uint_base<_Tsv, _Tuv, _L>::operator>>(unsigned n) const noexcept
+    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L> _truncated_uint_base<_Tsv, _Tuv, _L>::operator>>(int n) const noexcept
     {
         return _truncated_uint_base<_Tsv, _Tuv, _L>(val >> n);
     }
@@ -515,13 +509,13 @@ namespace BullsEye {
     }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L> _truncated_uint_base<_Tsv, _Tuv, _L>::operator<<=(unsigned n) noexcept
+    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L> _truncated_uint_base<_Tsv, _Tuv, _L>::operator<<=(int n) noexcept
     {
         return _truncated_uint_base<_Tsv, _Tuv, _L>(val <<= n);
     }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L> _truncated_uint_base<_Tsv, _Tuv, _L>::operator>>=(unsigned n) noexcept
+    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L> _truncated_uint_base<_Tsv, _Tuv, _L>::operator>>=(int n) noexcept
     {
         return _truncated_uint_base<_Tsv, _Tuv, _L>(val >>= n);
     }
@@ -545,21 +539,9 @@ namespace BullsEye {
     }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::operator _Tsv() const noexcept
-    {
-        return static_cast<_Tsv>(val & MASK);
-    }
-
-    template<class _Tsv, class _Tuv, unsigned _L>
     inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::operator _Tuv() const noexcept
     {
         return val & MASK;
-    }
-
-    template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::operator bool() const noexcept
-    {
-        return (val & MASK) != 0;
     }
 }
 
@@ -644,13 +626,13 @@ namespace BullsEye {
     }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_int_base<_Tsv, _Tuv, _L> _truncated_int_base<_Tsv, _Tuv, _L>::operator<<(unsigned n) const noexcept
+    inline constexpr _truncated_int_base<_Tsv, _Tuv, _L> _truncated_int_base<_Tsv, _Tuv, _L>::operator<<(int n) const noexcept
     {
         return _truncated_int_base<_Tsv, _Tuv, _L>(val << n);
     }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_int_base<_Tsv, _Tuv, _L> _truncated_int_base<_Tsv, _Tuv, _L>::operator>>(unsigned n) const noexcept
+    inline constexpr _truncated_int_base<_Tsv, _Tuv, _L> _truncated_int_base<_Tsv, _Tuv, _L>::operator>>(int n) const noexcept
     {
         return _truncated_int_base<_Tsv, _Tuv, _L>(static_cast<_Tsv>(*this) >> n);
     }
@@ -799,13 +781,13 @@ namespace BullsEye {
     }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_int_base<_Tsv, _Tuv, _L> _truncated_int_base<_Tsv, _Tuv, _L>::operator<<=(unsigned n) noexcept
+    inline constexpr _truncated_int_base<_Tsv, _Tuv, _L> _truncated_int_base<_Tsv, _Tuv, _L>::operator<<=(int n) noexcept
     {
         return _truncated_int_base<_Tsv, _Tuv, _L>(val <<= n);
     }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_int_base<_Tsv, _Tuv, _L> _truncated_int_base<_Tsv, _Tuv, _L>::operator>>=(unsigned n) noexcept
+    inline constexpr _truncated_int_base<_Tsv, _Tuv, _L> _truncated_int_base<_Tsv, _Tuv, _L>::operator>>=(int n) noexcept
     {
         return _truncated_int_base<_Tsv, _Tuv, _L>(val = static_cast<_Tsv>(*this) >> n);
     }
@@ -832,17 +814,5 @@ namespace BullsEye {
     inline constexpr _truncated_int_base<_Tsv, _Tuv, _L>::operator _Tsv() const noexcept
     {
         return ((val << SIGN_SHIFT) >> SIGN_SHIFT) & MASK;
-    }
-
-    template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_int_base<_Tsv, _Tuv, _L>::operator _Tuv() const noexcept
-    {
-        return static_cast<_Tuv>(val);
-    }
-
-    template<class _Tsv, class _Tuv, unsigned _L>
-    inline constexpr _truncated_int_base<_Tsv, _Tuv, _L>::operator bool() const noexcept
-    {
-        return val != 0;
     }
 }
