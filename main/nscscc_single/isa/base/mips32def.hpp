@@ -10,6 +10,9 @@
 #include "mips32r5def.hpp"
 
 
+#define __HEADER_MIPS32_DEFINITIONS
+
+
 // Global type definitions
 namespace Jasse {
     

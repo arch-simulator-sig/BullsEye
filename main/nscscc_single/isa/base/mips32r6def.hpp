@@ -6,6 +6,9 @@
 //
 
 
+#define __HEADER_MIPS32_R6_DEINITIONS
+
+
 // MIPS32-R6 opcode
 #define MIPS32_OPCODE_SPECIAL                       0b000000
 #define MIPS32_OPCODE_SPECIAL2                      0b011100
