@@ -180,6 +180,17 @@ namespace Jasse {
         return oss.str();
     }
 
+    std::string TextualizeMIPS32RdExcludedTypeR(const MIPS32Instruction& insn) noexcept
+    {
+        std::ostringstream oss;
+
+        oss << TextualizeMIPS32Name(insn.GetName());
+        oss << TextualizeMIPS32GPR(insn.GetRS()) << ", ";
+        oss << TextualizeMIPS32GPR(insn.GetRT());
+
+        return oss.str();
+    }
+
     std::string TextualizeMIPS32RtExcludedTypeR(const MIPS32Instruction& insn) noexcept
     {
         std::ostringstream oss;
