@@ -15,6 +15,7 @@
 #define R31i                        31
 
 #define GPR(i)                      inst.Arch().GPRs()[i]
+#define HILO(name)                  inst.Arch().name()
 
 
 #define RS                          GPR(RSi)
@@ -308,6 +309,52 @@
 #define traced_store_norm(width)    traced_store(RTi, RSi, width)
 
 
+#define traced_mfhilo(dst, hilo) { \
+    arch32_t value = GPR(dst) = HILO(hilo); \
+    if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
+        MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(value); \
+            if (inst.Tracers().HasHiLoTracer()) { \
+                MIPS32HiLoTracer* hilo_tracer = inst.Tracers().GetHiLoTracer(); \
+                trace_ref->SetFirstOperand(hilo_tracer->Get##hilo().Get()); \
+            } \
+        } \
+        gpr_tracer->Get(dst).Append(trace_ref); \
+    } \
+    return { EXEC_SEQUENTIAL }; \
+}
+
+#define traced_mfhi_norm    traced_mfhilo(RDi, Hi)
+#define traced_mflo_norm    traced_mfhilo(RDi, Lo)
+
+
+#define traced_mthilo(src, hilo) { \
+    arch32_t value = HILO(hilo) = GPR(src); \
+    if (inst.IsTraceEnabled() && inst.Tracers().HasHiLoTracer()) { \
+        MIPS32HiLoTracer* hilo_tracer = inst.Tracers().GetHiLoTracer(); \
+        MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
+        if (trace_ref.IsValid()) { \
+            trace_ref->SetInstruction(insn); \
+            trace_ref->SetPC(PC); \
+            trace_ref->SetValue(value); \
+            if (inst.Tracers().HasGPRTracer()) { \
+                MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+                trace_ref->SetFirstOperand(gpr_tracer->Get(src).Get()); \
+            } \
+        } \
+        hilo_tracer->Get##hilo().Append(trace_ref); \
+    } \
+    return { EXEC_SEQUENTIAL }; \
+} 
+
+#define traced_mthi_norm    traced_mthilo(RSi, Hi)
+#define traced_mtlo_norm    traced_mthilo(RSi, Lo)
+
+
 #define event_wrapped(name, expr) \
     { \
         MIPS32Instruction __insn = insn; \
@@ -464,6 +511,23 @@ namespace Jasse {
     implexec(JALR,
         noexcept event_wrapped(JALR, traced_jumplink_1r(RDi, RSi, RS)));
 
+    
+    // MFHI rd
+    implexec(MFHI,
+        noexcept event_wrapped(MFHI, traced_mfhi_norm));
+
+    // MFLO rd
+    implexec(MFLO,
+        noexcept event_wrapped(MFLO, traced_mflo_norm));
+
+    // MTHI rs
+    implexec(MTHI,
+        noexcept event_wrapped(MTHI, traced_mthi_norm));
+
+    // MTLO rs
+    implexec(MTLO,
+        noexcept event_wrapped(MTLO, traced_mtlo_norm));
+
 
     // LB rt, offset(base)
     implexec(LB,
@@ -511,6 +575,8 @@ namespace Jasse {
 #undef IMM26_ZEXT
 
 #undef GPR
+#undef HILO
+
 #undef RSi
 #undef RTi
 #undef RDi

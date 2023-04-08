@@ -57,6 +57,11 @@ namespace Jasse {
     execdecl(JR     ) noexcept;
     execdecl(JALR   ) noexcept;
 
+    execdecl(MFHI   ) noexcept;
+    execdecl(MFLO   ) noexcept;
+    execdecl(MTHI   ) noexcept;
+    execdecl(MTLO   ) noexcept;
+
     execdecl(LB     ) noexcept;
     execdecl(LBU    ) noexcept;
     execdecl(LH     ) noexcept;

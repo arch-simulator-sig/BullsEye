@@ -65,6 +65,11 @@ namespace Jasse::MIPS32PreExecutionEvents {
     implevent(JR    );
     implevent(JALR  );
 
+    implevent(MFHI  );
+    implevent(MFLO  );
+    implevent(MTHI  );
+    implevent(MTLO  );
+
     implevent(LB    );
     implevent(LBU   );
     implevent(LH    );
@@ -135,6 +140,11 @@ namespace Jasse::MIPS32PostExecutionEvents {
     implevent(JAL   );
     implevent(JR    );
     implevent(JALR  );
+
+    implevent(MFHI  );
+    implevent(MFLO  );
+    implevent(MTHI  );
+    implevent(MTLO  );
 
     implevent(LB    );
     implevent(LBU   );

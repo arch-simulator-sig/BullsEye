@@ -79,6 +79,11 @@ namespace Jasse {
     decdecl_stub2(Funct, SPECIAL, JR    );
     decdecl_stub2(Funct, SPECIAL, JALR  );
 
+    decdecl_stub2(Funct, SPECIAL, MFHI  );
+    decdecl_stub2(Funct, SPECIAL, MFLO  );
+    decdecl_stub2(Funct, SPECIAL, MTHI  );
+    decdecl_stub2(Funct, SPECIAL, MTLO  );
+
     //
     decdecl_stub2(Funct, SPECIAL2, MUL  );
 

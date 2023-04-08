@@ -54,6 +54,11 @@ namespace Jasse {
     codedef MIPS32_JR       {"jr"    , MIPS32_TYPE_R, &MIPS32_DECODER_STUB2(Funct, SPECIAL, JR)     , &MIPS32_EXECUTOR(JR)      , &TextualizeMIPS32RsExclusiveTypeR };
     codedef MIPS32_JALR     {"jalr"  , MIPS32_TYPE_R, &MIPS32_DECODER_STUB2(Funct, SPECIAL, JALR)   , &MIPS32_EXECUTOR(JALR)    , &TextualizeMIPS32RtExcludedTypeR };
 
+    codedef MIPS32_MFHI     {"mfhi"  , MIPS32_TYPE_R, &MIPS32_DECODER_STUB2(Funct, SPECIAL, MFHI)   , &MIPS32_EXECUTOR(MFHI)    , &TextualizeMIPS32RdExclusiveTypeR };
+    codedef MIPS32_MFLO     {"mflo"  , MIPS32_TYPE_R, &MIPS32_DECODER_STUB2(Funct, SPECIAL, MFLO)   , &MIPS32_EXECUTOR(MFLO)    , &TextualizeMIPS32RdExclusiveTypeR };
+    codedef MIPS32_MTHI     {"mthi"  , MIPS32_TYPE_R, &MIPS32_DECODER_STUB2(Funct, SPECIAL, MTHI)   , &MIPS32_EXECUTOR(MTHI)    , &TextualizeMIPS32RsExclusiveTypeR };
+    codedef MIPS32_MTLO     {"mtlo"  , MIPS32_TYPE_R, &MIPS32_DECODER_STUB2(Funct, SPECIAL, MTLO)   , &MIPS32_EXECUTOR(MTLO)    , &TextualizeMIPS32RsExclusiveTypeR };
+
     codedef MIPS32_LB       {"lb"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, LB)              , &MIPS32_EXECUTOR(LB)      , &TextualizeMIPS32LoadStore };
     codedef MIPS32_LBU      {"lbu"   , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, LBU)             , &MIPS32_EXECUTOR(LBU)     , &TextualizeMIPS32LoadStore };
     codedef MIPS32_LH       {"lh"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, LH)              , &MIPS32_EXECUTOR(LH)      , &TextualizeMIPS32LoadStore };
@@ -74,6 +79,7 @@ namespace Jasse {
         &MIPS32_SLL,    &MIPS32_SLLV,   &MIPS32_SRA,    &MIPS32_SRAV,   &MIPS32_SRL,    &MIPS32_SRLV,
         &MIPS32_BEQ,    &MIPS32_BNE,    &MIPS32_BGEZ,   &MIPS32_BGTZ,   &MIPS32_BLEZ,   &MIPS32_BLTZ,
         &MIPS32_J,      &MIPS32_JAL,    &MIPS32_JR,     &MIPS32_JALR,
+        &MIPS32_MFHI,   &MIPS32_MFLO,   &MIPS32_MTHI,   &MIPS32_MTLO,
         &MIPS32_LB,     &MIPS32_LBU,    &MIPS32_LH,     &MIPS32_LHU,    &MIPS32_LW,     
         &MIPS32_SB,     &MIPS32_SH,     &MIPS32_SW
     };

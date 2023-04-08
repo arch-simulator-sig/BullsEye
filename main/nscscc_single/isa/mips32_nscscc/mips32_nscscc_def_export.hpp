@@ -51,6 +51,11 @@ namespace Jasse {
     codedecl    MIPS32_JR    ;
     codedecl    MIPS32_JALR  ;
 
+    codedecl    MIPS32_MFHI  ;
+    codedecl    MIPS32_MFLO  ;
+    codedecl    MIPS32_MTHI  ;
+    codedecl    MIPS32_MTLO  ;
+
     codedecl    MIPS32_LB    ;
     codedecl    MIPS32_LBU   ;
     codedecl    MIPS32_LH    ;
