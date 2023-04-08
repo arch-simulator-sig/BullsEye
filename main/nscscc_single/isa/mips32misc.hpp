@@ -201,6 +201,16 @@ namespace Jasse {
         return oss.str();
     }
 
+     std::string TextualizeMIPS32RdExclusiveTypeR(const MIPS32Instruction& insn) noexcept
+    {
+        std::ostringstream oss;
+
+        oss << TextualizeMIPS32Name(insn.GetName());
+        oss << TextualizeMIPS32GPR(insn.GetRD());
+
+        return oss.str();
+    }
+
     std::string TextualizeMIPS32ShiftConstant(const MIPS32Instruction& insn) noexcept
     {
         std::ostringstream oss;
