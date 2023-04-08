@@ -362,6 +362,41 @@ namespace Jasse {
         MIPS32GPRTracerSubtrate&            operator=(const MIPS32GPRTracerSubtrate& obj) = delete;
         MIPS32GPRTracerSubtrate&            operator=(MIPS32GPRTracerSubtrate&& obj) = delete;
     };
+
+
+    // MIPS32 HI/LO Tracer
+    class MIPS32HiLoTracerSubtrate {
+    private:
+        MIPS32TraceHistory  hi;
+        MIPS32TraceHistory  lo;
+
+    public:
+        MIPS32HiLoTracerSubtrate(const MIPS32HiLoTracerSubtrate& obj) = delete;
+        MIPS32HiLoTracerSubtrate(MIPS32HiLoTracerSubtrate&& obj) = delete;
+        MIPS32HiLoTracerSubtrate(size_t default_depth) noexcept;
+        ~MIPS32HiLoTracerSubtrate() noexcept;
+
+        size_t                      GetDefaultDepth() const noexcept;
+        void                        SetDefaultDepth(size_t depth) noexcept;
+
+        MIPS32TraceHistory&         GetHi() noexcept;
+        const MIPS32TraceHistory&   GetHi() const noexcept;
+
+        MIPS32TraceHistory&         GetLo() noexcept;
+        const MIPS32TraceHistory&   GetLo() const noexcept;
+
+        void                        SetHi(const MIPS32TraceHistory& obj) noexcept;
+        void                        SetHi(MIPS32TraceHistory&& obj) noexcept;
+
+        void                        SetLo(const MIPS32TraceHistory& obj) noexcept;
+        void                        SetLo(MIPS32TraceHistory&& obj) noexcept;
+
+        void                        SwapHi(MIPS32TraceHistory& obj) noexcept;
+        void                        SwapLo(MIPS32TraceHistory& obj) noexcept;
+
+        MIPS32HiLoTracerSubtrate&   operator=(const MIPS32HiLoTracerSubtrate& obj) = delete;
+        MIPS32HiLoTracerSubtrate&   operator=(MIPS32HiLoTracerSubtrate&& obj) = delete;
+    };
     
 
     // MIPS32 Memory Tracer
@@ -1434,6 +1469,84 @@ namespace Jasse {
     inline const MIPS32TraceHistory& MIPS32GPRTracerSubtrate<_HistoryManager>::operator[](size_t index) const noexcept
     {
         return Get(index);
+    }
+}
+
+
+// Implementation of: class MIPS32HiLoTracerSubtrate
+namespace Jasse {
+    //
+    // MIPS32TraceHistory  hi;
+    // MIPS32TraceHistory  lo;
+    //
+
+    MIPS32HiLoTracerSubtrate::MIPS32HiLoTracerSubtrate(size_t default_depth) noexcept
+        : hi (default_depth)
+        , lo (default_depth)
+    { }
+
+    MIPS32HiLoTracerSubtrate::~MIPS32HiLoTracerSubtrate() noexcept
+    { }
+
+    inline size_t MIPS32HiLoTracerSubtrate::GetDefaultDepth() const noexcept
+    {
+        return hi.GetDepth();
+    }
+
+    inline void MIPS32HiLoTracerSubtrate::SetDefaultDepth(size_t depth) noexcept
+    {
+        hi.SetDepth(depth);
+        lo.SetDepth(depth);
+    }
+
+    inline MIPS32TraceHistory& MIPS32HiLoTracerSubtrate::GetHi() noexcept
+    {
+        return hi;
+    }
+
+    inline const MIPS32TraceHistory& MIPS32HiLoTracerSubtrate::GetHi() const noexcept
+    {
+        return hi;
+    }
+
+    inline MIPS32TraceHistory& MIPS32HiLoTracerSubtrate::GetLo() noexcept
+    {
+        return lo;
+    }
+
+    inline const MIPS32TraceHistory& MIPS32HiLoTracerSubtrate::GetLo() const noexcept
+    {
+        return lo;
+    }
+
+    inline void MIPS32HiLoTracerSubtrate::SetHi(const MIPS32TraceHistory& obj) noexcept
+    {
+        hi = obj;
+    }
+
+    inline void MIPS32HiLoTracerSubtrate::SetHi(MIPS32TraceHistory&& obj) noexcept
+    {
+        hi = std::move(obj);
+    }
+
+    inline void MIPS32HiLoTracerSubtrate::SetLo(const MIPS32TraceHistory& obj) noexcept
+    {
+        lo = obj;
+    }
+
+    inline void MIPS32HiLoTracerSubtrate::SetLo(MIPS32TraceHistory&& obj) noexcept
+    {
+        lo = std::move(obj);
+    }
+
+    inline void MIPS32HiLoTracerSubtrate::SwapHi(MIPS32TraceHistory& obj) noexcept
+    {
+        std::swap(hi, obj);
+    }
+
+    inline void MIPS32HiLoTracerSubtrate::SwapLo(MIPS32TraceHistory& obj) noexcept
+    {
+        std::swap(lo, obj);
     }
 }
 
