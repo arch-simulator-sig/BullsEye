@@ -84,6 +84,12 @@ namespace Jasse {
     impldec_stub2_static(Funct, SPECIAL, MTLO,   MIPS32_MTLO);
 
     //
+    impldec_stub2_static(Funct, SPECIAL, DIV,    MIPS32_DIV);
+    impldec_stub2_static(Funct, SPECIAL, DIVU,   MIPS32_DIVU);
+    impldec_stub2_static(Funct, SPECIAL, MULT,   MIPS32_MULT);
+    impldec_stub2_static(Funct, SPECIAL, MULTU,  MIPS32_MULTU);
+
+    //
     impldec_stub2_static(Funct, SPECIAL2, MUL,   MIPS32_MUL);
 
     //

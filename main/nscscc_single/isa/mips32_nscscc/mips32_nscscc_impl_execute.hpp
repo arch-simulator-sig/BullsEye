@@ -355,6 +355,79 @@
 #define traced_mtlo_norm    traced_mthilo(RSi, Lo)
 
 
+#define traced_div(src0, src1, sign) { \
+    arch32_t q = HILO(Lo) = ((sign) GPR(src0)) / ((sign) GPR(src1)); \
+    arch32_t r = HILO(Hi) = ((sign) GPR(src0)) % ((sign) GPR(src1)); \
+    if (inst.IsTraceEnabled() && inst.Tracers().HasHiLoTracer()) { \
+        MIPS32HiLoTracer* hilo_tracer = inst.Tracers().GetHiLoTracer(); \
+        MIPS32TraceEntity::Reference lo_trace_ref = inst.TracePool().Acquire(); \
+        if (lo_trace_ref.IsValid()) { \
+            lo_trace_ref->SetInstruction(insn); \
+            lo_trace_ref->SetPC(PC); \
+            lo_trace_ref->SetValue(q); \
+            if (inst.Tracers().HasGPRTracer()) { \
+                MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+                lo_trace_ref->SetFirstOperand (gpr_tracer->Get(src0).Get()); \
+                lo_trace_ref->SetSecondOperand(gpr_tracer->Get(src1).Get()); \
+            } \
+        } \
+        MIPS32TraceEntity::Reference hi_trace_ref = inst.TracePool().Acquire(); \
+        if (hi_trace_ref.IsValid()) { \
+            hi_trace_ref->SetInstruction(insn); \
+            hi_trace_ref->SetPC(PC); \
+            hi_trace_ref->SetValue(r); \
+            if (inst.Tracers().HasGPRTracer()) { \
+                MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+                hi_trace_ref->SetFirstOperand (gpr_tracer->Get(src0).Get()); \
+                hi_trace_ref->SetSecondOperand(gpr_tracer->Get(src1).Get()); \
+            } \
+        } \
+        hilo_tracer->GetLo().Append(lo_trace_ref); \
+        hilo_tracer->GetHi().Append(hi_trace_ref); \
+    } \
+    return { EXEC_SEQUENTIAL }; \
+}
+
+#define traced_div_norm(sign)       traced_div(RSi, RTi, sign)
+
+
+#define traced_mult(src0, src1, sign) { \
+    uint64_t val = (unsigned) (((int64_t) (sign) GPR(src0)) * ((int64_t) (sign) GPR(src1))); \
+    arch32_t lo = HILO(Lo) = (arch32_t) (val); \
+    arch32_t hi = HILO(Hi) = (arch32_t) (val >> 32); \
+    if (inst.IsTraceEnabled() && inst.Tracers().HasHiLoTracer()) { \
+        MIPS32HiLoTracer* hilo_tracer = inst.Tracers().GetHiLoTracer(); \
+        MIPS32TraceEntity::Reference lo_trace_ref = inst.TracePool().Acquire(); \
+        if (lo_trace_ref.IsValid()) { \
+            lo_trace_ref->SetInstruction(insn); \
+            lo_trace_ref->SetPC(PC); \
+            lo_trace_ref->SetValue(lo); \
+            if (inst.Tracers().HasGPRTracer()) { \
+                MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+                lo_trace_ref->SetFirstOperand (gpr_tracer->Get(src0).Get()); \
+                lo_trace_ref->SetSecondOperand(gpr_tracer->Get(src1).Get()); \
+            } \
+        } \
+        MIPS32TraceEntity::Reference hi_trace_ref = inst.TracePool().Acquire(); \
+        if (hi_trace_ref.IsValid()) { \
+            hi_trace_ref->SetInstruction(insn); \
+            hi_trace_ref->SetPC(PC); \
+            hi_trace_ref->SetValue(hi); \
+            if (inst.Tracers().HasGPRTracer()) { \
+                MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
+                hi_trace_ref->SetFirstOperand (gpr_tracer->Get(src0).Get()); \
+                hi_trace_ref->SetSecondOperand(gpr_tracer->Get(src1).Get()); \
+            } \
+        } \
+        hilo_tracer->GetLo().Append(lo_trace_ref); \
+        hilo_tracer->GetHi().Append(hi_trace_ref); \
+    } \
+    return { EXEC_SEQUENTIAL }; \
+}
+
+#define traced_mult_norm(sign)      traced_mult(RSi, RTi, sign)
+
+
 #define event_wrapped(name, expr) \
     { \
         MIPS32Instruction __insn = insn; \
@@ -415,6 +488,23 @@ namespace Jasse {
     // MUL rd, rs, rt
     implexec(MUL,
         noexcept event_wrapped(MUL, traced_arithmetic_norm2r(RS * RT)));
+
+    
+    // DIV rs, rt
+    implexec(DIV,
+        noexcept event_wrapped(DIV, traced_div_norm(signed)));
+
+    // DIVU rs, rt
+    implexec(DIVU,
+        noexcept event_wrapped(DIVU, traced_div_norm(unsigned)));
+
+    // MULT rs, rt
+    implexec(MULT,
+        noexcept event_wrapped(MULT, traced_mult_norm(signed)));
+
+    // MULTU rs, rt
+    implexec(MULTU,
+        noexcept event_wrapped(MULTU, traced_mult_norm(unsigned)));
 
 
     // AND rd, rs, rt

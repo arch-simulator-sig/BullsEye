@@ -70,6 +70,11 @@ namespace Jasse::MIPS32PreExecutionEvents {
     eventdecl(MTHI  );
     eventdecl(MTLO  );
 
+    eventdecl(DIV   );
+    eventdecl(DIVU  );
+    eventdecl(MULT  );
+    eventdecl(MULTU );
+
     eventdecl(LB    );
     eventdecl(LBU   );
     eventdecl(LH    );
@@ -144,6 +149,11 @@ namespace Jasse::MIPS32PostExecutionEvents {
     eventdecl(MFLO  );
     eventdecl(MTHI  );
     eventdecl(MTLO  );
+
+    eventdecl(DIV   );
+    eventdecl(DIVU  );
+    eventdecl(MULT  );
+    eventdecl(MULTU );
 
     eventdecl(LB    );
     eventdecl(LBU   );
