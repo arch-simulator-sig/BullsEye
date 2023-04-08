@@ -66,8 +66,13 @@ namespace Jasse::MIPS32PreExecutionEvents {
     eventdecl(JALR  );
 
     eventdecl(LB    );
+    eventdecl(LBU   );
+    eventdecl(LH    );
+    eventdecl(LHU   );
     eventdecl(LW    );
+
     eventdecl(SB    );
+    eventdecl(SH    );
     eventdecl(SW    );
 }
 
@@ -131,8 +136,13 @@ namespace Jasse::MIPS32PostExecutionEvents {
     eventdecl(JALR  );
 
     eventdecl(LB    );
+    eventdecl(LBU   );
+    eventdecl(LH    );
+    eventdecl(LHU   );
     eventdecl(LW    );
+
     eventdecl(SB    );
+    eventdecl(SH    );
     eventdecl(SW    );
 }
 

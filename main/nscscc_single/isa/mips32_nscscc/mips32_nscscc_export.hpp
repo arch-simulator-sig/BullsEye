@@ -55,8 +55,13 @@ namespace Jasse {
     codedef MIPS32_JALR     {"jalr"  , MIPS32_TYPE_R, &MIPS32_DECODER_STUB2(Funct, SPECIAL, JALR)   , &MIPS32_EXECUTOR(JALR)    , &TextualizeMIPS32RtExcludedTypeR };
 
     codedef MIPS32_LB       {"lb"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, LB)              , &MIPS32_EXECUTOR(LB)      , &TextualizeMIPS32LoadStore };
+    codedef MIPS32_LBU      {"lbu"   , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, LBU)             , &MIPS32_EXECUTOR(LBU)     , &TextualizeMIPS32LoadStore };
+    codedef MIPS32_LH       {"lh"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, LH)              , &MIPS32_EXECUTOR(LH)      , &TextualizeMIPS32LoadStore };
+    codedef MIPS32_LHU      {"lhu"   , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, LHU)             , &MIPS32_EXECUTOR(LHU)     , &TextualizeMIPS32LoadStore };
     codedef MIPS32_LW       {"lw"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, LW)              , &MIPS32_EXECUTOR(LW)      , &TextualizeMIPS32LoadStore };
+    
     codedef MIPS32_SB       {"sb"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, SB)              , &MIPS32_EXECUTOR(SB)      , &TextualizeMIPS32LoadStore };
+    codedef MIPS32_SH       {"sh"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, SH)              , &MIPS32_EXECUTOR(SH)      , &TextualizeMIPS32LoadStore };
     codedef MIPS32_SW       {"sw"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, SW)              , &MIPS32_EXECUTOR(SW)      , &TextualizeMIPS32LoadStore };
 
     
@@ -69,6 +74,7 @@ namespace Jasse {
         &MIPS32_SLL,    &MIPS32_SLLV,   &MIPS32_SRA,    &MIPS32_SRAV,   &MIPS32_SRL,    &MIPS32_SRLV,
         &MIPS32_BEQ,    &MIPS32_BNE,    &MIPS32_BGEZ,   &MIPS32_BGTZ,   &MIPS32_BLEZ,   &MIPS32_BLTZ,
         &MIPS32_J,      &MIPS32_JAL,    &MIPS32_JR,     &MIPS32_JALR,
-        &MIPS32_LB,     &MIPS32_LW,     &MIPS32_SB,     &MIPS32_SW
+        &MIPS32_LB,     &MIPS32_LBU,    &MIPS32_LH,     &MIPS32_LHU,    &MIPS32_LW,     
+        &MIPS32_SB,     &MIPS32_SH,     &MIPS32_SW
     };
 }

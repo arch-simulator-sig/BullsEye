@@ -47,7 +47,12 @@
 #define ENCODE_MIPS32_JR(rs)                    ENCODE_MIPS32_TYPE_R(MIPS32_OPCODE_SPECIAL, rs, 0, 0, 0, MIPS32_FUNCT_SPECIAL_JR)
 #define ENCODE_MIPS32_JALR(rd, rs)              ENCODE_MIPS32_TYPE_R(MIPS32_OPCODE_SPECIAL, rs, 0, rd, 0, MIPS32_FUNCT_SPECIAL_JALR)
 
-#define ENCODE_MIPS32_LB(rt, offset, base)      ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_LB, base, rt, offset)
-#define ENCODE_MIPS32_LW(rt, offset, base)      ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_LW, base, rt, offset)
-#define ENCODE_MIPS32_SB(rt, offset, base)      ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_SB, base, rt, offset)
-#define ENCODE_MIPS32_SW(rt, offset, base)      ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_SW, base, rt, offset)
+#define ENCODE_MIPS32_LB(rt, offset, base)      ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_LB,  base, rt, offset)
+#define ENCODE_MIPS32_LBU(rt, offset, base)     ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_LBU, base, rt, offset)
+#define ENCODE_MIPS32_LH(rt, offset, base)      ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_LH,  base, rt, offset)
+#define ENCODE_MIPS32_LHU(rt, offset, base)     ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_LHU, base, rt, offset)
+#define ENCODE_MIPS32_LW(rt, offset, base)      ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_LW,  base, rt, offset)
+
+#define ENCODE_MIPS32_SB(rt, offset, base)      ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_SB,  base, rt, offset)
+#define ENCODE_MIPS32_SH(rt, offset, base)      ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_SH,  base, rt, offset)
+#define ENCODE_MIPS32_SW(rt, offset, base)      ENCODE_MIPS32_TYPE_I(MIPS32_OPCODE_SW,  base, rt, offset)

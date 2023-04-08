@@ -46,8 +46,13 @@ namespace Jasse {
     impldec_stub_static(Opcode, JAL,    MIPS32_JAL);
 
     impldec_stub_static(Opcode, LB,     MIPS32_LB);
+    impldec_stub_static(Opcode, LBU,    MIPS32_LBU);
+    impldec_stub_static(Opcode, LH,     MIPS32_LH);
+    impldec_stub_static(Opcode, LHU,    MIPS32_LHU);
     impldec_stub_static(Opcode, LW,     MIPS32_LW);
+
     impldec_stub_static(Opcode, SB,     MIPS32_SB);
+    impldec_stub_static(Opcode, SH,     MIPS32_SH);
     impldec_stub_static(Opcode, SW,     MIPS32_SW);
 
     //
@@ -203,8 +208,13 @@ namespace Jasse {
             stub_slot(JAL   );
 
             stub_slot(LB    );
+            stub_slot(LBU   );
+            stub_slot(LH    );
+            stub_slot(LHU   );
             stub_slot(LW    );
+
             stub_slot(SB    );
+            stub_slot(SH    );
             stub_slot(SW    );
         }
 

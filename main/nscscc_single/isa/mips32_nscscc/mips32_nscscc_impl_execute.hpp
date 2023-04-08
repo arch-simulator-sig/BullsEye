@@ -239,7 +239,7 @@
 }
 
 
-#define traced_load(dst, src0, width) { \
+#define traced_load(dst, src0, width, ext) { \
     memdata_t memdata; \
     arch32_t address = GPR(src0) + IMM16_SEXT; \
     MIPS32MOPOutcome mopoutcome = inst.MI()->ReadData(address, MOPW_##width, &memdata); \
@@ -250,7 +250,7 @@
         case MOP_DEVICE_ERROR:          return { EXEC_MEMORY_DEVICE_ERROR, mopoutcome.error }; \
         [[unlikely]] default:           SHOULD_NOT_REACH_HERE; \
     } \
-    arch32_t value = GPR(dst) = SEXT32_##width(memdata); \
+    arch32_t value = GPR(dst) = ext##32_##width(memdata); \
     if (inst.IsTraceEnabled() && inst.Tracers().HasGPRTracer()) { \
         MIPS32GPRTracer* gpr_tracer = inst.Tracers().GetGPRTracer(); \
         MIPS32TraceEntity::Reference trace_ref = inst.TracePool().Acquire(); \
@@ -271,7 +271,7 @@
     return { EXEC_SEQUENTIAL }; \
 }
 
-#define traced_load_norm(width)     traced_load(RTi, RSi, width)
+#define traced_load_norm(width, ext)    traced_load(RTi, RSi, width, ext)
 
 
 #define traced_store(src0, src1, width) { \
@@ -467,15 +467,31 @@ namespace Jasse {
 
     // LB rt, offset(base)
     implexec(LB,
-        noexcept event_wrapped(LB, traced_load_norm(BYTE)));
+        noexcept event_wrapped(LB, traced_load_norm(BYTE, SEXT)));
+
+    // LBU rt, offset(base)
+    implexec(LBU,
+        noexcept event_wrapped(LBU, traced_load_norm(BYTE, ZEXT)));
+
+    // LH rt, offset(base)
+    implexec(LH,
+        noexcept event_wrapped(LH, traced_load_norm(HALF_WORD, SEXT)));
+
+    // LHU rt, offset(base)
+    implexec(LHU,
+        noexcept event_wrapped(LHU, traced_load_norm(HALF_WORD, ZEXT)));
 
     // LW rt, offset(base)
     implexec(LW,
-        noexcept event_wrapped(LW, traced_load_norm(WORD)));
+        noexcept event_wrapped(LW, traced_load_norm(WORD, SEXT)));
 
     // SB rt, offset(base)
     implexec(SB,
         noexcept event_wrapped(SB, traced_store_norm(BYTE)));
+
+    // SH rt, offset(base)
+    implexec(SH,
+        noexcept event_wrapped(SH, traced_store_norm(HALF_WORD)));
 
     // SW rt, offset(base)
     implexec(SW,

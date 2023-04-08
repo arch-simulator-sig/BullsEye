@@ -47,8 +47,13 @@ namespace Jasse {
     decdecl_stub(Opcode, JAL    );
 
     decdecl_stub(Opcode, LB     );
+    decdecl_stub(Opcode, LBU    );
+    decdecl_stub(Opcode, LH     );
+    decdecl_stub(Opcode, LHU    );
     decdecl_stub(Opcode, LW     );
+
     decdecl_stub(Opcode, SB     );
+    decdecl_stub(Opcode, SH     );
     decdecl_stub(Opcode, SW     );
 
 
