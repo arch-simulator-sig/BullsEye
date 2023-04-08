@@ -7,8 +7,8 @@
 
 #include <iostream>
 
-#include "yasio/xxsocket.hpp"
-#include "yasio/xxsocket.cpp"     // not formal, just for compilation convenience :\
+#include "xxsocket.hpp"
+#include "xxsocket.cpp"     // not formal, just for compilation convenience :\
 
 
 namespace BullsEye {
@@ -81,7 +81,7 @@ namespace BullsEye {
 
     void SerialWriteOnlyConsole::Write(uint8_t data) noexcept
     {
-        std::cout << (char) data;
+        std::cout << (char) data << std::flush;
     }
 
     bool SerialWriteOnlyConsole::IsWriteAvailable() const noexcept

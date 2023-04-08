@@ -7,16 +7,6 @@
 
 namespace BullsEye::NSCSCCSingle {
 
-    // Performance Counter Container
-    class PerfCounterContainer {
-    private:
-        ClockCounter*   counter;
-
-    public:
-        // Not implemented currently (unused)
-    };
-
-
     // Clock Counter (Performance Counter)
     class ClockCounter {
     private:
@@ -43,6 +33,16 @@ namespace BullsEye::NSCSCCSingle {
 
         uint64_t    operator++(int) noexcept;
         uint64_t    operator--(int) noexcept;
+    };
+
+
+    // Performance Counter Container
+    class PerfCounterContainer {
+    private:
+        ClockCounter*   counter;
+
+    public:
+        // Not implemented currently (unused)
     };
 }
 

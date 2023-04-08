@@ -156,9 +156,9 @@ namespace BullsEye::NSCSCCSingle {
         addr_t phyaddress = address & 0x7FFFFFFF;
 
         if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
-            return baseRAM->ReadInsn(address, width, dst);
+            return baseRAM->ReadInsn(phyaddress, width, dst);
         else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
-            return extRAM->ReadInsn(address, width, dst);
+            return extRAM->ReadInsn(phyaddress - 0x00400000, width, dst);
         else
             return { MOP_ACCESS_FAULT, EFAULT };
     }
@@ -168,10 +168,10 @@ namespace BullsEye::NSCSCCSingle {
         addr_t phyaddress = address & 0x7FFFFFFF;
 
         if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
-            return baseRAM->ReadData(address, width, dst);
+            return baseRAM->ReadData(phyaddress, width, dst);
         else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
-            return extRAM->ReadData(address, width, dst);
-        else if (address == 0xBFD003F8 || address == 0xBFD003FD)
+            return extRAM->ReadData(phyaddress - 0x00400000, width, dst);
+        else if (address == 0xBFD003F8 || address == 0xBFD003FC)
             return _MMIO_ReadSerial(address, width, dst);
         else if (address == 0xBFD00400 || address == 0xBFD00404)
             return _MMIO_ReadClockCounter(address, width, dst);
@@ -184,9 +184,9 @@ namespace BullsEye::NSCSCCSingle {
         addr_t phyaddress = address & 0x7FFFFFFF;
 
         if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
-            return baseRAM->WriteInsn(address, width, src);
+            return baseRAM->WriteInsn(phyaddress, width, src);
         else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
-            return extRAM->WriteInsn(address, width, src);
+            return extRAM->WriteInsn(phyaddress - 0x00400000, width, src);
         else
             return { MOP_ACCESS_FAULT, EFAULT };
     }
@@ -196,10 +196,10 @@ namespace BullsEye::NSCSCCSingle {
         addr_t phyaddress = address & 0x7FFFFFFF;
 
         if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
-            return baseRAM->WriteData(address, width, src);
+            return baseRAM->WriteData(phyaddress, width, src);
         else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
-            return extRAM->WriteData(address, width, src);
-        else if (address == 0xBFD003F8 || address == 0xBFD003FD)
+            return extRAM->WriteData(phyaddress - 0x00400000, width, src);
+        else if (address == 0xBFD003F8 || address == 0xBFD003FC)
             return _MMIO_WriteSerial(address, width, src);
         else if (address == 0xBFD00400 || address == 0xBFD00404)
             return _MMIO_WriteClockCounter(address, width, src);
