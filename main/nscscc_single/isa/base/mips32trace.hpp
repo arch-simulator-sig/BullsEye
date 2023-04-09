@@ -403,10 +403,18 @@ namespace Jasse {
     template<MIPS32TraceHistoryManager _HistoryManager
         = MIPS32TraceHistoryManagement::CompressedIncremental<>>
     class MIPS32MemoryTracerSubtrate {
+    public:
+        using AddressRangeMapper    = std::function<bool(const MIPS32MemoryTracerSubtrate<_HistoryManager>&, size_t&)>;
+    
     private:
         const size_t            size;
 
         mutable _HistoryManager manager;
+
+        AddressRangeMapper      address_range_mapper;
+
+    private:
+        static bool                 _DefaultAddressRangeMapper(const MIPS32MemoryTracerSubtrate<_HistoryManager>&, size_t& address) noexcept;
 
     public:
         MIPS32MemoryTracerSubtrate(const MIPS32MemoryTracerSubtrate& obj) = delete;
@@ -426,14 +434,21 @@ namespace Jasse {
         MIPS32TraceHistory&         Acquire(size_t address) noexcept;
         const MIPS32TraceHistory&   Acquire(size_t address) const noexcept;
 
-        void                        Set(size_t address, const MIPS32TraceHistory& obj) noexcept;
-        void                        Set(size_t address, MIPS32TraceHistory&& obj) noexcept;
+        std::optional<std::reference_wrapper<MIPS32TraceHistory>>       AcquireInBound(size_t address) noexcept;
+        std::optional<std::reference_wrapper<const MIPS32TraceHistory>> AcquireInBound(size_t address) const noexcept;
+
+        bool                        Set(size_t address, const MIPS32TraceHistory& obj) noexcept;
+        bool                        Set(size_t address, MIPS32TraceHistory&& obj) noexcept;
         bool                        SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept;
         bool                        SetIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept;
         bool                        SetIfAbsent(size_t address, const MIPS32TraceHistory& obj) noexcept;
         bool                        SetIfAbsent(size_t address, MIPS32TraceHistory&& obj) noexcept;
 
         bool                        SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept;
+
+        AddressRangeMapper&         GetAddressRangeMapper() noexcept;
+        const AddressRangeMapper&   GetAddressRangeMapper() const noexcept;
+        void                        SetAddressRangeMapper(const AddressRangeMapper& mapper) noexcept;
 
         MIPS32MemoryTracerSubtrate&         operator=(const MIPS32MemoryTracerSubtrate& obj) = delete;
         MIPS32MemoryTracerSubtrate&         operator=(MIPS32MemoryTracerSubtrate&& obj) = delete;
@@ -675,6 +690,8 @@ namespace Jasse {
         if (new_history_depth == history_depth)
             return;
 
+        history_depth  = new_history_depth;
+
         auto newArray = _ModifyDepth(traces,
                                      capacity,
                                      count,
@@ -719,12 +736,15 @@ namespace Jasse {
         {
             if (count == capacity)
             {
-                MIPS32TraceEntity::Reference* newArray = new MIPS32TraceEntity::Reference[
-                    std::min(capacity << 1, history_depth)];
+                size_t newCapacity = std::min(capacity << 1, history_depth);
+
+                MIPS32TraceEntity::Reference* newArray = new MIPS32TraceEntity::Reference[newCapacity];
                 
                 std::copy(traces, traces + capacity, newArray);
+                delete[] traces;
 
-                traces = newArray;
+                capacity = newCapacity;
+                traces   = newArray;
             }
 
             traces[count++] = trace;
@@ -1558,16 +1578,26 @@ namespace Jasse {
     //
     // mutable _HistoryManager manager;
     //
+    // AddressRangeMapper      address_range_mapper;
+    //
 
     template<MIPS32TraceHistoryManager _HistoryManager>
     MIPS32MemoryTracerSubtrate<_HistoryManager>::MIPS32MemoryTracerSubtrate(size_t size, size_t default_depth) noexcept
-        : size      (size)
-        , manager   (size, default_depth)
+        : size                  (size)
+        , manager               (size, default_depth)
+        , address_range_mapper  (_DefaultAddressRangeMapper)
     { }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
     MIPS32MemoryTracerSubtrate<_HistoryManager>::~MIPS32MemoryTracerSubtrate() noexcept
     { }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    bool MIPS32MemoryTracerSubtrate<_HistoryManager>::_DefaultAddressRangeMapper(
+        const MIPS32MemoryTracerSubtrate<_HistoryManager>& obj, size_t& address) noexcept
+    {
+        return address >= 0 && address <= obj.GetSize();
+    }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline size_t MIPS32MemoryTracerSubtrate<_HistoryManager>::GetDefaultDepth() const noexcept
@@ -1590,12 +1620,15 @@ namespace Jasse {
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline bool MIPS32MemoryTracerSubtrate<_HistoryManager>::CheckBound(size_t address) const noexcept
     {
-        return address >= 0 && address < size;
+        return address_range_mapper(*this, address);
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline std::optional<std::reference_wrapper<MIPS32TraceHistory>> MIPS32MemoryTracerSubtrate<_HistoryManager>::Get(size_t address) noexcept
     {
+        if (!address_range_mapper(*this, address))
+            return std::nullopt;
+
         auto __from_get = manager.Get(address);
         return __from_get ? std::optional<std::reference_wrapper<MIPS32TraceHistory>>(std::ref(*__from_get)) : std::nullopt;
     }
@@ -1603,6 +1636,9 @@ namespace Jasse {
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline std::optional<std::reference_wrapper<const MIPS32TraceHistory>> MIPS32MemoryTracerSubtrate<_HistoryManager>::Get(size_t address) const noexcept
     {
+        if (!address_range_mapper(*this, address))
+            return std::nullopt;
+
         auto __from_const_get = std::as_const(manager).Get(address);
         return __from_const_get ? std::optional<std::reference_wrapper<const MIPS32TraceHistory>>(std::cref(*__from_const_get)) : std::nullopt;
     }
@@ -1610,54 +1646,115 @@ namespace Jasse {
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline MIPS32TraceHistory& MIPS32MemoryTracerSubtrate<_HistoryManager>::Acquire(size_t address) noexcept
     {
+        address_range_mapper(*this, address);
         return manager.Acquire(address);
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline const MIPS32TraceHistory& MIPS32MemoryTracerSubtrate<_HistoryManager>::Acquire(size_t address) const noexcept
     {
+        address_range_mapper(*this, address);
         return manager.Acquire(address);
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
-    inline void MIPS32MemoryTracerSubtrate<_HistoryManager>::Set(size_t address, const MIPS32TraceHistory& obj) noexcept
+    inline std::optional<std::reference_wrapper<MIPS32TraceHistory>> MIPS32MemoryTracerSubtrate<_HistoryManager>::AcquireInBound(size_t address) noexcept
     {
-        manager.Set(address, obj);
+        if (!address_range_mapper(*this, address))
+            return std::nullopt;
+
+        return Acquire(address);
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
-    inline void MIPS32MemoryTracerSubtrate<_HistoryManager>::Set(size_t address, MIPS32TraceHistory&& obj) noexcept
+    inline std::optional<std::reference_wrapper<const MIPS32TraceHistory>> MIPS32MemoryTracerSubtrate<_HistoryManager>::AcquireInBound(size_t address) const noexcept
     {
+        if (!address_range_mapper(*this, address))
+            return std::nullopt;
+
+        return Acquire(address);
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline bool MIPS32MemoryTracerSubtrate<_HistoryManager>::Set(size_t address, const MIPS32TraceHistory& obj) noexcept
+    {
+        if (!address_range_mapper(*this, address))
+            return false;
+
+        manager.Set(address, obj);
+        return true;
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline bool MIPS32MemoryTracerSubtrate<_HistoryManager>::Set(size_t address, MIPS32TraceHistory&& obj) noexcept
+    {
+        if (!address_range_mapper(*this, address))
+            return false;
+        
         manager.Set(address, std::move(obj));
+        return true;
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline bool MIPS32MemoryTracerSubtrate<_HistoryManager>::SetIfExists(size_t address, const MIPS32TraceHistory& obj) noexcept
     {
+        if (!address_range_mapper(*this, address))
+            return false;
+
         return manager.SetIfExists(address, obj);
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline bool MIPS32MemoryTracerSubtrate<_HistoryManager>::SetIfExists(size_t address, MIPS32TraceHistory&& obj) noexcept
     {
+        if (!address_range_mapper(*this, address))
+            return false;
+
         return manager.SetIfExists(address, std::move(obj));
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline bool MIPS32MemoryTracerSubtrate<_HistoryManager>::SetIfAbsent(size_t address, const MIPS32TraceHistory& obj) noexcept
     {
+        if (!address_range_mapper(*this, address))
+            return false;
+
         return manager.SetIfAbsent(address, obj);
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline bool MIPS32MemoryTracerSubtrate<_HistoryManager>::SetIfAbsent(size_t address, MIPS32TraceHistory&& obj) noexcept
     {
+        if (!address_range_mapper(*this, address))
+            return false;
+        
         return manager.SetIfAbsent(address, std::move(obj));
     }
 
     template<MIPS32TraceHistoryManager _HistoryManager>
     inline bool MIPS32MemoryTracerSubtrate<_HistoryManager>::SwapIfExists(size_t address, MIPS32TraceHistory& obj) noexcept
     {
+        if (!address_range_mapper(*this, address))
+            return false;
+
         return manager.SwapIfExists(address, obj);
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline MIPS32MemoryTracerSubtrate<_HistoryManager>::AddressRangeMapper& MIPS32MemoryTracerSubtrate<_HistoryManager>::GetAddressRangeMapper() noexcept
+    {
+        return address_range_mapper;
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline const MIPS32MemoryTracerSubtrate<_HistoryManager>::AddressRangeMapper& MIPS32MemoryTracerSubtrate<_HistoryManager>::GetAddressRangeMapper() const noexcept
+    {
+        return address_range_mapper;
+    }
+
+    template<MIPS32TraceHistoryManager _HistoryManager>
+    inline void MIPS32MemoryTracerSubtrate<_HistoryManager>::SetAddressRangeMapper(const AddressRangeMapper& mapper) noexcept
+    {
+        address_range_mapper = mapper;
     }
 }
