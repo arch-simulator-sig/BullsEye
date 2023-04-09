@@ -84,6 +84,8 @@ namespace Jasse::MIPS32PreExecutionEvents {
     eventdecl(SB    );
     eventdecl(SH    );
     eventdecl(SW    );
+
+    eventdecl(TEQ   );
 }
 
 #undef eventdecl
@@ -164,6 +166,8 @@ namespace Jasse::MIPS32PostExecutionEvents {
     eventdecl(SB    );
     eventdecl(SH    );
     eventdecl(SW    );
+
+    eventdecl(TEQ   );
 }
 
 

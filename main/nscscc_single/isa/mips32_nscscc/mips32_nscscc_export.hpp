@@ -73,7 +73,9 @@ namespace Jasse {
     codedef MIPS32_SB       {"sb"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, SB)              , &MIPS32_EXECUTOR(SB)      , &TextualizeMIPS32LoadStore };
     codedef MIPS32_SH       {"sh"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, SH)              , &MIPS32_EXECUTOR(SH)      , &TextualizeMIPS32LoadStore };
     codedef MIPS32_SW       {"sw"    , MIPS32_TYPE_I, &MIPS32_DECODER_STUB(Opcode, SW)              , &MIPS32_EXECUTOR(SW)      , &TextualizeMIPS32LoadStore };
-
+    
+    codedef MIPS32_TEQ      {"teq"   , MIPS32_TYPE_R, &MIPS32_DECODER_STUB2(Funct, SPECIAL, TEQ)    , &MIPS32_EXECUTOR(TEQ)     , &TextualizeMIPS32RdExcludedTypeR };
+    
     
     codesetdef  ALL_OF_MIPS32 {
         &MIPS32_ADD,    &MIPS32_ADDI,   &MIPS32_ADDU,   &MIPS32_ADDIU,  &MIPS32_SUB,    &MIPS32_SUBU,
@@ -87,6 +89,7 @@ namespace Jasse {
         &MIPS32_MFHI,   &MIPS32_MFLO,   &MIPS32_MTHI,   &MIPS32_MTLO,
         &MIPS32_DIV,    &MIPS32_DIVU,   &MIPS32_MULT,   &MIPS32_MULTU,
         &MIPS32_LB,     &MIPS32_LBU,    &MIPS32_LH,     &MIPS32_LHU,    &MIPS32_LW,     
-        &MIPS32_SB,     &MIPS32_SH,     &MIPS32_SW
+        &MIPS32_SB,     &MIPS32_SH,     &MIPS32_SW,
+        &MIPS32_TEQ
     };
 }

@@ -71,5 +71,7 @@ namespace Jasse {
     codedecl    MIPS32_SH    ;
     codedecl    MIPS32_SW    ;
 
+    codedecl    MIPS32_TEQ   ;
+
     codesetdecl ALL_OF_MIPS32;
 }

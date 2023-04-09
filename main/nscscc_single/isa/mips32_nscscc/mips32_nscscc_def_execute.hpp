@@ -76,6 +76,8 @@ namespace Jasse {
     execdecl(SB     ) noexcept;
     execdecl(SH     ) noexcept;
     execdecl(SW     ) noexcept;
+
+    execdecl(TEQ    ) noexcept;
 }
 
 #undef execdecl

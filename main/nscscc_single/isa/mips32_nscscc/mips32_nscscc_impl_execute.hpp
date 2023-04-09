@@ -301,7 +301,8 @@
                 trace_ref->SetSecondOperand (gpr_tracer->Get(src1).Get()); \
             } \
         } \
-        memory_tracer->Acquire(address).Append(trace_ref); \
+        if (memory_tracer->CheckBound(address)) \
+            memory_tracer->Acquire(address).Append(trace_ref); \
     } \
     return { EXEC_SEQUENTIAL }; \
 }
@@ -650,6 +651,11 @@ namespace Jasse {
     // SW rt, offset(base)
     implexec(SW,
         noexcept event_wrapped(SW, traced_store_norm(WORD)));
+
+    
+    // TEQ rs, rt
+    implexec(TEQ,
+        noexcept event_wrapped(TEQ, return { EXEC_SEQUENTIAL };))
 }
 
 

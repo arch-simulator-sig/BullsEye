@@ -84,6 +84,8 @@ namespace Jasse::MIPS32PreExecutionEvents {
     implevent(SB    );
     implevent(SH    );
     implevent(SW    );
+
+    implevent(TEQ   );
 }
 
 #undef implevent
@@ -165,6 +167,8 @@ namespace Jasse::MIPS32PostExecutionEvents {
     implevent(SB    );
     implevent(SH    );
     implevent(SW    );
+
+    implevent(TEQ   );
 }
 
 

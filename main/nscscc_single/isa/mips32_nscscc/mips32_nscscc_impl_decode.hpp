@@ -90,6 +90,9 @@ namespace Jasse {
     impldec_stub2_static(Funct, SPECIAL, MULTU,  MIPS32_MULTU);
 
     //
+    impldec_stub2_static(Funct, SPECIAL, TEQ,    MIPS32_TEQ);
+
+    //
     impldec_stub2_static(Funct, SPECIAL2, MUL,   MIPS32_MUL);
 
     //
@@ -136,6 +139,18 @@ namespace Jasse {
 
             stub_slot(JR    );
             stub_slot(JALR  );
+
+            stub_slot(MFHI  );
+            stub_slot(MFLO  );
+            stub_slot(MTHI  );
+            stub_slot(MTLO  );
+
+            stub_slot(DIV   );
+            stub_slot(DIVU  );
+            stub_slot(MULT  );
+            stub_slot(MULTU );
+
+            stub_slot(TEQ   );
         }
 
         ~_IMPLDEC_NSCSCC_STUB_CLASS_GROUP_SPECIAL() noexcept
@@ -251,6 +266,9 @@ namespace Jasse {
     {
         MIPS32DecodePath stub 
             = _IMPLDEC_NSCSCC_STUB_GLOBAL->stubs[insn.GetOpcode()];
+
+        if (!stub)
+            printf("[Unknown instruction: 0x%08x]\n", insn.GetRaw());
 
         return stub ? (*stub)(insn) : false;
     }
