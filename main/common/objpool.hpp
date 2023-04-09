@@ -144,6 +144,8 @@ namespace BullsEye {
             const _TObject*     operator->() const noexcept;
 
             Reference&          operator=(const Reference& obj) noexcept;
+
+            operator            bool() const noexcept;
         };
 
     private:
@@ -510,6 +512,13 @@ namespace BullsEye {
         valid_ref   = obj.valid_ref;
         ref         = obj.ref;
         return *this;
+    }
+
+    template<class _TObject, class _TInitializer, class _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+        ::Reference::operator bool() const noexcept
+    {
+        return IsValid();
     }
 }
 
