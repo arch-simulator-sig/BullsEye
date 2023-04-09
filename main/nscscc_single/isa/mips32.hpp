@@ -94,7 +94,7 @@ namespace Jasse {
 
     using MIPS32HiLoTracer      = MIPS32HiLoTracerSubtrate;
 
-    using MIPS32MemoryTracer    = MIPS32MemoryTracerSubtrate<MIPS32TraceHistoryManagement::CompressedIncremental<>>;
+    using MIPS32MemoryTracer    = MIPS32MemoryTracerSubtrate<MIPS32TraceHistoryManagement::Pretouch>;
 
     using MIPS32PCTracer        = MIPS32PCTracerSubtrate;
 
@@ -518,10 +518,12 @@ namespace Jasse {
     MIPS32TracerContainer::MIPS32TracerContainer(MIPS32TracerContainer&& obj) noexcept
         : pc_tracer     (obj.pc_tracer)
         , gpr_tracer    (obj.gpr_tracer)
+        , hilo_tracer   (obj.hilo_tracer)
         , memory_tracer (obj.memory_tracer)
     {
         obj.pc_tracer       = nullptr;
         obj.gpr_tracer      = nullptr;
+        obj.hilo_tracer     = nullptr;
         obj.memory_tracer   = nullptr;
     }
 
@@ -872,6 +874,9 @@ namespace Jasse {
             {
                 new_pc      = GetBranchTargetPC();
                 pc_action   = MIPS32PCIterationEvent::Action::BRANCH_TAKEN;
+
+                if (IsTraceEnabled() && tracers.HasPCTracer())
+                    tracers.GetPCTracer()->ConfirmDelayedTrace();
             }
             else
             {
@@ -943,6 +948,8 @@ namespace Jasse {
         , tracer_depth_pc       (0)
         , tracer_enabled_gpr    (false)
         , tracer_depth_gpr      (0)
+        , tracer_enabled_hilo   (false)
+        , tracer_depth_hilo     (0)
         , tracer_enabled_memory (false)
         , tracer_depth_memory   (0)
         , tracer_size_memory    (0)
