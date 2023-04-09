@@ -167,16 +167,26 @@ namespace BullsEye::NSCSCCSingle {
     {
         addr_t phyaddress = address & 0x7FFFFFFF;
 
-        if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
-            return baseRAM->ReadData(phyaddress, width, dst);
-        else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
-            return extRAM->ReadData(phyaddress - 0x00400000, width, dst);
-        else if (address == 0xBFD003F8 || address == 0xBFD003FC)
-            return _MMIO_ReadSerial(address, width, dst);
-        else if (address == 0xBFD00400 || address == 0xBFD00404)
-            return _MMIO_ReadClockCounter(address, width, dst);
-        else
-            return { MOP_ACCESS_FAULT, EFAULT };
+        auto procedure = [&]() -> MIPS32MOPOutcome 
+        {
+            if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
+                return baseRAM->ReadData(phyaddress, width, dst);
+            else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
+                return extRAM->ReadData(phyaddress - 0x00400000, width, dst);
+            else if (address == 0xBFD003F8 || address == 0xBFD003FC)
+                return _MMIO_ReadSerial(address, width, dst);
+            else if (address == 0xBFD00400 || address == 0xBFD00404)
+                return _MMIO_ReadClockCounter(address, width, dst);
+            else
+                return { MOP_ACCESS_FAULT, EFAULT };
+        };
+
+        MIPS32MOPOutcome outcome = procedure();
+
+        if (outcome.status != MOP_SUCCESS)
+            printf("Failed ReadData: 0x%08x %d\n", address, width.length);
+
+        return outcome;
     }
 
     MIPS32MOPOutcome NSCSCC2022MMU::WriteInsn(addr_t address, MIPS32MOPWidth width, memdata_t src) noexcept
@@ -193,18 +203,29 @@ namespace BullsEye::NSCSCCSingle {
 
     MIPS32MOPOutcome NSCSCC2022MMU::WriteData(addr_t address, MIPS32MOPWidth width, memdata_t src) noexcept
     {
+
         addr_t phyaddress = address & 0x7FFFFFFF;
 
-        if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
-            return baseRAM->WriteData(phyaddress, width, src);
-        else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
-            return extRAM->WriteData(phyaddress - 0x00400000, width, src);
-        else if (address == 0xBFD003F8 || address == 0xBFD003FC)
-            return _MMIO_WriteSerial(address, width, src);
-        else if (address == 0xBFD00400 || address == 0xBFD00404)
-            return _MMIO_WriteClockCounter(address, width, src);
-        else
-            return { MOP_ACCESS_FAULT, EFAULT };
+        auto procedure = [&]() -> MIPS32MOPOutcome 
+        {
+            if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
+                return baseRAM->WriteData(phyaddress, width, src);
+            else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
+                return extRAM->WriteData(phyaddress - 0x00400000, width, src);
+            else if (address == 0xBFD003F8 || address == 0xBFD003FC)
+                return _MMIO_WriteSerial(address, width, src);
+            else if (address == 0xBFD00400 || address == 0xBFD00404)
+                return _MMIO_WriteClockCounter(address, width, src);
+            else
+                return { MOP_ACCESS_FAULT, EFAULT };
+        };
+
+        MIPS32MOPOutcome outcome = procedure();
+
+        if (outcome.status != MOP_SUCCESS)
+            printf("Failed WriteData: 0x%08x %d\n", address, width.length);
+
+        return outcome;
     }
 
     inline BaseRAM* NSCSCC2022MMU::GetBaseRAM() noexcept
