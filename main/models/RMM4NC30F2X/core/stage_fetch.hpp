@@ -12,6 +12,7 @@
 
 #include "models/common/dff.hpp"
 #include "models/common/sram.hpp"
+#include "models/common/axi.hpp"
 
 #include "models/util/mips32helper.hpp"
 
@@ -21,17 +22,27 @@
 
 namespace BullsEye::Gemini30F2::Fetch {
 
+    // AXI-4 Channel Definition
+    using FetchAXI4ReadAddressChannelM2S    = AXI4::ReadAddressChannelM2S<uint4_t, uint32_t, bool>;
+
+    using FetchAXI4ReadAddressChannelS2M    = AXI4::ReadAddressChannelS2M;
+
+    using FetchAXI4ReadDataChannelM2S       = AXI4::ReadDataChannelM2S;
+
+    using FetchAXI4ReadDataChannelS2M       = AXI4::ReadDataChannelS2M<uint4_t, uint32_t>;
+
+
     // GHR (Global History Register)
-    using GHRValue  = truncated_uint8_t<4>;
+    using GHRValue  = uint4_t;
     using GHR       = SteppingDFF<GHRValue>;
 
 
     // Uncached Fetch Buffer (Instruction Fetch Buffer)
     class UncachedBuffer {
     public:
-        using Address   = truncated_uint32_t<30>;
+        using Address   = uint30_t;
 
-        using Data      = truncated_uint64_t<36>;
+        using Data      = uint36_t;
 
     private:
         SteppingDFF<bool>       buffer_valid;
@@ -41,16 +52,9 @@ namespace BullsEye::Gemini30F2::Fetch {
         SteppingDFF<Data>       buffer_data;
 
     public:
-        class CombQueryResult {
-        private:
+        struct CombQueryResult {
             bool    hit;
             Data    data;
-
-        public:
-            CombQueryResult(bool hit, Data data) noexcept;
-
-            bool    Hit() const noexcept;
-            Data    Data() const noexcept;
         };
 
     public:
@@ -73,9 +77,9 @@ namespace BullsEye::Gemini30F2::Fetch {
     // Cached Refill Fetch Buffer (Instruction Fetch Buffer)
     class CachedRefillBuffer {
     public:
-        using Address   = truncated_uint32_t<26>;
+        using Address   = uint26_t;
         
-        using Data      = truncated_uint64_t<36>;
+        using Data      = uint36_t;
 
     private:
         SteppingDFF<Address>    refill_addr;
@@ -85,16 +89,9 @@ namespace BullsEye::Gemini30F2::Fetch {
         SteppingDFF<Data>       refilled_data[16];
 
     public:
-        class CombQueryResult {
-        private:
+        struct CombQueryResult {
             bool    hit;
             Data    data;
-
-        public:
-            CombQueryResult(bool hit, Data data) noexcept;
-
-            bool    Hit() const noexcept;
-            Data    Data() const noexcept;
         };
 
     public:
@@ -121,14 +118,14 @@ namespace BullsEye::Gemini30F2::Fetch {
     // L1 (attached) Instruction Cache
     class L1InstructionCache {
     public:
-        using InstructionData   = truncated_uint64_t<36>;
+        using InstructionData   = uint36_t;
 
     private:
         class Tags {
         public:
             using TagValid  = bool;
 
-            using TagValue  = truncated_uint32_t<19>;
+            using TagValue  = uint19_t;
 
         private:
             TagValid    tag_valid[128];
@@ -165,16 +162,9 @@ namespace BullsEye::Gemini30F2::Fetch {
         SteppingDFF<bool>                   cache_tag_hit;
 
     public:
-        class CacheQueryResult {
-        private:
+        struct CacheQueryResult {
             bool            hit;
             InstructionData data;
-
-        public:
-            CacheQueryResult(bool hit, InstructionData data) noexcept;
-
-            bool            Hit() const noexcept;
-            InstructionData Data() const noexcept;
         };
 
     public:
@@ -205,7 +195,7 @@ namespace BullsEye::Gemini30F2::Fetch {
     public:
         using RawInstructionData        = uint32_t;
 
-        using PredecodedInstructionData = truncated_uint32_t<36>;
+        using PredecodedInstructionData = uint36_t;
 
     public:
         Predecoder() noexcept;
@@ -224,9 +214,9 @@ namespace BullsEye::Gemini30F2::Fetch {
         static constexpr uint8_t    PHT_STATE_STRONG_NOT_TAKEN  = 0b11;
 
     public:
-        using PHTEntry      = truncated_uint8_t<2>;
+        using PHTEntry      = uint2_t;
 
-        using BTBEntry      = truncated_uint64_t<36>;
+        using BTBEntry      = uint36_t;
 
     private:
         DualPortRAM<PHTEntry, 8192>     pht_ram;
@@ -238,20 +228,11 @@ namespace BullsEye::Gemini30F2::Fetch {
         SteppingDFF<pc_t>               last_pc;
 
     public:
-        class BPQueryResult {
-        private:
+        struct BPQueryResult {
             bool        taken;
             PHTEntry    pattern;
             bool        target_valid;
             pc_t        target;
-
-        public:
-            BPQueryResult(bool taken, PHTEntry pattern, bool target_valid, pc_t target) noexcept;
-
-            bool        Taken() const noexcept;
-            PHTEntry    Pattern() const noexcept;
-            bool        TargetValid() const noexcept;
-            pc_t        Target() const noexcept;
         };
 
     private:
@@ -291,33 +272,134 @@ namespace BullsEye::Gemini30F2::Fetch {
     };
 
 
+    // AXI-4 Bus Controller
+    class AXI4Controller {
+    public:
+        static constexpr uint8_t    FETCH_STATE_IDLE                = 0b000;
 
+        static constexpr uint8_t    FETCH_STATE_UNCACHED_AXI_ADDR   = 0b100;
+        static constexpr uint8_t    FETCH_STATE_UNCACHED_AXI_DATA   = 0b101;
+
+        static constexpr uint8_t    FETCH_STATE_REFILL_AXI_ADDR     = 0b010;
+        static constexpr uint8_t    FETCH_STATE_REFILL_AXI_DATA     = 0b011;
+
+    public:
+        using CacheLine     = uint36_t;
+
+        using CacheAddress  = uint32_t;
+
+        struct CacheUpdateData {
+            bool            enable;
+            CacheAddress    addr;
+            CacheLine       data;
+        };
+
+        struct CacheUpdateTag {
+            bool            enable;
+            bool            valid;
+            CacheAddress    addr;
+        };
+
+
+        using BufferLine    = uint36_t;
+
+        using BufferAddress = uint32_t;
+
+        using BufferOffset  = uint4_t;
+
+        struct UncachedBufferUpdate {
+            bool            enable;
+            BufferAddress   addr;
+            BufferLine      data;
+        };
+        
+        struct RefillBufferUpdateAddress {
+            bool            enable;
+            BufferAddress   addr;
+        };
+
+        struct RefillBufferUpdateData {
+            bool            enable;
+            BufferOffset    addr;
+            BufferLine      data;
+        };
+
+        struct RefillBufferUpdateControl {
+            bool            reset;
+        };
+
+    private:
+        //
+        Predecoder          predecoder;
+
+        uint3_t             state;
+        uint5_t             axi_counter;
+
+        uint4_t             raddr;
+        uint32_t            curaddr;
+
+        //
+        bool                next_reset;
+
+        //
+        pc_t                next_pc;
+
+        bool                next_cctrl_miss;
+        bool                next_cctrl_uncached;
+
+        //
+        CacheUpdateData                 last_cache_update_data;
+        CacheUpdateTag                  last_cache_update_tag;
+
+        UncachedBufferUpdate            last_uncached_buffer_update;
+
+        RefillBufferUpdateAddress       last_refill_buffer_update_address;
+        RefillBufferUpdateData          last_refill_buffer_update_data;
+        RefillBufferUpdateControl       last_refill_buffer_update_control;
+
+        //
+        FetchAXI4ReadAddressChannelS2M  axi_read_address;
+        FetchAXI4ReadDataChannelS2M     axi_read_data;
+
+        FetchAXI4ReadAddressChannelM2S  last_axi_read_address;
+        FetchAXI4ReadDataChannelM2S     last_axi_read_data;
+
+
+    public:
+        AXI4Controller() noexcept;
+        ~AXI4Controller() noexcept;
+
+        void                        NextPC(pc_t pc) noexcept;
+
+        void                        NextCacheControl(bool miss, bool uncached) noexcept;
+
+        void                        NextReset() noexcept;
+
+        CacheUpdateData             GetLastCacheUpdateData() const noexcept;
+        CacheUpdateTag              GetLastCacheUpdateTag() const noexcept;
+
+        UncachedBufferUpdate        GetLastUncachedBufferUpdate() const noexcept;
+
+        RefillBufferUpdateAddress   GetLastRefillBufferUpdateAddress() const noexcept;
+        RefillBufferUpdateData      GetLastRefillBufferUpdateData() const noexcept;
+        RefillBufferUpdateControl   GetLastRefillBufferUpdateControl() const noexcept;
+
+        // AXI interface
+        FetchAXI4ReadAddressChannelM2S  GetLastAXI4ReadAddress() const noexcept;
+        void                            NextAXI4ReadAddress(FetchAXI4ReadAddressChannelS2M bundle) noexcept;
+
+        FetchAXI4ReadDataChannelM2S     GetLastAXI4ReadData() const noexcept;
+        void                            NextAXI4ReadData(FetchAXI4ReadDataChannelS2M bundle) noexcept;
+
+        //
+        void                        Reset() noexcept;
+        void                        Eval() noexcept;
+    };
+
+    
     // TODO
 }
 
-
-// Implementation of: class Fetch::UncachedBuffer::CombQueryResult
-namespace BullsEye::Gemini30F2::Fetch {
-    //
-    // bool    hit;
-    // Data    data;
-    //
-
-    UncachedBuffer::CombQueryResult::CombQueryResult(bool hit, UncachedBuffer::Data data) noexcept
-        : hit    (hit)
-        , data   (data)
-    { }
-
-    bool UncachedBuffer::CombQueryResult::Hit() const noexcept
-    {
-        return hit;
-    }
-
-    UncachedBuffer::Data UncachedBuffer::CombQueryResult::Data() const noexcept
-    {
-        return data;
-    }
-}
 
 
 // Implementation of: class Fetch::UncachedBuffer
@@ -364,9 +446,10 @@ namespace BullsEye::Gemini30F2::Fetch {
 
     inline UncachedBuffer::CombQueryResult UncachedBuffer::CombQuery(uint32_t address) const noexcept
     {
-        return CombQueryResult(
-            buffer_valid.Get() && buffer_addr.Get() == (address >> 2), 
-            buffer_data.Get());
+        return CombQueryResult {
+            .hit    = buffer_valid.Get() && buffer_addr.Get() == (address >> 2), 
+            .data   = buffer_data.Get() 
+        };
     }
 
     inline void UncachedBuffer::Reset() noexcept
@@ -383,31 +466,6 @@ namespace BullsEye::Gemini30F2::Fetch {
         buffer_data.Eval();
 
         buffer_valid.Next(false);
-    }
-}
-
-
-
-// Implementation of: class Fetch::CachedRefillBuffer::CombQueryResult
-namespace BullsEye::Gemini30F2::Fetch {
-    //
-    // bool    hit;
-    // Data    data;
-    //
-
-    CachedRefillBuffer::CombQueryResult::CombQueryResult(bool hit, CachedRefillBuffer::Data data) noexcept
-        : hit    (hit)
-        , data   (data)
-    { }
-
-    bool CachedRefillBuffer::CombQueryResult::Hit() const noexcept
-    {
-        return hit;
-    }
-
-    CachedRefillBuffer::Data CachedRefillBuffer::CombQueryResult::Data() const noexcept
-    {
-        return data;
     }
 }
 
@@ -478,9 +536,10 @@ namespace BullsEye::Gemini30F2::Fetch {
     {
         uint32_t index = (address >> 2) & 0xF;
 
-        return CombQueryResult(
-            refilled_valid[index].Get() && refill_addr.Get() == (address >> 6), 
-            refilled_data[index].Get());
+        return CombQueryResult {
+            .hit    = refilled_valid[index].Get() && refill_addr.Get() == (address >> 6), 
+            .data   = refilled_data[index].Get() 
+        };
     }
 
     void CachedRefillBuffer::Reset() noexcept
@@ -500,7 +559,6 @@ namespace BullsEye::Gemini30F2::Fetch {
             data.Eval();
     }
 }
-
 
 
 // Implementation of: class Fetch::L1InstructionCache::Tags
@@ -586,30 +644,6 @@ namespace BullsEye::Gemini30F2::Fetch {
 }
 
 
-// Implementation of: class Fetch::L1InstructionCache::CacheQueryResult
-namespace BullsEye::Gemini30F2::Fetch {
-    //
-    // bool             hit;
-    // InstructionData  data;
-    //
-
-    L1InstructionCache::CacheQueryResult::CacheQueryResult(bool hit, L1InstructionCache::InstructionData data) noexcept
-        : hit    (hit)
-        , data   (data)
-    { }
-
-    bool L1InstructionCache::CacheQueryResult::Hit() const noexcept
-    {
-        return hit;
-    }
-
-    L1InstructionCache::InstructionData L1InstructionCache::CacheQueryResult::Data() const noexcept
-    {
-        return data;
-    }
-}
-
-
 // Implementation of: class Fetch::L1InstructionCache
 namespace BullsEye::Gemini30F2::Fetch {
     //
@@ -675,7 +709,10 @@ namespace BullsEye::Gemini30F2::Fetch {
 
     inline L1InstructionCache::CacheQueryResult L1InstructionCache::GetLastQuery() const noexcept
     {
-        return CacheQueryResult(cache_tag_hit.Get(), cache_ram.GetLastReadB());
+        return CacheQueryResult {
+            .hit    = cache_tag_hit.Get(), 
+            .data   = cache_ram.GetLastReadB()
+        };
     }
 
     inline void L1InstructionCache::Reset() noexcept
@@ -693,7 +730,6 @@ namespace BullsEye::Gemini30F2::Fetch {
 }
 
 
-
 // Implementation of: class Fetch::Predecoder
 namespace BullsEye::Gemini30F2::Fetch {
 
@@ -705,7 +741,7 @@ namespace BullsEye::Gemini30F2::Fetch {
 
     Predecoder::PredecodedInstructionData Predecoder::Comb(RawInstructionData raw) const noexcept
     {
-        PredecodedInstructionData predecoded(raw);
+        PredecodedInstructionData predecoded((uint64_t) raw);
 
         unsigned int opcode = MIPS32::GetOpcode(raw);
         unsigned int rt     = MIPS32::GetOpcode(raw);
@@ -740,44 +776,6 @@ namespace BullsEye::Gemini30F2::Fetch {
         }
 
         return predecoded;
-    }
-}
-
-
-
-// Implementation of: class Fetch::BranchPredictor::BPQueryResult
-namespace BullsEye::Gemini30F2::Fetch {
-    //
-    // bool        taken;
-    // PHTEntry    pattern;
-    // bool        target_valid;
-    // pc_t        target;
-
-    BranchPredictor::BPQueryResult::BPQueryResult(bool taken, PHTEntry pattern, bool target_valid, pc_t target) noexcept
-        : taken         (taken)
-        , pattern       (pattern)
-        , target_valid  (target_valid)
-        , target        (target)
-    { }
-
-    inline bool BranchPredictor::BPQueryResult::Taken() const noexcept
-    {
-        return taken;
-    }
-
-    inline BranchPredictor::PHTEntry BranchPredictor::BPQueryResult::Pattern() const noexcept
-    {
-        return pattern;
-    }
-
-    inline bool BranchPredictor::BPQueryResult::TargetValid() const noexcept
-    {
-        return target_valid;
-    }
-
-    inline pc_t BranchPredictor::BPQueryResult::Target() const noexcept
-    {
-        return target;
     }
 }
 
@@ -921,12 +919,12 @@ namespace BullsEye::Gemini30F2::Fetch {
         PHTEntry pht_line = pht_ram.GetLastReadB();
         BTBEntry btb_line = btb_ram.GetLastReadB();
 
-        return BPQueryResult(
-            (pht_line == PHT_STATE_STRONG_TAKEN) || (pht_line == PHT_STATE_WEAK_TAKEN),
-            pht_line,
-            _GetBTBValid(btb_line) && (_GetBTBTag(btb_line) == _GetBTBTag(last_pc.Get())),
-            _GetBTBValue(btb_line)
-        );
+        return BPQueryResult {
+            .taken          = (pht_line == PHT_STATE_STRONG_TAKEN) || (pht_line == PHT_STATE_WEAK_TAKEN),
+            .pattern        = pht_line,
+            .target_valid   = _GetBTBValid(btb_line) && (_GetBTBTag(btb_line) == _GetBTBTag(last_pc.Get())),
+            .target         = _GetBTBValue(btb_line)
+        };
     }
 
     inline void BranchPredictor::Reset() noexcept
@@ -941,5 +939,350 @@ namespace BullsEye::Gemini30F2::Fetch {
         btb_ram.Eval();
         ghr.Eval();
         last_pc.Eval();
+    }
+}
+
+
+// Implementation of: class Fetch::AXI4Controller
+namespace BullsEye::Gemini30F2::Fetch {
+    //
+    // //
+    // Predecoder          predecoder;
+    //
+    // uint3_t             state;
+    // uint5_t             axi_counter;
+    //
+    // uint4_t             raddr;
+    // uint32_t            curaddr;
+    //
+    // //
+    // bool                next_reset;
+    //
+    // //
+    // pc_t                next_pc;
+    //
+    // bool                next_cctrl_miss;
+    // bool                next_cctrl_uncached;
+    //
+    // //
+    // FetchAXI4ReadAddressChannelS2M  axi_read_address;
+    // FetchAXI4ReadDataChannelS2M     axi_read_data;
+    //
+    // FetchAXI4ReadAddressChannelM2S  last_axi_read_address;
+    // FetchAXI4ReadDataChannelM2S     last_axi_read_data;
+    //
+
+    AXI4Controller::AXI4Controller()
+        : predecoder                        ()
+        , state                             (FETCH_STATE_IDLE)
+        , axi_counter                       (0)
+        , raddr                             (0)
+        , curaddr                           (0)
+        , next_reset                        (false)
+        , next_pc                           (0)
+        , next_cctrl_miss                   (false)
+        , next_cctrl_uncached               (false)
+        , last_cache_update_data            { .enable = false }
+        , last_cache_update_tag             { .enable = false }
+        , last_uncached_buffer_update       { .enable = false }
+        , last_refill_buffer_update_address { .enable = false }
+        , last_refill_buffer_update_data    { .enable = false }
+        , last_refill_buffer_update_control { .reset = false }
+        , axi_read_address                  { .arready = false }
+        , axi_read_data                     { .rvalid = false }
+        , last_axi_read_address             { .arvalid = false }
+        , last_axi_read_data                { .rready = false }
+    { }
+
+    AXI4Controller::~AXI4Controller()
+    { }
+
+    inline void AXI4Controller::NextPC(pc_t pc) noexcept
+    {
+        next_pc = pc;
+    }
+
+    inline void AXI4Controller::NextCacheControl(bool miss, bool uncached) noexcept
+    {
+        next_cctrl_miss     = miss;
+        next_cctrl_uncached = uncached;
+    }
+
+    inline void AXI4Controller::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline AXI4Controller::CacheUpdateData AXI4Controller::GetLastCacheUpdateData() const noexcept
+    {
+        return last_cache_update_data;
+    }
+
+    inline AXI4Controller::CacheUpdateTag AXI4Controller::GetLastCacheUpdateTag() const noexcept
+    {
+        return last_cache_update_tag;
+    }
+
+    inline AXI4Controller::UncachedBufferUpdate AXI4Controller::GetLastUncachedBufferUpdate() const noexcept
+    {
+        return last_uncached_buffer_update;
+    }
+
+    inline AXI4Controller::RefillBufferUpdateAddress AXI4Controller::GetLastRefillBufferUpdateAddress() const noexcept
+    {
+        return last_refill_buffer_update_address;
+    }
+
+    inline AXI4Controller::RefillBufferUpdateData AXI4Controller::GetLastRefillBufferUpdateData() const noexcept
+    {
+        return last_refill_buffer_update_data;
+    }
+
+    inline AXI4Controller::RefillBufferUpdateControl AXI4Controller::GetLastRefillBufferUpdateControl() const noexcept
+    {
+        return last_refill_buffer_update_control;
+    }
+
+    inline FetchAXI4ReadAddressChannelM2S AXI4Controller::GetLastAXI4ReadAddress() const noexcept
+    {
+        return last_axi_read_address;
+    }
+
+    inline void AXI4Controller::NextAXI4ReadAddress(FetchAXI4ReadAddressChannelS2M bundle) noexcept
+    {
+        axi_read_address = bundle;
+    }
+
+    inline FetchAXI4ReadDataChannelM2S AXI4Controller::GetLastAXI4ReadData() const noexcept
+    {
+        return last_axi_read_data;
+    }
+
+    inline void AXI4Controller::NextAXI4ReadData(FetchAXI4ReadDataChannelS2M bundle) noexcept
+    {
+        axi_read_data = bundle;
+    }
+
+    void AXI4Controller::Reset() noexcept
+    {
+        state = FETCH_STATE_IDLE;
+
+        axi_counter = 0;
+        raddr       = 0;
+        curaddr     = 0;
+
+        next_reset = false;
+
+        next_pc = 0;
+
+        next_cctrl_miss     = false;
+        next_cctrl_uncached = false;
+
+        last_cache_update_data  = { .enable = false };
+        last_cache_update_tag   = { .enable = false };
+
+        last_uncached_buffer_update = { .enable = false };
+
+        last_refill_buffer_update_address   = { .enable = false };
+        last_refill_buffer_update_data      = { .enable = false };
+        last_refill_buffer_update_control   = { .reset = false };
+
+        axi_read_address        = { .arready = false };
+        axi_read_data           = { .rvalid = false };
+        last_axi_read_address   = { .arvalid = false };
+        last_axi_read_data      = { .rready = false };
+    }
+
+    void AXI4Controller::Eval() noexcept
+    {
+        // State transition
+        uint3_t     state_next          = state;
+        uint5_t     axi_counter_next    = axi_counter;
+
+        uint4_t     raddr_next          = raddr;
+        uint32_t    curaddr_next        = curaddr;
+
+        bool    refill_read_comb    = false;
+        bool    refill_done_comb    = false;
+        bool    uncached_read_comb  = false;
+
+        switch (state)
+        {
+            //
+            case FETCH_STATE_IDLE:
+
+                if (next_cctrl_uncached)
+                {
+                    curaddr_next = next_pc;
+                    raddr_next   = next_pc >> 2;
+
+                    state_next = FETCH_STATE_UNCACHED_AXI_ADDR;
+                }
+                else if (next_cctrl_miss)
+                {
+                    curaddr_next = next_pc;
+                    raddr_next   = next_pc >> 2;
+
+                    axi_counter_next = 0;
+
+                    state_next = FETCH_STATE_REFILL_AXI_ADDR;
+                }
+
+                break;
+
+            //
+            case FETCH_STATE_UNCACHED_AXI_ADDR:
+
+                if (axi_read_address.arready)
+                    state_next = FETCH_STATE_UNCACHED_AXI_DATA;
+
+                break;
+
+            //
+            case FETCH_STATE_UNCACHED_AXI_DATA:
+
+                if (axi_read_data.rvalid)
+                {
+                    uncached_read_comb = true;
+
+                    state_next = FETCH_STATE_IDLE;
+                }
+
+                break;
+
+            //
+            case FETCH_STATE_REFILL_AXI_ADDR:
+
+                if (axi_read_address.arready)
+                    state_next = FETCH_STATE_REFILL_AXI_DATA;
+
+                break;
+
+            //
+            case FETCH_STATE_REFILL_AXI_DATA:
+
+                if (axi_counter & 0x10)
+                {
+                    refill_done_comb = true;
+
+                    state_next = FETCH_STATE_IDLE;
+                }
+                else if (axi_read_data.rvalid)
+                {
+                    axi_counter_next++;
+                    raddr_next++;
+
+                    refill_read_comb = true;
+
+                    state_next = FETCH_STATE_REFILL_AXI_DATA;
+                }
+
+                break;
+
+            //
+            default:
+                break;
+        }
+
+        // AXI interface logics
+        switch (state)
+        {
+            //
+            case FETCH_STATE_IDLE:
+
+                if (state_next == FETCH_STATE_UNCACHED_AXI_ADDR)
+                {
+                    last_axi_read_address.araddr    = next_pc;
+                    last_axi_read_address.arlen     = AXI4::Attributes::AXLEN<1>;
+                    last_axi_read_address.arsize    = AXI4::Attributes::AXSIZE<4>;
+                    last_axi_read_address.arburst   = AXI4::Attributes::AXBURST_INCR;
+                    last_axi_read_address.aruser    = true;
+                    last_axi_read_address.arvalid   = true;
+                }
+                else if (state_next == FETCH_STATE_REFILL_AXI_ADDR)
+                {
+                    last_axi_read_address.araddr    = next_pc;
+                    last_axi_read_address.arlen     = AXI4::Attributes::AXLEN<16>;
+                    last_axi_read_address.arsize    = AXI4::Attributes::AXSIZE<4>;
+                    last_axi_read_address.arburst   = AXI4::Attributes::AXBURST_WRAP;
+                    last_axi_read_address.aruser    = false;
+                    last_axi_read_address.arvalid   = true;
+                }
+
+                break;
+
+            //
+            case FETCH_STATE_UNCACHED_AXI_ADDR:
+
+                if (state_next == FETCH_STATE_IDLE)
+                    last_axi_read_address.arvalid = false;
+                else if (state_next == FETCH_STATE_UNCACHED_AXI_DATA)
+                    last_axi_read_address.arvalid = false;
+
+                break;
+
+            //
+            case FETCH_STATE_UNCACHED_AXI_DATA:
+                break;
+
+            //
+            case FETCH_STATE_REFILL_AXI_ADDR:
+
+                if (state_next = FETCH_STATE_IDLE)
+                    last_axi_read_address.arvalid = false;
+                else if (state_next == FETCH_STATE_REFILL_AXI_DATA)
+                    last_axi_read_address.arvalid = false;
+
+                break;
+
+            //
+            case FETCH_STATE_REFILL_AXI_DATA:
+                break;
+
+            //
+            default:
+                break;
+        }
+
+        //
+        state       = state_next;
+        axi_counter = axi_counter_next;
+
+        raddr       = raddr_next;
+        curaddr     = curaddr_next;
+
+        //
+        Predecoder::PredecodedInstructionData predecoded =
+            predecoder.Comb(axi_read_data.rdata);
+
+        //
+        last_cache_update_data.enable   = refill_read_comb;
+        last_cache_update_data.addr     = ( curaddr & 0xFFFFFFC0 ) | ( ((uint32_t) raddr) << 4 );
+        last_cache_update_data.data     = predecoded;
+
+        last_cache_update_tag.enable    = refill_read_comb || refill_done_comb;
+        last_cache_update_tag.addr      = curaddr;
+        last_cache_update_tag.valid     = refill_done_comb;
+
+        //
+        last_uncached_buffer_update.enable  = uncached_read_comb;
+        last_uncached_buffer_update.addr    = curaddr;
+        last_uncached_buffer_update.data    = predecoded;
+
+        //
+        last_refill_buffer_update_address.enable    = refill_read_comb;
+        last_refill_buffer_update_address.addr      = curaddr;
+
+        last_refill_buffer_update_data.enable       = refill_read_comb;
+        last_refill_buffer_update_data.addr         = raddr;
+        last_refill_buffer_update_data.data         = predecoded;
+
+        last_refill_buffer_update_control.reset     = refill_done_comb;
+
+        //
+        last_axi_read_address.arid = 0;
+
+        //
+        last_axi_read_data.rready = true;
     }
 }
