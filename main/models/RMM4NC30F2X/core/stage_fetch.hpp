@@ -6,7 +6,6 @@
 //
 
 #include <cstdint>
-#include <tuple>
 
 #include "common/nonstdint.hpp"
 
@@ -18,6 +17,7 @@
 
 
 #include "def_global.hpp"
+#include "stage_global.hpp"
 
 
 namespace BullsEye::Gemini30F2::Fetch {
@@ -42,7 +42,7 @@ namespace BullsEye::Gemini30F2::Fetch {
     public:
         using Address   = uint30_t;
 
-        using Data      = uint36_t;
+        using Data      = Global::PredecodedInstruction;
 
     private:
         SteppingDFF<bool>       buffer_valid;
@@ -79,7 +79,7 @@ namespace BullsEye::Gemini30F2::Fetch {
     public:
         using Address   = uint26_t;
         
-        using Data      = uint36_t;
+        using Data      = Global::PredecodedInstruction;
 
     private:
         SteppingDFF<Address>    refill_addr;
@@ -115,11 +115,68 @@ namespace BullsEye::Gemini30F2::Fetch {
     };
 
 
+    // Instruction Fetch Buffer
+    class InstructionBuffer {
+    public:
+        struct UncachedBufferUpdate {
+            bool                            enable;
+            Global::VirtualAddress          addr;
+            Global::PredecodedInstruction   data;
+        };
+
+        struct CachedRefillBufferUpdateAddress {
+            bool                            enable;
+            Global::VirtualAddress          addr;
+        };
+
+        struct CachedRefillBufferUpdateData {
+            bool                            enable;
+            uint4_t                         index;
+            Global::PredecodedInstruction   data;
+        };
+
+        struct QueryResult {
+            bool                            hit;
+            Global::PredecodedInstruction   data;
+        };
+
+    private:
+        UncachedBuffer          module_uncached_buffer;
+        CachedRefillBuffer      module_refilled_buffer;
+
+        UncachedBuffer::CombQueryResult     last_uncached_buffer_query;
+        CachedRefillBuffer::CombQueryResult last_refilled_buffer_query;
+
+        Global::VirtualAddress  next_query;
+
+        bool                    next_reset;
+
+    public:
+        InstructionBuffer() noexcept;
+        ~InstructionBuffer() noexcept;
+
+        void            NextUncachedBufferUpdate(UncachedBufferUpdate bundle) noexcept;
+        void            NextCachedRefillBufferUpdateAddress(CachedRefillBufferUpdateAddress bundle) noexcept;
+        void            NextCachedRefillBufferUpdateData(CachedRefillBufferUpdateData bundle) noexcept;
+
+        void            NextQuery(Global::VirtualAddress address) noexcept;
+
+        void            NextRefillBufferReset() noexcept;
+
+        void            NextReset() noexcept;
+
+        bool            GetCombUncachedDone() const noexcept;
+        bool            GetCombRefilledHit() const noexcept;
+
+        QueryResult     GetLastQuery() const noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
+    };
+
+
     // L1 (attached) Instruction Cache
     class L1InstructionCache {
-    public:
-        using InstructionData   = uint36_t;
-
     private:
         class Tags {
         public:
@@ -155,16 +212,16 @@ namespace BullsEye::Gemini30F2::Fetch {
         };
 
     private:
-        DualPortRAM<InstructionData, 2048>  cache_ram;
+        DualPortRAM<Global::PredecodedInstruction, 2048>    cache_ram;
 
-        Tags                                cache_tags;
+        Tags                                                cache_tags;
 
-        SteppingDFF<bool>                   cache_tag_hit;
+        SteppingDFF<bool>                                   cache_tag_hit;
 
     public:
         struct CacheQueryResult {
-            bool            hit;
-            InstructionData data;
+            bool                            hit;
+            Global::PredecodedInstruction   data;
         };
 
     public:
@@ -175,8 +232,8 @@ namespace BullsEye::Gemini30F2::Fetch {
         void                NextTagUpdate(bool enable, uint32_t address, bool valid) noexcept;
         void                NextTagUpdate() noexcept;
 
-        void                NextDataUpdate(uint32_t address, InstructionData data) noexcept;
-        void                NextDataUpdate(bool enable, uint32_t address, InstructionData data) noexcept;
+        void                NextDataUpdate(uint32_t address, Global::PredecodedInstruction data) noexcept;
+        void                NextDataUpdate(bool enable, uint32_t address, Global::PredecodedInstruction data) noexcept;
         void                NextDataUpdate() noexcept;
 
         void                NextQuery(uint32_t address) noexcept;
@@ -193,15 +250,10 @@ namespace BullsEye::Gemini30F2::Fetch {
     // Instruction Pre-decode
     class Predecoder {
     public:
-        using RawInstructionData        = uint32_t;
-
-        using PredecodedInstructionData = uint36_t;
-
-    public:
         Predecoder() noexcept;
         ~Predecoder() noexcept;
 
-        PredecodedInstructionData   Comb(RawInstructionData raw) const noexcept;
+        Global::PredecodedInstruction   Comb(Global::RawInstruction raw) const noexcept;
     };
 
 
@@ -225,42 +277,42 @@ namespace BullsEye::Gemini30F2::Fetch {
 
         GHR                             ghr;
 
-        SteppingDFF<pc_t>               last_pc;
+        SteppingDFF<Global::PC>         last_pc;
 
     public:
         struct BPQueryResult {
             bool        taken;
             PHTEntry    pattern;
             bool        target_valid;
-            pc_t        target;
+            Global::PC  target;
         };
 
     private:
-        size_t              _GetPHTLineIndex(pc_t pc) const noexcept;
-        size_t              _GetBTBLineIndex(pc_t pc) const noexcept;
+        size_t                  _GetPHTLineIndex(Global::PC pc) const noexcept;
+        size_t                  _GetBTBLineIndex(Global::PC pc) const noexcept;
 
-        PHTEntry            _GetPHTNextState(PHTEntry oldpattern, bool taken) const noexcept;
+        PHTEntry                _GetPHTNextState(PHTEntry oldpattern, bool taken) const noexcept;
 
-        constexpr uint64_t  _GetBTBTag(pc_t pc) const noexcept;
+        constexpr uint64_t      _GetBTBTag(Global::PC pc) const noexcept;
 
-        constexpr uint64_t  _GetBTBTag(BTBEntry line) const noexcept;
-        constexpr bool      _GetBTBValid(BTBEntry line) const noexcept;
-        constexpr pc_t      _GetBTBValue(BTBEntry line) const noexcept;
+        constexpr uint64_t      _GetBTBTag(BTBEntry line) const noexcept;
+        constexpr bool          _GetBTBValid(BTBEntry line) const noexcept;
+        constexpr Global::PC    _GetBTBValue(BTBEntry line) const noexcept;
 
-        constexpr BTBEntry  _NewBTBLine(pc_t pc, pc_t target) const noexcept;
+        constexpr BTBEntry      _NewBTBLine(Global::PC pc, Global::PC target) const noexcept;
     
     public:
         BranchPredictor() noexcept;
         ~BranchPredictor() noexcept;
 
-        void                NextPC(pc_t pc) noexcept;
+        void                NextPC(Global::PC pc) noexcept;
 
-        void                NextPHTUpdate(pc_t pc, PHTEntry oldpattern, bool taken) noexcept;
-        void                NextPHTUpdate(bool enable, pc_t pc, PHTEntry oldpattern, bool taken) noexcept;
+        void                NextPHTUpdate(Global::PC pc, PHTEntry oldpattern, bool taken) noexcept;
+        void                NextPHTUpdate(bool enable, Global::PC pc, PHTEntry oldpattern, bool taken) noexcept;
         void                NextPHTUpdate() noexcept;
 
-        void                NextBTBUpdate(pc_t pc, pc_t target) noexcept;
-        void                NextBTBUpdate(bool enable, pc_t pc, pc_t target) noexcept;
+        void                NextBTBUpdate(Global::PC pc, Global::PC target) noexcept;
+        void                NextBTBUpdate(bool enable, Global::PC pc, Global::PC target) noexcept;
         void                NextBTBUpdate() noexcept;
 
         void                NextReset() noexcept;
@@ -269,6 +321,102 @@ namespace BullsEye::Gemini30F2::Fetch {
 
         void                Reset() noexcept;
         void                Eval() noexcept;
+    };
+
+
+    // PC Sequence
+    class PCSequence {
+    public:
+        static constexpr uint8_t FETCH_STATE_SEQUENTIAL     = 0;
+        static constexpr uint8_t FETCH_STATE_LOCKED         = 1;
+
+    public:
+        using State         = bool;
+
+        struct BranchCommitOverride {
+            bool        valid;
+            Global::PC  target;
+        };
+
+        struct BranchPrediction {
+            bool        valid;
+            bool        hit;
+            bool        taken;
+            Global::PC  target;
+        };
+
+        struct CacheControl {
+            bool        miss;
+            bool        uncached;
+        };
+
+        struct PCInternal {
+            bool                    valid;
+            bool                    uncached;
+            Global::VirtualAddress  vaddr;
+            Global::PhysicalAddress paddr;
+        };
+
+        struct PCFetch {
+            bool                    valid;
+            Global::VirtualAddress  vaddr;
+            Global::FID             fid;
+        };
+
+    private:
+        SteppingDFF<State, DFFResetValue<State, FETCH_STATE_SEQUENTIAL>>    state;
+        SteppingDFF<State, DFFResetValue<State, FETCH_STATE_SEQUENTIAL>>    state_last;
+
+        SteppingDFF<Global::PC>     pc_value[2];
+        SteppingDFF<bool>           pc_valid[2];
+
+        SteppingDFF<Global::FID>    fid;
+
+        SteppingDFF<bool>           cache_control_miss;
+        SteppingDFF<bool>           cache_control_uncached;
+
+        Global::VPAddressConvertion vpaddr;
+
+        bool                        next_readyn;
+
+        bool                        next_cache_feedback_hit;
+        bool                        next_cache_feedback_uncached;
+
+        bool                        next_cache_control_refilled_hit;
+        bool                        next_cache_control_uncached_done;
+
+        BranchCommitOverride        next_branch_commit_override;
+
+        BranchPrediction            next_branch_prediction;
+
+        bool                        next_reset;
+
+    private:
+        bool            _SignalLocked() const noexcept;
+        bool            _SignalValidOnFetchPort() const noexcept;
+
+    public:
+        PCSequence() noexcept;
+        ~PCSequence() noexcept;
+
+        void            NextNotReady(bool readyn) noexcept;
+
+        void            NextBranchCommitOverride(BranchCommitOverride bundle) noexcept;
+
+        void            NextCacheFeedback(bool hit, bool uncached) noexcept;
+        void            NextCacheControl(bool refilled_hit, bool uncached_done) noexcept;
+
+        void            NextBranchPrediction(BranchPrediction bundle) noexcept;
+
+        void            NextReset() noexcept;
+
+        CacheControl    GetLastCacheControl() const noexcept;
+        PCFetch         GetLastFetchPC() const noexcept;
+
+        PCInternal      CombInternalPC() const noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
     };
 
 
@@ -342,7 +490,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         bool                next_reset;
 
         //
-        pc_t                next_pc;
+        Global::PC          next_pc;
 
         bool                next_cctrl_miss;
         bool                next_cctrl_uncached;
@@ -369,7 +517,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         AXI4Controller() noexcept;
         ~AXI4Controller() noexcept;
 
-        void                        NextPC(pc_t pc) noexcept;
+        void                        NextPC(Global::PC pc) noexcept;
 
         void                        NextCacheControl(bool miss, bool uncached) noexcept;
 
@@ -396,8 +544,78 @@ namespace BullsEye::Gemini30F2::Fetch {
         void                        Eval() noexcept;
     };
 
+
     
-    // TODO
+    // Fetch AIO
+    class Fetch {
+    public:
+        struct FetchResult {
+            bool                        valid;
+            Global::PC                  pc;
+            Global::FID                 fid;
+            Global::RawInstruction      data;
+        };
+
+        struct BranchCommitOverride {
+            bool                        valid;
+            Global::PC                  pc;
+            BranchPredictor::PHTEntry   old_pattern;
+            bool                        taken;
+            Global::PC                  target;
+        };
+
+        struct BranchPrediction {
+            bool                        valid;
+            BranchPredictor::PHTEntry   pattern;
+            bool                        taken;
+            bool                        hit;
+            Global::PC                  target;
+        };
+
+    private:
+        PCSequence              module_pc_sequence;
+
+        BranchPrediction        module_branch_prediction;
+
+        L1InstructionCache      module_icache;
+
+        UncachedBuffer          module_buffer_uncached;
+
+        CachedRefillBuffer      module_buffer_refill;
+
+        AXI4Controller          module_axi_controller;
+
+        SteppingDFF<bool>       pc_uncached;
+
+    private:
+        bool                    _ICacheBranchValid() const noexcept;
+        bool                    _IBufferBranchValid() const noexcept;
+
+    public:
+        Fetch();
+        ~Fetch();
+
+        void                    NextReset() noexcept;
+
+        void                    NextNotReady(bool readyn) noexcept;
+        
+        void                    NextBranchCommitOverride(BranchCommitOverride bundle) noexcept;
+
+        FetchResult             GetLastFetch() const noexcept;
+
+        BranchPrediction        GetLastBranchPrediction() const noexcept;
+
+        //
+        FetchAXI4ReadAddressChannelM2S  GetLastAXI4ReadAddress() const noexcept;
+        void                            NextAXI4ReadAddress(FetchAXI4ReadAddressChannelS2M bundle) noexcept;
+
+        FetchAXI4ReadDataChannelM2S     GetLastAXI4ReadData() const noexcept;
+        void                            NextAXI4ReadData(FetchAXI4ReadDataChannelS2M bundle) noexcept;
+
+        //
+        void                    Reset() noexcept;
+        void                    Eval() noexcept;
+    };
 }
 
 
@@ -561,6 +779,110 @@ namespace BullsEye::Gemini30F2::Fetch {
 }
 
 
+// Implementation of: class Fetch::InstructionBuffer
+namespace BullsEye::Gemini30F2::Fetch {
+    //
+    // UncachedBuffer          module_uncached_buffer;
+    // CachedRefillBuffer      module_refilled_buffer;
+    //
+    // UncachedBuffer::CombQueryResult     last_uncached_buffer_query;
+    // CachedRefillBuffer::CombQueryResult last_refilled_buffer_query;
+    //
+    // Global::VirtualAddress  next_query;
+    //
+    // bool                    next_reset;
+    //
+
+    InstructionBuffer::InstructionBuffer() noexcept
+        : module_uncached_buffer        ()
+        , module_refilled_buffer        ()
+        , last_uncached_buffer_query    { .hit = false }
+        , last_refilled_buffer_query    { .hit = false }
+        , next_query                    (0)
+        , next_reset                    (false)
+    { }
+
+    InstructionBuffer::~InstructionBuffer() noexcept
+    { }
+
+    inline void InstructionBuffer::NextUncachedBufferUpdate(UncachedBufferUpdate bundle) noexcept
+    {
+        module_uncached_buffer.Next(bundle.enable, bundle.addr, bundle.data);
+    }
+
+    inline void InstructionBuffer::NextCachedRefillBufferUpdateAddress(CachedRefillBufferUpdateAddress bundle) noexcept
+    {
+        module_refilled_buffer.NextAddress(bundle.enable, bundle.addr);
+    }
+
+    inline void InstructionBuffer::NextCachedRefillBufferUpdateData(CachedRefillBufferUpdateData bundle) noexcept
+    {
+        module_refilled_buffer.NextRefill(bundle.enable, bundle.index, bundle.data);
+    }
+
+    inline void InstructionBuffer::NextQuery(Global::VirtualAddress address) noexcept
+    {
+        next_query = address;
+    }
+
+    inline void InstructionBuffer::NextRefillBufferReset() noexcept
+    {
+        module_refilled_buffer.NextReset();
+    }
+
+    inline void InstructionBuffer::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline bool InstructionBuffer::GetCombUncachedDone() const noexcept
+    {
+        return module_uncached_buffer.CombQuery(next_query).hit;
+    }
+
+    inline bool InstructionBuffer::GetCombRefilledHit() const noexcept
+    {
+        return module_refilled_buffer.CombQuery(next_query).hit;
+    }
+
+    inline InstructionBuffer::QueryResult InstructionBuffer::GetLastQuery() const noexcept
+    {
+        return QueryResult {
+            .hit    = last_uncached_buffer_query.hit || last_refilled_buffer_query.hit,
+            .data   = last_uncached_buffer_query.hit ? last_uncached_buffer_query.data : last_refilled_buffer_query.data
+        };
+    }
+
+    inline void InstructionBuffer::Reset() noexcept
+    {
+        module_uncached_buffer.Reset();
+        module_refilled_buffer.Reset();
+
+        last_uncached_buffer_query.hit = false;
+        last_refilled_buffer_query.hit = false;
+
+        next_query = 0;
+
+        next_reset = false;
+    }
+
+    void InstructionBuffer::Eval() noexcept
+    {
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        last_refilled_buffer_query = module_refilled_buffer.CombQuery(next_query);
+        last_uncached_buffer_query = module_uncached_buffer.CombQuery(next_query);
+
+        module_refilled_buffer.Eval();
+        module_uncached_buffer.Eval();
+    }
+}
+
+
 // Implementation of: class Fetch::L1InstructionCache::Tags
 namespace BullsEye::Gemini30F2::Fetch {
     //
@@ -647,11 +969,11 @@ namespace BullsEye::Gemini30F2::Fetch {
 // Implementation of: class Fetch::L1InstructionCache
 namespace BullsEye::Gemini30F2::Fetch {
     //
-    // DualPortRAM<InstructionData, 2048>  cache_ram;
+    // DualPortRAM<Global::PredecodedInstruction, 2048>    cache_ram;
     //
-    // Tags                                cache_tags;
+    // Tags                                                cache_tags;
     //
-    // SteppingDFF<bool>                   cache_tag_hit;
+    // SteppingDFF<bool>                                   cache_tag_hit;
     //
 
     L1InstructionCache::L1InstructionCache() noexcept
@@ -679,12 +1001,12 @@ namespace BullsEye::Gemini30F2::Fetch {
         cache_tags.Next();
     }
 
-    inline void L1InstructionCache::NextDataUpdate(uint32_t address, InstructionData data) noexcept
+    inline void L1InstructionCache::NextDataUpdate(uint32_t address, Global::PredecodedInstruction data) noexcept
     {
         cache_ram.NextWriteA((address >> 2) & 0x7FF, data);
     }
 
-    inline void L1InstructionCache::NextDataUpdate(bool enable, uint32_t address, InstructionData data) noexcept
+    inline void L1InstructionCache::NextDataUpdate(bool enable, uint32_t address, Global::PredecodedInstruction data) noexcept
     {
         if (enable)
             NextDataUpdate(address, data);
@@ -739,9 +1061,9 @@ namespace BullsEye::Gemini30F2::Fetch {
     Predecoder::~Predecoder() noexcept
     { }
 
-    Predecoder::PredecodedInstructionData Predecoder::Comb(RawInstructionData raw) const noexcept
+    Global::PredecodedInstruction Predecoder::Comb(Global::RawInstruction raw) const noexcept
     {
-        PredecodedInstructionData predecoded((uint64_t) raw);
+        Global::PredecodedInstruction predecoded { .insn = raw };
 
         unsigned int opcode = MIPS32::GetOpcode(raw);
         unsigned int rt     = MIPS32::GetOpcode(raw);
@@ -753,7 +1075,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         || (opcode == MIPS32_OPCODE_BLEZ && !rt)
         || (opcode == MIPS32_OPCODE_REGIMM && rt == MIPS32_RT_REGIMM_BLTZ))
         {
-            predecoded |= (uint64_t(FETCH_PREDECODED_BRANCH) << 32);
+            predecoded.tag = (uint64_t(FETCH_PREDECODED_BRANCH) << 32);
         }
         else if (opcode == MIPS32_OPCODE_J
         ||      (opcode == MIPS32_OPCODE_SPECIAL && MIPS32::GetFunct(raw) == MIPS32_FUNCT_SPECIAL_JR 
@@ -761,18 +1083,18 @@ namespace BullsEye::Gemini30F2::Fetch {
                                                  && !MIPS32::GetRD(raw) 
                                                  && !MIPS32::GetShamt(raw)))
         {
-            predecoded |= (uint64_t(FETCH_PREDECODED_JUMP) << 32);
+            predecoded.tag = (uint64_t(FETCH_PREDECODED_JUMP) << 32);
         }
         else if (opcode == MIPS32_OPCODE_JAL
         ||      (opcode == MIPS32_OPCODE_SPECIAL && MIPS32::GetFunct(raw) == MIPS32_FUNCT_SPECIAL_JALR
                                                  && !rt
                                                  && !MIPS32::GetShamt(raw)))
         {
-            predecoded |= (uint64_t(FETCH_PREDECODED_JUMP_LINK) << 32);
+            predecoded.tag = (uint64_t(FETCH_PREDECODED_JUMP_LINK) << 32);
         }
         else
         {
-            predecoded |= (uint64_t(FETCH_PREDECODED_NORMAL) << 32);
+            predecoded.tag = (uint64_t(FETCH_PREDECODED_NORMAL) << 32);
         }
 
         return predecoded;
@@ -789,7 +1111,7 @@ namespace BullsEye::Gemini30F2::Fetch {
     //
     // GHR                             ghr;
     //
-    // SteppingDFF<pc_t>               last_pc;
+    // SteppingDFF<Global::PC>         last_pc;
     //
 
     BranchPredictor::BranchPredictor() noexcept
@@ -802,7 +1124,7 @@ namespace BullsEye::Gemini30F2::Fetch {
     BranchPredictor::~BranchPredictor() noexcept
     { }
 
-    inline size_t BranchPredictor::_GetPHTLineIndex(pc_t pc) const noexcept
+    inline size_t BranchPredictor::_GetPHTLineIndex(Global::PC pc) const noexcept
     {
         GHRValue ghr_value = ghr.Get();
 
@@ -811,7 +1133,7 @@ namespace BullsEye::Gemini30F2::Fetch {
              |  ((uint8_t) ghr_value & 0x03);
     }
 
-    inline size_t BranchPredictor::_GetBTBLineIndex(pc_t pc) const noexcept
+    inline size_t BranchPredictor::_GetBTBLineIndex(Global::PC pc) const noexcept
     {
         return (pc >> 2) & 0x3FF;
     }
@@ -844,7 +1166,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         return PHT_STATE_WEAK_NOT_TAKEN;
     }
 
-    inline constexpr uint64_t BranchPredictor::_GetBTBTag(pc_t pc) const noexcept
+    inline constexpr uint64_t BranchPredictor::_GetBTBTag(Global::PC pc) const noexcept
     {
         return (pc >> 12) & 0x1F;
     }
@@ -859,17 +1181,17 @@ namespace BullsEye::Gemini30F2::Fetch {
         return (line & 0x8'0000'0000UL);
     }
 
-    inline constexpr pc_t BranchPredictor::_GetBTBValue(BTBEntry line) const noexcept
+    inline constexpr Global::PC BranchPredictor::_GetBTBValue(BTBEntry line) const noexcept
     {
         return (line & 0x3FFF'FFFF) << 2;
     }
 
-    inline constexpr BranchPredictor::BTBEntry BranchPredictor::_NewBTBLine(pc_t pc, pc_t target) const noexcept
+    inline constexpr BranchPredictor::BTBEntry BranchPredictor::_NewBTBLine(Global::PC pc, Global::PC target) const noexcept
     {
         return (uint64_t) (0x8'0000'0000UL | (_GetBTBTag(pc) << 30) | (target >> 2));
     }
 
-    inline void BranchPredictor::NextPC(pc_t pc) noexcept
+    inline void BranchPredictor::NextPC(Global::PC pc) noexcept
     {
         pht_ram.NextReadB(_GetPHTLineIndex(pc));
         btb_ram.NextReadB(_GetBTBLineIndex(pc));
@@ -877,12 +1199,12 @@ namespace BullsEye::Gemini30F2::Fetch {
         last_pc.Next(pc);
     }
 
-    inline void BranchPredictor::NextPHTUpdate(pc_t pc, PHTEntry oldpattern, bool taken) noexcept
+    inline void BranchPredictor::NextPHTUpdate(Global::PC pc, PHTEntry oldpattern, bool taken) noexcept
     {
         pht_ram.NextWriteA(_GetPHTLineIndex(pc), _GetPHTNextState(oldpattern, taken));
     }
 
-    inline void BranchPredictor::NextPHTUpdate(bool enable, pc_t pc, PHTEntry oldpattern, bool taken) noexcept
+    inline void BranchPredictor::NextPHTUpdate(bool enable, Global::PC pc, PHTEntry oldpattern, bool taken) noexcept
     {
         if (enable)
             NextPHTUpdate(pc, oldpattern, taken);
@@ -893,12 +1215,12 @@ namespace BullsEye::Gemini30F2::Fetch {
         pht_ram.NextWriteA();
     }
 
-    inline void BranchPredictor::NextBTBUpdate(pc_t pc, pc_t target) noexcept
+    inline void BranchPredictor::NextBTBUpdate(Global::PC pc, Global::PC target) noexcept
     {
         btb_ram.NextWriteA(_GetBTBLineIndex(pc), _NewBTBLine(pc, target));
     }
 
-    inline void BranchPredictor::NextBTBUpdate(bool enable, pc_t pc, pc_t target) noexcept
+    inline void BranchPredictor::NextBTBUpdate(bool enable, Global::PC pc, Global::PC target) noexcept
     {
         if (enable)
             NextBTBUpdate(pc, target);
@@ -943,6 +1265,271 @@ namespace BullsEye::Gemini30F2::Fetch {
 }
 
 
+// Implementation of: class Fetch::PCSequence
+namespace BullsEye::Gemini30F2::Fetch {
+
+
+    PCSequence::PCSequence() noexcept
+        : state                             ()
+        , state_last                        ()
+        , pc_value                          ()
+        , pc_valid                          ()
+        , fid                               ()
+        , cache_control_miss                (false)
+        , cache_control_uncached            (false)
+        , vpaddr                            ()
+        , next_readyn                       (false)
+        , next_cache_feedback_hit           (false)
+        , next_cache_feedback_uncached      (false)
+        , next_cache_control_refilled_hit   (false)
+        , next_cache_control_uncached_done  (false)
+        , next_branch_prediction            { .valid = false }
+        , next_reset                        (false)
+    { }
+
+    PCSequence::~PCSequence() noexcept
+    { }
+
+    inline bool PCSequence::_SignalLocked() const noexcept
+    {
+        return state == FETCH_STATE_LOCKED;
+    }
+
+    inline bool PCSequence::_SignalValidOnFetchPort() const noexcept
+    {
+        return pc_valid[1];
+    }
+
+    inline void PCSequence::NextNotReady(bool readyn) noexcept
+    {
+        next_readyn = readyn;
+    }
+
+    inline void PCSequence::NextBranchCommitOverride(BranchCommitOverride bundle) noexcept
+    {
+        next_branch_commit_override = bundle;
+    }
+
+    inline void PCSequence::NextCacheFeedback(bool hit, bool uncached) noexcept
+    {
+        next_cache_feedback_hit         = hit;
+        next_cache_feedback_uncached    = uncached;
+    }
+
+    inline void PCSequence::NextCacheControl(bool refilled_hit, bool uncached_done) noexcept
+    {
+        next_cache_control_refilled_hit     = refilled_hit;
+        next_cache_control_uncached_done    = uncached_done;
+    }
+
+    inline void PCSequence::NextBranchPrediction(BranchPrediction bundle) noexcept
+    {
+        next_branch_prediction = bundle;
+    }
+
+    inline void PCSequence::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline PCSequence::CacheControl PCSequence::GetLastCacheControl() const noexcept
+    {
+        return CacheControl {
+            .miss       = cache_control_miss,
+            .uncached   = cache_control_uncached
+        };
+    }
+
+    inline PCSequence::PCFetch PCSequence::GetLastFetchPC() const noexcept
+    {
+        return PCFetch {
+            .valid      = pc_valid[1],
+            .vaddr      = pc_value[1],
+            .fid        = fid
+        };
+    }
+
+    inline PCSequence::PCInternal PCSequence::CombInternalPC() const noexcept
+    {
+        Global::VirtualAddress vaddr = 
+            _SignalLocked() ? this->pc_value[1] : this->pc_value[0];
+        
+        bool valid =
+            _SignalLocked() ? this->pc_valid[1] : this->pc_valid[0];
+        
+        Global::VPAddressConvertion::PhysicalAddressBundle paddr =
+            vpaddr.Comb(vaddr);
+
+        return PCInternal {
+            .valid      = valid,
+            .uncached   = paddr.kseg1,
+            .vaddr      = vaddr,
+            .paddr      = paddr.paddr
+        };
+    }
+
+    void PCSequence::Reset() noexcept
+    {
+        state.Reset();
+        state_last.Reset();
+
+        pc_value[0].Reset();
+        pc_value[1].Reset();
+        pc_valid[0].Reset();
+        pc_valid[1].Reset();
+
+        fid.Reset();
+
+        cache_control_miss      = false;
+        cache_control_uncached  = false;
+
+        next_readyn = false;
+
+        next_cache_feedback_hit         = false;
+        next_cache_feedback_uncached    = false;
+
+        next_cache_control_refilled_hit     = false;
+        next_cache_control_uncached_done    = false;
+
+        next_branch_prediction = { .valid = false };
+
+        next_reset = false;
+    }
+
+    void PCSequence::Eval() noexcept
+    {
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        // State transition
+        State   state_next = state;
+
+        bool    locked_for_readyn_comb = false;
+
+        switch (state)
+        {
+            //
+            case FETCH_STATE_SEQUENTIAL:
+
+                if (_SignalValidOnFetchPort())
+                {
+                    if (!next_cache_feedback_hit)
+                    {
+                        // Falls into LOCKED on cache miss or uncached fetch
+                        state_next = FETCH_STATE_LOCKED;
+                    }
+                    else if (next_readyn)
+                    {
+                        // Falls into LOCKED on 'readyn' asserted
+                        state_next = FETCH_STATE_LOCKED;
+
+                        locked_for_readyn_comb = true;
+                    }
+                }
+
+                break;
+
+            //
+            case FETCH_STATE_LOCKED:
+
+                if (next_branch_commit_override.valid)
+                {
+                    // Fall back to SEQUENTIAL immeidately on BCO
+                    state_next = FETCH_STATE_SEQUENTIAL;
+                }
+                else if (!next_readyn && (next_cache_control_refilled_hit || next_cache_control_uncached_done))
+                {
+                    // Back to SEQUENTIAL fetch on cache/buffer hit on LOCKED
+                    // *NOTICE: On uncached fetch, if the fetch sequence is blocked by 'readyn' signal,
+                    //          the uncached instruction fetch procedure would simply restart (immedately)
+                    //          after the procedure accomplished, because Uncached Fetch Buffer only holds
+                    //          instruction data for 1 cycle and fetch sequence wouldn't store the fetched
+                    //          instruction data.
+                    state_next = FETCH_STATE_SEQUENTIAL;
+                }
+                else if (!next_readyn && next_cache_feedback_hit && state_last == FETCH_STATE_LOCKED)
+                {
+                    // Recovery to SEQUENTIAL when LOCKED on 'readyn'
+                    state_next = FETCH_STATE_SEQUENTIAL;
+                }
+
+                break;
+
+            //
+            default:
+                break;
+        }
+
+        state_last.Next(state);
+        state.Next(state_next);
+
+        //
+        bool seq_shift_enable = !_SignalLocked() && ((state_next != FETCH_STATE_LOCKED) || locked_for_readyn_comb);
+
+        // PC sequence shifter
+        if (next_branch_commit_override.valid)
+        {
+            pc_value[0].Next(next_branch_commit_override.target);
+            pc_valid[0].Next(true);
+
+            pc_valid[1].Next(false);
+        }
+        else if (seq_shift_enable)
+        {
+            if (_SignalValidOnFetchPort() && next_branch_prediction.valid && next_branch_prediction.hit && next_branch_prediction.taken)
+                pc_value[0].Next(next_branch_prediction.target);
+            else
+                pc_value[0].Next(pc_value[0] + 4);
+            pc_valid[0].Next(true);
+
+            pc_value[1].Next(pc_value[0]);
+            pc_valid[1].Next(true);
+        }
+
+        // FID
+        if (seq_shift_enable)
+            fid.Next(fid + 1);
+
+        // Cache control
+        switch (state)
+        {
+            //
+            case FETCH_STATE_SEQUENTIAL:
+                break;
+
+            //
+            case FETCH_STATE_LOCKED:
+
+                if (state_next == FETCH_STATE_SEQUENTIAL)
+                {
+                    cache_control_miss.Next(false);
+                    cache_control_uncached.Next(false);
+                }
+                else
+                {
+                    if (next_cache_feedback_uncached)
+                        cache_control_uncached.Next(true);
+                    else if (!next_cache_feedback_hit)
+                    {
+                        // *NOTICE: There is no need to trigger cache refill procedure if LOCKED
+                        //          on 'readyn' signal.
+                        cache_control_miss.Next(true);
+                    }
+                }
+
+                break;
+
+            //
+            default:
+                break;
+        }
+    }
+}
+
+
 // Implementation of: class Fetch::AXI4Controller
 namespace BullsEye::Gemini30F2::Fetch {
     //
@@ -959,7 +1546,7 @@ namespace BullsEye::Gemini30F2::Fetch {
     // bool                next_reset;
     //
     // //
-    // pc_t                next_pc;
+    // Global::PC          next_pc;
     //
     // bool                next_cctrl_miss;
     // bool                next_cctrl_uncached;
@@ -997,7 +1584,7 @@ namespace BullsEye::Gemini30F2::Fetch {
     AXI4Controller::~AXI4Controller()
     { }
 
-    inline void AXI4Controller::NextPC(pc_t pc) noexcept
+    inline void AXI4Controller::NextPC(Global::PC pc) noexcept
     {
         next_pc = pc;
     }
@@ -1252,7 +1839,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         curaddr     = curaddr_next;
 
         //
-        Predecoder::PredecodedInstructionData predecoded =
+        Global::PredecodedInstruction predecoded =
             predecoder.Comb(axi_read_data.rdata);
 
         //
@@ -1284,5 +1871,26 @@ namespace BullsEye::Gemini30F2::Fetch {
 
         //
         last_axi_read_data.rready = true;
+    }
+}
+
+
+// Implementation of: class Fetch::Fetch
+namespace BullsEye::Gemini30F2::Fetch {
+
+
+
+
+    bool Fetch::_ICacheBranchValid() const noexcept
+    {
+        Global::PredecodedInstruction data = module_icache.GetLastQuery().data;
+
+        return data.tag == FETCH_PREDECODED_BRANCH
+            || data.tag == FETCH_PREDECODED_JUMP
+            || data.tag == FETCH_PREDECODED_JUMP_LINK;
+    }
+
+    bool Fetch::_IBufferBranchValid() const noexcept
+    {
     }
 }
