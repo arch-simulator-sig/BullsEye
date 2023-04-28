@@ -17,6 +17,13 @@ namespace BullsEye {
         inline constexpr _T operator() const noexcept { return _T(0); }
     };
 
+    //
+    template<class _T, _T _Val>
+    struct DFFResetValue
+    {
+        inline constexpr _T operator() const noexcept { return _Val; };
+    };
+
 
     // Normal DFF
     template<class _T, class _TResetRoutine = DFFResetZero<_T>>
@@ -42,6 +49,8 @@ namespace BullsEye {
 
         void                Reset() noexcept;
         void                Eval(const _T& val, bool enable = true) noexcept;
+
+        operator            _T() const noexcept;
     };
 
 
@@ -77,6 +86,8 @@ namespace BullsEye {
 
         void                Reset() noexcept;
         void                Eval(bool enable = true) noexcept;
+
+        operator            _T() const noexcept;
     };
 }
 
@@ -141,6 +152,12 @@ namespace BullsEye {
     {
         if (enable)
             this->val = val;
+    }
+
+    template<class _T, class _TResetRoutine>
+    inline DFF<_T, _TResetRoutine>::operator _T() const noexcept
+    {
+        return val;
     }
 }
 
@@ -240,5 +257,11 @@ namespace BullsEye {
     {
         if (enable)
             val = next;
+    }
+
+    template<class _T, class _TResetRoutine>
+    inline SteppingDFF<_T, _TResetRoutine>::operator _T() const noexcept
+    {
+        return val;
     }
 }
