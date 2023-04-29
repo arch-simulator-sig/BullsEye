@@ -432,14 +432,14 @@ namespace BullsEye::Gemini30F2::Fetch {
         static constexpr uint8_t    FETCH_STATE_REFILL_AXI_DATA     = 0b011;
 
     public:
-        using CacheLine     = uint36_t;
+        using CacheEntry    = Global::PredecodedInstruction;
 
         using CacheAddress  = uint32_t;
 
         struct CacheUpdateData {
             bool            enable;
             CacheAddress    addr;
-            CacheLine       data;
+            CacheEntry      data;
         };
 
         struct CacheUpdateTag {
@@ -575,31 +575,33 @@ namespace BullsEye::Gemini30F2::Fetch {
     private:
         PCSequence              module_pc_sequence;
 
-        BranchPrediction        module_branch_prediction;
+        BranchPredictor         module_branch_predictor;
 
         L1InstructionCache      module_icache;
 
-        UncachedBuffer          module_buffer_uncached;
-
-        CachedRefillBuffer      module_buffer_refill;
+        InstructionBuffer       module_ibuffer;
 
         AXI4Controller          module_axi_controller;
 
         SteppingDFF<bool>       pc_uncached;
 
+        bool                    next_reset;
+
     private:
-        bool                    _ICacheBranchValid() const noexcept;
-        bool                    _IBufferBranchValid() const noexcept;
+        bool                    _InstructionCacheBranchValid() const noexcept;
+        bool                    _InstructionBufferBranchValid() const noexcept;
+
+        bool                    _InstructionDataHit() const noexcept;
 
     public:
-        Fetch();
-        ~Fetch();
-
-        void                    NextReset() noexcept;
+        Fetch() noexcept;
+        ~Fetch() noexcept;
 
         void                    NextNotReady(bool readyn) noexcept;
         
         void                    NextBranchCommitOverride(BranchCommitOverride bundle) noexcept;
+
+        void                    NextReset() noexcept;
 
         FetchResult             GetLastFetch() const noexcept;
 
@@ -1879,9 +1881,20 @@ namespace BullsEye::Gemini30F2::Fetch {
 namespace BullsEye::Gemini30F2::Fetch {
 
 
+    Fetch::Fetch() noexcept
+        : module_pc_sequence        ()
+        , module_branch_predictor   ()
+        , module_icache             ()
+        , module_ibuffer            ()
+        , module_axi_controller     ()
+        , pc_uncached               ()
+        , next_reset                (false)
+    { }
 
+    Fetch::~Fetch() noexcept
+    { }
 
-    bool Fetch::_ICacheBranchValid() const noexcept
+    inline bool Fetch::_InstructionCacheBranchValid() const noexcept
     {
         Global::PredecodedInstruction data = module_icache.GetLastQuery().data;
 
@@ -1890,7 +1903,225 @@ namespace BullsEye::Gemini30F2::Fetch {
             || data.tag == FETCH_PREDECODED_JUMP_LINK;
     }
 
-    bool Fetch::_IBufferBranchValid() const noexcept
+    inline bool Fetch::_InstructionBufferBranchValid() const noexcept
     {
+        Global::PredecodedInstruction data = module_ibuffer.GetLastQuery().data;
+
+        return data.tag == FETCH_PREDECODED_BRANCH
+            || data.tag == FETCH_PREDECODED_JUMP
+            || data.tag == FETCH_PREDECODED_JUMP_LINK;
+    }
+
+    inline bool Fetch::_InstructionDataHit() const noexcept
+    {
+        return module_icache.GetLastQuery().hit || module_ibuffer.GetLastQuery().hit;
+    }
+
+    inline void Fetch::NextNotReady(bool readyn) noexcept
+    {
+        module_pc_sequence.NextNotReady(readyn);
+    }
+
+    inline void Fetch::NextBranchCommitOverride(BranchCommitOverride bundle) noexcept
+    {
+        module_pc_sequence.NextBranchCommitOverride({ 
+            .valid = bundle.valid, 
+            .target = bundle.target
+        });
+
+        module_branch_predictor.NextPHTUpdate(
+            bundle.valid,
+            bundle.target,
+            bundle.old_pattern,
+            bundle.taken
+        );
+
+        module_branch_predictor.NextBTBUpdate(
+            bundle.valid,
+            bundle.pc,
+            bundle.target
+        );
+    }
+
+    inline void Fetch::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline Fetch::FetchResult Fetch::GetLastFetch() const noexcept
+    {
+        PCSequence::PCFetch                     pc_seq  = module_pc_sequence.GetLastFetchPC();
+        L1InstructionCache::CacheQueryResult    icache  = module_icache.GetLastQuery();
+        InstructionBuffer::QueryResult          ibuffer = module_ibuffer.GetLastQuery();
+
+        return FetchResult {
+            .valid  = pc_seq.valid && _InstructionDataHit(),
+            .pc     = pc_seq.vaddr,
+            .fid    = pc_seq.fid,
+            .data   = ibuffer.hit ? ibuffer.data.insn : icache.data.insn
+        };
+    }
+
+    inline Fetch::BranchPrediction Fetch::GetLastBranchPrediction() const noexcept
+    {
+        PCSequence::PCFetch             pc_seq  = module_pc_sequence.GetLastFetchPC();
+        InstructionBuffer::QueryResult  ibuffer = module_ibuffer.GetLastQuery();
+        BranchPredictor::BPQueryResult  bp      = module_branch_predictor.GetLastQuery();
+        
+        return BranchPrediction {
+            .valid      = pc_seq.valid && (ibuffer.hit ? _InstructionBufferBranchValid() : _InstructionCacheBranchValid()),
+            .pattern    = bp.pattern,
+            .taken      = bp.taken,
+            .hit        = bp.target_valid,
+            .target     = bp.target
+        };
+    }
+
+    inline FetchAXI4ReadAddressChannelM2S Fetch::GetLastAXI4ReadAddress() const noexcept
+    {
+        return module_axi_controller.GetLastAXI4ReadAddress();
+    }
+
+    inline void Fetch::NextAXI4ReadAddress(FetchAXI4ReadAddressChannelS2M bundle) noexcept
+    {
+        module_axi_controller.NextAXI4ReadAddress(bundle);
+    }
+
+    inline FetchAXI4ReadDataChannelM2S Fetch::GetLastAXI4ReadData() const noexcept
+    {
+        return module_axi_controller.GetLastAXI4ReadData();
+    }
+
+    inline void Fetch::NextAXI4ReadData(FetchAXI4ReadDataChannelS2M bundle) noexcept
+    {
+        module_axi_controller.NextAXI4ReadData(bundle);
+    }
+
+    void Fetch::Reset() noexcept
+    {
+        module_pc_sequence.Reset();
+        module_branch_predictor.Reset();
+        module_icache.Reset();
+        module_ibuffer.Reset();
+        module_axi_controller.Reset();
+
+        pc_uncached.Reset();
+
+        next_reset = false;
+    }
+
+    void Fetch::Eval() noexcept
+    {
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        PCSequence::PCInternal pc_internal = module_pc_sequence.CombInternalPC();
+
+        //
+        PCSequence::PCFetch      pc_seq           = module_pc_sequence.GetLastFetchPC();
+        PCSequence::CacheControl pc_cache_control = module_pc_sequence.GetLastCacheControl();
+
+        //
+        BranchPredictor::BPQueryResult bp = module_branch_predictor.GetLastQuery();
+
+        //
+        L1InstructionCache::CacheQueryResult icache  = module_icache.GetLastQuery();
+
+        //
+        InstructionBuffer::QueryResult ibuffer = module_ibuffer.GetLastQuery();
+
+        //
+        AXI4Controller::CacheUpdateData cache_update_data = module_axi_controller.GetLastCacheUpdateData();
+        AXI4Controller::CacheUpdateTag  cache_update_tag  = module_axi_controller.GetLastCacheUpdateTag();
+
+        AXI4Controller::UncachedBufferUpdate uncached_buffer_update = module_axi_controller.GetLastUncachedBufferUpdate();
+
+        AXI4Controller::RefillBufferUpdateAddress refill_buffer_update_address = module_axi_controller.GetLastRefillBufferUpdateAddress();
+        AXI4Controller::RefillBufferUpdateData    refill_buffer_update_data    = module_axi_controller.GetLastRefillBufferUpdateData();
+        AXI4Controller::RefillBufferUpdateControl refill_buffer_update_control = module_axi_controller.GetLastRefillBufferUpdateControl();
+
+
+        //
+        module_pc_sequence.NextCacheFeedback(
+            ibuffer.hit || icache.hit,
+            pc_uncached
+        );
+
+        module_pc_sequence.NextCacheControl(
+            module_ibuffer.GetCombRefilledHit(),
+            module_ibuffer.GetCombUncachedDone()
+        );
+
+        module_pc_sequence.NextBranchPrediction({
+            .valid  = pc_seq.valid && (ibuffer.hit ? _InstructionBufferBranchValid() : _InstructionCacheBranchValid()),
+            .hit    = bp.target_valid,
+            .taken  = bp.taken,
+            .target = bp.target
+        });
+
+        //
+        module_branch_predictor.NextPC(pc_internal.paddr);
+
+        //
+        module_icache.NextTagUpdate(
+            cache_update_tag.enable,
+            cache_update_tag.addr,
+            cache_update_tag.valid
+        );
+
+        module_icache.NextDataUpdate(
+            cache_update_data.enable,
+            cache_update_data.addr,
+            cache_update_data.data  
+        );
+
+        module_icache.NextQuery(pc_internal.paddr);
+
+        //
+        module_ibuffer.NextUncachedBufferUpdate({
+            .enable = uncached_buffer_update.enable,
+            .addr   = uncached_buffer_update.addr,
+            .data   = uncached_buffer_update.data
+        });
+
+        module_ibuffer.NextCachedRefillBufferUpdateAddress({
+            .enable = refill_buffer_update_address.enable,
+            .addr   = refill_buffer_update_address.addr
+        });
+
+        module_ibuffer.NextCachedRefillBufferUpdateData({
+            .enable = refill_buffer_update_data.enable,
+            .data   = refill_buffer_update_data.data
+        });
+
+        if (refill_buffer_update_control.reset)
+            module_ibuffer.NextRefillBufferReset();
+
+        module_ibuffer.NextQuery(pc_internal.paddr);
+
+        //
+        module_axi_controller.NextCacheControl(
+            pc_cache_control.miss,
+            pc_cache_control.uncached
+        );
+
+        module_axi_controller.NextPC(pc_internal.paddr);
+
+        //
+        pc_uncached.Next(pc_internal.uncached);
+
+
+        //
+        module_pc_sequence.Eval();
+        module_branch_predictor.Eval();
+        module_icache.Eval();
+        module_ibuffer.Eval();
+        module_axi_controller.Eval();
+        
+        pc_uncached.Eval();
     }
 }
