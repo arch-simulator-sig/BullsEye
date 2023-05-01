@@ -23,25 +23,28 @@
 namespace BullsEye::Gemini30F2::Global {
 
 
+    using VirtualAddress            = uint32_t;
+
+    using PhysicalAddress           = uint32_t;
 
 
-    using VirtualAddress        = uint32_t;
+    using FID                       = uint8_t;
 
-    using PhysicalAddress       = uint32_t;
-
-
-    using FID                   = uint8_t;
-
-    using RawInstruction        = uint32_t;
+    using RawInstruction            = uint32_t;
 
     struct _PredecodedInstruction {
         RawInstruction  insn;
         uint4_t         tag;
     };
 
-    using PredecodedInstruction = _PredecodedInstruction;
+    using PredecodedInstruction     = _PredecodedInstruction;
 
-    using PC                    = pc_t;
+    using PC                        = pc_t;
+
+
+    using ArchitecturalRegisterIndex    = uint5_t;
+
+    using ArchitecturalRegisterValue    = uint32_t;
 }
 
 
