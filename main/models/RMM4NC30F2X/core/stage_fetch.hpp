@@ -155,9 +155,9 @@ namespace BullsEye::Gemini30F2::Fetch {
         InstructionBuffer() noexcept;
         ~InstructionBuffer() noexcept;
 
-        void            NextUncachedBufferUpdate(UncachedBufferUpdate bundle) noexcept;
-        void            NextCachedRefillBufferUpdateAddress(CachedRefillBufferUpdateAddress bundle) noexcept;
-        void            NextCachedRefillBufferUpdateData(CachedRefillBufferUpdateData bundle) noexcept;
+        void            NextUncachedBufferUpdate(const UncachedBufferUpdate& bundle) noexcept;
+        void            NextCachedRefillBufferUpdateAddress(const CachedRefillBufferUpdateAddress& bundle) noexcept;
+        void            NextCachedRefillBufferUpdateData(const CachedRefillBufferUpdateData& bundle) noexcept;
 
         void            NextQuery(Global::VirtualAddress address) noexcept;
 
@@ -401,12 +401,12 @@ namespace BullsEye::Gemini30F2::Fetch {
 
         void            NextNotReady(bool readyn) noexcept;
 
-        void            NextBranchCommitOverride(BranchCommitOverride bundle) noexcept;
+        void            NextBranchCommitOverride(const BranchCommitOverride& bundle) noexcept;
 
         void            NextCacheFeedback(bool hit, bool uncached) noexcept;
         void            NextCacheControl(bool refilled_hit, bool uncached_done) noexcept;
 
-        void            NextBranchPrediction(BranchPrediction bundle) noexcept;
+        void            NextBranchPrediction(const BranchPrediction& bundle) noexcept;
 
         void            NextReset() noexcept;
 
@@ -534,10 +534,10 @@ namespace BullsEye::Gemini30F2::Fetch {
 
         // AXI interface
         FetchAXI4ReadAddressChannelM2S  GetLastAXI4ReadAddress() const noexcept;
-        void                            NextAXI4ReadAddress(FetchAXI4ReadAddressChannelS2M bundle) noexcept;
+        void                            NextAXI4ReadAddress(const FetchAXI4ReadAddressChannelS2M& bundle) noexcept;
 
         FetchAXI4ReadDataChannelM2S     GetLastAXI4ReadData() const noexcept;
-        void                            NextAXI4ReadData(FetchAXI4ReadDataChannelS2M bundle) noexcept;
+        void                            NextAXI4ReadData(const FetchAXI4ReadDataChannelS2M& bundle) noexcept;
 
         //
         void                        Reset() noexcept;
@@ -599,7 +599,7 @@ namespace BullsEye::Gemini30F2::Fetch {
 
         void                    NextNotReady(bool readyn) noexcept;
         
-        void                    NextBranchCommitOverride(BranchCommitOverride bundle) noexcept;
+        void                    NextBranchCommitOverride(const BranchCommitOverride& bundle) noexcept;
 
         void                    NextReset() noexcept;
 
@@ -609,10 +609,10 @@ namespace BullsEye::Gemini30F2::Fetch {
 
         //
         FetchAXI4ReadAddressChannelM2S  GetLastAXI4ReadAddress() const noexcept;
-        void                            NextAXI4ReadAddress(FetchAXI4ReadAddressChannelS2M bundle) noexcept;
+        void                            NextAXI4ReadAddress(const FetchAXI4ReadAddressChannelS2M& bundle) noexcept;
 
         FetchAXI4ReadDataChannelM2S     GetLastAXI4ReadData() const noexcept;
-        void                            NextAXI4ReadData(FetchAXI4ReadDataChannelS2M bundle) noexcept;
+        void                            NextAXI4ReadData(const FetchAXI4ReadDataChannelS2M& bundle) noexcept;
 
         //
         void                    Reset() noexcept;
@@ -807,17 +807,17 @@ namespace BullsEye::Gemini30F2::Fetch {
     InstructionBuffer::~InstructionBuffer() noexcept
     { }
 
-    inline void InstructionBuffer::NextUncachedBufferUpdate(UncachedBufferUpdate bundle) noexcept
+    inline void InstructionBuffer::NextUncachedBufferUpdate(const UncachedBufferUpdate& bundle) noexcept
     {
         module_uncached_buffer.Next(bundle.enable, bundle.addr, bundle.data);
     }
 
-    inline void InstructionBuffer::NextCachedRefillBufferUpdateAddress(CachedRefillBufferUpdateAddress bundle) noexcept
+    inline void InstructionBuffer::NextCachedRefillBufferUpdateAddress(const CachedRefillBufferUpdateAddress& bundle) noexcept
     {
         module_refilled_buffer.NextAddress(bundle.enable, bundle.addr);
     }
 
-    inline void InstructionBuffer::NextCachedRefillBufferUpdateData(CachedRefillBufferUpdateData bundle) noexcept
+    inline void InstructionBuffer::NextCachedRefillBufferUpdateData(const CachedRefillBufferUpdateData& bundle) noexcept
     {
         module_refilled_buffer.NextRefill(bundle.enable, bundle.index, bundle.data);
     }
@@ -1307,7 +1307,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         next_readyn = readyn;
     }
 
-    inline void PCSequence::NextBranchCommitOverride(BranchCommitOverride bundle) noexcept
+    inline void PCSequence::NextBranchCommitOverride(const BranchCommitOverride& bundle) noexcept
     {
         next_branch_commit_override = bundle;
     }
@@ -1324,7 +1324,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         next_cache_control_uncached_done    = uncached_done;
     }
 
-    inline void PCSequence::NextBranchPrediction(BranchPrediction bundle) noexcept
+    inline void PCSequence::NextBranchPrediction(const BranchPrediction& bundle) noexcept
     {
         next_branch_prediction = bundle;
     }
@@ -1637,7 +1637,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         return last_axi_read_address;
     }
 
-    inline void AXI4Controller::NextAXI4ReadAddress(FetchAXI4ReadAddressChannelS2M bundle) noexcept
+    inline void AXI4Controller::NextAXI4ReadAddress(const FetchAXI4ReadAddressChannelS2M& bundle) noexcept
     {
         axi_read_address = bundle;
     }
@@ -1647,7 +1647,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         return last_axi_read_data;
     }
 
-    inline void AXI4Controller::NextAXI4ReadData(FetchAXI4ReadDataChannelS2M bundle) noexcept
+    inline void AXI4Controller::NextAXI4ReadData(const FetchAXI4ReadDataChannelS2M& bundle) noexcept
     {
         axi_read_data = bundle;
     }
@@ -1922,7 +1922,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         module_pc_sequence.NextNotReady(readyn);
     }
 
-    inline void Fetch::NextBranchCommitOverride(BranchCommitOverride bundle) noexcept
+    inline void Fetch::NextBranchCommitOverride(const BranchCommitOverride& bundle) noexcept
     {
         module_pc_sequence.NextBranchCommitOverride({ 
             .valid = bundle.valid, 
@@ -1982,7 +1982,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         return module_axi_controller.GetLastAXI4ReadAddress();
     }
 
-    inline void Fetch::NextAXI4ReadAddress(FetchAXI4ReadAddressChannelS2M bundle) noexcept
+    inline void Fetch::NextAXI4ReadAddress(const FetchAXI4ReadAddressChannelS2M& bundle) noexcept
     {
         module_axi_controller.NextAXI4ReadAddress(bundle);
     }
@@ -1992,7 +1992,7 @@ namespace BullsEye::Gemini30F2::Fetch {
         return module_axi_controller.GetLastAXI4ReadData();
     }
 
-    inline void Fetch::NextAXI4ReadData(FetchAXI4ReadDataChannelS2M bundle) noexcept
+    inline void Fetch::NextAXI4ReadData(const FetchAXI4ReadDataChannelS2M& bundle) noexcept
     {
         module_axi_controller.NextAXI4ReadData(bundle);
     }
