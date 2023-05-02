@@ -24,12 +24,168 @@
 
 namespace BullsEye::Gemini30F2::Decode {
 
+    using RegisterIndex     = Global::ArchitecturalRegisterIndex;
+
+    using RegisterValue     = Global::ArchitecturalRegisterValue;
+
+    using Immediate         = uint26_t;
+
+    using LoadStoreWidth    = uint2_t;
+
+    using ALUCommand        = uint5_t;
+
+    using MULCommand        = uint2_t;
+
+    using MEMCommand        = uint5_t;
+
+    using BRUCommand        = uint7_t;
+
+    using BAGUCommand       = uint2_t;
+}
+
+
+namespace BullsEye::Gemini30F2::Decode {
+
+    //
+    static constexpr LoadStoreWidth     LSWIDTH_BYTE        = 0b00;
+    static constexpr LoadStoreWidth     LSWIDTH_HALF_WORD   = 0b01;
+    static constexpr LoadStoreWidth     LSWIDTH_WORD        = 0b10;
+    static constexpr LoadStoreWidth     LSWIDTH_DOUBLE_WORD = 0b11;
+
+    //
+    static constexpr ALUCommand         ALU_NOP             = 0x00;
+    static constexpr ALUCommand         ALU_ADD             = 0x01;
+    static constexpr ALUCommand         ALU_ADDI            = 0x11;
+    static constexpr ALUCommand         ALU_SUB             = 0x02;
+    static constexpr ALUCommand         ALU_SUBI            = 0x12;
+    static constexpr ALUCommand         ALU_AND             = 0x03;
+    static constexpr ALUCommand         ALU_ANDI            = 0x13;
+    static constexpr ALUCommand         ALU_OR              = 0x04;
+    static constexpr ALUCommand         ALU_ORI             = 0x14;
+    static constexpr ALUCommand         ALU_XOR             = 0x05;
+    static constexpr ALUCommand         ALU_XORI            = 0x15;
+    static constexpr ALUCommand         ALU_SLT             = 0x06;
+    static constexpr ALUCommand         ALU_SLTU            = 0x0B;
+    static constexpr ALUCommand         ALU_SLL             = 0x07;
+    static constexpr ALUCommand         ALU_SLLV            = 0x17;
+    static constexpr ALUCommand         ALU_SRL             = 0x08;
+    static constexpr ALUCommand         ALU_SRLV            = 0x18;
+    static constexpr ALUCommand         ALU_SRA             = 0x09;
+    static constexpr ALUCommand         ALU_SRAV            = 0x19;
+    static constexpr ALUCommand         ALU_LUI             = 0x0A;
+
+    static constexpr MULCommand         MUL_NOP             = 0x00;
+    static constexpr MULCommand         MUL_EN              = 0x01;
+
+    static constexpr MEMCommand         MEM_NOP             = 0x00;
+    static constexpr MEMCommand         MEM_LB              = 0x06;
+    static constexpr MEMCommand         MEM_LW              = 0x02;
+    static constexpr MEMCommand         MEM_SB              = 0x05;
+    static constexpr MEMCommand         MEM_SW              = 0x01;
+    static constexpr MEMCommand         MEM_BITMASK_STORE   = 0x01;
+    static constexpr MEMCommand         MEM_BITMASK_LOAD    = 0x02;
+    static constexpr MEMCommand         MEM_BITMASK_LSBYTE  = 0x04;
+
+    static constexpr BRUCommand         BRU_NOP             = 0x00;
+    static constexpr BRUCommand         BRU_JUMP            = 0x40;
+    static constexpr BRUCommand         BRU_JCALL           = 0x60;
+    static constexpr BRUCommand         BRU_BRANCH_EQ       = 0x02;
+    static constexpr BRUCommand         BRU_BRANCH_NEQ      = 0x01;
+    static constexpr BRUCommand         BRU_BRANCH_GEZ      = 0x18;
+    static constexpr BRUCommand         BRU_BRANCH_GTZ      = 0x10;
+    static constexpr BRUCommand         BRU_BRANCH_LEZ      = 0x0C;
+    static constexpr BRUCommand         BRU_BRANCH_LTZ      = 0x04;
+
+    static constexpr BAGUCommand        BAGU_NOP            = 0x00;
+    static constexpr BAGUCommand        BAGU_RLT            = 0x01;
+    static constexpr BAGUCommand        BAGU_IMM            = 0x02;
+    static constexpr BAGUCommand        BAGU_REG            = 0x03;
+}
+
+
+namespace BullsEye::Gemini30F2::Decode {
+
+    // Instruction Decoder
+    class InstructionDecoder {
+    public:
+        struct Decoded {
+            RegisterIndex   src0;
+            RegisterIndex   src1;
+            RegisterIndex   dst;
+
+            Immediate       imm;
+
+            bool            branch;
+            bool            load;
+            bool            store;
+            LoadStoreWidth  lswidth;
+            
+            bool            pipe_alu;
+            bool            pipe_mul;
+            bool            pipe_mem;
+            bool            pipe_bru;
+
+            ALUCommand      alu_cmd;
+            MULCommand      mul_cmd;
+            MEMCommand      mem_cmd;
+            BRUCommand      bru_cmd;
+            BAGUCommand     bagu_cmd;
+        };
+
+    public:
+        InstructionDecoder() noexcept;
+        ~InstructionDecoder() noexcept;
+        
+        Decoded     CombDecode(Global::RawInstruction insn, bool valid) const noexcept;
+    };
+
+
+    // Instruction Decoder output DFFs
+    class InstructionDecoderDFFs {
+    private:
+        Global::PC                      last_pc;
+        InstructionDecoder::Decoded     last_decoded;
+        Fetch::Fetch::BranchPrediction  last_branch_prediction;
+        bool                            last_allocation_enable;
+
+        Global::PC                      next_pc;
+        InstructionDecoder::Decoded     next_decoded;
+        Fetch::Fetch::BranchPrediction  next_branch_prediction;
+        bool                            next_allocation_enable;
+
+        bool                            next_bco_valid;
+
+        bool                            next_reset;
+
+    public:
+        InstructionDecoderDFFs() noexcept;
+        ~InstructionDecoderDFFs() noexcept;
+
+        void                            NextPC(Global::PC pc) noexcept;
+        void                            NextDecoded(InstructionDecoder::Decoded bundle) noexcept;
+        void                            NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept;
+        void                            NextAllocationEnable(bool enable) noexcept;
+
+        void                            NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void                            NextReset() noexcept;
+
+        Global::PC                      GetLastPC() const noexcept;
+        InstructionDecoder::Decoded     GetLastDecoded() const noexcept;
+        Fetch::Fetch::BranchPrediction  GetLastBranchPrediction() const noexcept;
+        bool                            GetLastAllocationEnable() const noexcept;
+
+        void                            Reset() noexcept;
+        void                            Eval() noexcept;
+    };
+
+
     // Register File (32b x 32)
     class RegisterFile {
     public:
-        using Index         = Global::ArchitecturalRegisterIndex;
+        using Index         = RegisterIndex;
 
-        using Value         = Global::ArchitecturalRegisterValue;
+        using Value         = RegisterValue;
 
     private:
         Value   regfile[31];
@@ -57,8 +213,6 @@ namespace BullsEye::Gemini30F2::Decode {
     class ReOrderBuffer {
     public:
         using Index             = uint4_t;
-
-        using LoadStoreWidth    = uint2_t;
 
         using CommitDelay       = uint4_t;
 
@@ -117,12 +271,6 @@ namespace BullsEye::Gemini30F2::Decode {
             Index                               rob;
             Entry                               entry;
         };
-
-    public:
-        static constexpr LoadStoreWidth     LSWIDTH_BYTE        = 0b00;
-        static constexpr LoadStoreWidth     LSWIDTH_HALF_WORD   = 0b01;
-        static constexpr LoadStoreWidth     LSWIDTH_WORD        = 0b10;
-        static constexpr LoadStoreWidth     LSWIDTH_DOUBLE_WORD = 0b11;
 
     private:
         Entry                   rob[16];
@@ -191,7 +339,7 @@ namespace BullsEye::Gemini30F2::Decode {
             ReOrderBuffer::Index    rob;
         };
 
-        struct Writeback {
+        struct ROBCommit {
             bool                    enable;
             Index                   addr;
             Global::FID             fid;
@@ -207,7 +355,7 @@ namespace BullsEye::Gemini30F2::Decode {
         Entry       rat[31];
 
         Allocation  next_allocation;
-        Writeback   next_writeback;
+        ROBCommit   next_writeback;
 
         bool        next_bco_valid;
 
@@ -220,8 +368,8 @@ namespace BullsEye::Gemini30F2::Decode {
         RegisterAliasTable() noexcept;
         ~RegisterAliasTable() noexcept;
 
-        void            NextAllocation(Allocation allocation) noexcept;
-        void            NextWriteback(Writeback writeback) noexcept;
+        void            NextAllocation(Allocation bundle) noexcept;
+        void            NextROBCommit(ROBCommit bundle) noexcept;
 
         void            NextBranchCommitOverride(bool valid) noexcept;
 
@@ -229,6 +377,76 @@ namespace BullsEye::Gemini30F2::Decode {
 
         ReadResult      CombReadPortA(Index index) const noexcept;
         ReadResult      CombReadPortB(Index index) const noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
+    };
+
+
+    // Register And Rename
+    class RegisterAndRename {
+    public:
+        struct RenameAndAllocation {
+            bool                    enable;         // allocation enable
+
+            Global::FID             fid;
+            ReOrderBuffer::Index    rob;
+
+            RegisterIndex           src0;
+            RegisterIndex           src1;
+            RegisterIndex           dst;
+        };
+
+        struct RenameResult {
+            ReOrderBuffer::Index    src0_rob;
+            bool                    src0_ready;
+            RegisterValue           src0_value;
+
+            ReOrderBuffer::Index    src1_rob;
+            bool                    src1_ready;
+            RegisterValue           src1_value;  
+        };
+
+        struct ROBRead {
+            RegisterValue           value;
+            bool                    ready;
+        };
+
+        struct ROBCommit {
+            bool                    enable;
+            RegisterIndex           addr;
+            Global::FID             fid;
+            RegisterValue           data;
+        };
+        
+    private:
+        RegisterFile            module_regfile;
+
+        RegisterAliasTable      module_rat;
+
+        ReOrderBuffer&          module_rob;
+
+        RenameAndAllocation     next_rename_and_allocation;
+
+        ROBCommit               next_rob_commit;
+
+        bool                    next_bco_valid;
+
+        bool                    next_reset;
+
+    public:
+        RegisterAndRename(ReOrderBuffer& rob) noexcept;
+        ~RegisterAndRename() noexcept;
+
+        void            NextRenameAndAllocation(RenameAndAllocation bundle) noexcept;
+
+        void            NextROBCommit(ROBCommit bundle) noexcept;
+
+        void            NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void            NextReset() noexcept;
+
+        RenameResult    CombReadAndRename() const noexcept;
 
         void            Reset() noexcept;
         void            Eval() noexcept;
@@ -327,15 +545,389 @@ namespace BullsEye::Gemini30F2::Decode {
 
     // Pre-Allocator
     class PreAllocator {
+    private:
+        PreAllocatorROB         model_allocator_rob;
+        PreAllocatorStoreBuffer model_allocator_storebuffer;
 
+        SteppingDFF<bool>       readyn_sync1;
+        SteppingDFF<bool>       readyn_sync2;
+
+        bool                    next_allocation_enable;
+
+        bool                    next_readyn;
+
+        bool                    next_reset;
+
+    private:
+        bool        _SignalNotReady() const noexcept;
+
+    public:
+        PreAllocator() noexcept;
+        ~PreAllocator() noexcept;
+        
+        void        NextAllocationEnable(bool enable, bool enable_store) noexcept;
+        void        NextCommitEnable(bool enable, bool enable_store) noexcept;
+
+        void        NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void        NextNotReady(bool readyn) noexcept;
+
+        void        NextReset() noexcept;
+
+        bool        CombAllocationEnable() const noexcept;
+
+        bool        CombNotReady() const noexcept;
+
+        void        Reset() noexcept;
+        void        Eval() noexcept;
     };
 
 
 
-    // InstructionDecoder
-    class InstructionDecoder {
+    // Decode AIO
+    class Decode {
 
     };
+}
+
+
+// Implementation of: class InstructionDecoder
+namespace BullsEye::Gemini30F2::Decode {
+
+    InstructionDecoder::InstructionDecoder() noexcept
+    { }
+
+    InstructionDecoder::~InstructionDecoder() noexcept
+    { }
+
+    InstructionDecoder::Decoded InstructionDecoder::CombDecode(Global::RawInstruction insn, bool valid) const noexcept
+    {
+        // *NOTICE: Temporary implementation. Further optimzation is required.
+
+        //
+        if (!valid)
+            return {};
+
+        //
+        MIPS32::MIPS32Instruction mips32_insn = insn;
+
+        uint6_t     opcode  = mips32_insn.GetOpcode();
+        uint5_t     rs      = mips32_insn.GetRS();
+        uint5_t     rt      = mips32_insn.GetRT();
+        uint5_t     rd      = mips32_insn.GetRD();
+        uint5_t     sa      = mips32_insn.GetShamt();
+        uint6_t     func    = mips32_insn.GetFunct();
+        uint16_t    iimm    = mips32_insn.GetImmediate();
+        uint26_t    jindex  = mips32_insn.GetJumpIndex();
+
+        //
+        Decoded decoded;
+
+        //
+        bool i_add, i_addi, i_addu, i_addiu, i_sub,  i_slt,  i_sltu,  i_mul;
+        bool i_and, i_andi, i_lui,  i_or,    i_ori,  i_xor,  i_xori;
+        bool i_sll, i_sllv, i_sra,  i_srav,  i_srl,  i_srlv;
+        bool i_beq, i_bne,  i_bgez, i_bgtz,  i_blez, i_bltz;
+        bool i_j,   i_jal,  i_jr,   i_jalr;
+        bool i_lb,  i_lw,   i_sb,   i_sw;
+
+        //  insn |          opcode   |          func     |         sa      |         rs     |         rt      |       rd      |
+        //
+        i_add    = opcode == 0b000000 && func == 0b100000 && sa == 0b00000;
+        i_addi   = opcode == 0b001000;
+        i_addu   = opcode == 0b000000 && func == 0b100001 && sa == 0b00000;
+        i_addiu  = opcode == 0b001001;
+        i_sub    = opcode == 0b000000 && func == 0b100010 && sa == 0b00000;
+        i_slt    = opcode == 0b000000 && func == 0b101010 && sa == 0b00000;
+        i_sltu   = opcode == 0b000000 && func == 0b101011 && sa == 0b00000;
+        i_mul    = opcode == 0b011100 && func == 0b000010 && sa == 0b00000;
+
+        i_and    = opcode == 0b000000 && func == 0b100100 && sa == 0b00000;
+        i_andi   = opcode == 0b001100;
+        i_lui    = opcode == 0b001111                                       && rs == 0b00000;
+        i_or     = opcode == 0b000000 && func == 0b100101 && sa == 0b00000;
+        i_ori    = opcode == 0b001101;
+        i_xor    = opcode == 0b000000 && func == 0b100110 && sa == 0b00000;
+        i_xori   = opcode == 0b001110;
+
+        i_sllv   = opcode == 0b000000 && func == 0b000100 && sa == 0b00000;
+        i_sll    = opcode == 0b000000 && func == 0b000000                   && rs == 0b00000;
+        i_srav   = opcode == 0b000000 && func == 0b000111 && sa == 0b00000;
+        i_sra    = opcode == 0b000000 && func == 0b000011                   && rs == 0b00000;
+        i_srlv   = opcode == 0b000000 && func == 0b000110 && sa == 0b00000;
+        i_srl    = opcode == 0b000000 && func == 0b000010                   && rs == 0b00000;
+
+        i_beq    = opcode == 0b000100;
+        i_bne    = opcode == 0b000101;
+        i_bgez   = opcode == 0b000001                                                        && rt == 0b00001;
+        i_bgtz   = opcode == 0b000111                                                        && rt == 0b00000;
+        i_blez   = opcode == 0b000110                                                        && rt == 0b00000;
+        i_bltz   = opcode == 0b000001                                                        && rt == 0b00000;
+
+        i_j      = opcode == 0b000010;
+        i_jal    = opcode == 0b000011;
+        i_jr     = opcode == 0b000000 && func == 0b001000 && sa == 0b00000                   && rt == 0b00000 && rd == 0b00000;
+        i_jalr   = opcode == 0b000000 && func == 0b001001 && sa == 0b00000                   && rt == 0b00000;
+
+        i_lb     = opcode == 0b100000;
+        i_lw     = opcode == 0b100011;
+        i_sb     = opcode == 0b101000;
+        i_sw     = opcode == 0b101011;
+
+        //
+        bool iform_i_1op;
+        bool iform_i_1opn;
+        bool iform_i_2opn;
+        bool iform_r;
+        bool iform_j_n;
+        bool iform_j_r31;
+
+        iform_i_1op      = i_addi  | i_addiu | i_andi  | i_lui   | i_ori   | i_xori  | i_lb    | i_lw;
+        iform_i_1opn     = i_bgez  | i_bgtz  | i_blez  | i_bltz;
+        iform_i_2opn     = i_beq   | i_bne   | i_sb    | i_sw;
+
+        iform_r          = i_add   | i_addu  | i_sub   | i_slt   | i_sltu  | i_mul   | i_and   | i_or    | i_xor
+                         | i_sllv  | i_sll   | i_srav  | i_sra   | i_srlv  | i_srl   | i_jr    | i_jalr;
+
+        iform_j_n        = i_j;
+        iform_j_r31      = i_jal;
+
+        //
+        bool iattr_branch;
+        bool iattr_load;
+        bool iattr_store;
+
+        iattr_branch     = i_beq   | i_bne   | i_bgez  | i_bgtz  | i_blez  | i_bltz
+                         | i_j     | i_jal   | i_jr    | i_jalr;
+        iattr_load       = i_lb    | i_lw;
+        iattr_store      = i_sb    | i_sw;
+
+        //
+        decoded.lswidth  = i_lb       ? LSWIDTH_BYTE
+                         : i_sb       ? LSWIDTH_BYTE
+                         : i_lw       ? LSWIDTH_WORD
+                         : i_sw       ? LSWIDTH_WORD
+                         :              LSWIDTH_WORD;
+
+        //
+        decoded.alu_cmd  = i_add      ? ALU_ADD
+                         : i_addi     ? ALU_ADDI
+                         : i_addu     ? ALU_ADD
+                         : i_addiu    ? ALU_ADDI
+                         : i_sub      ? ALU_SUB
+                         : i_slt      ? ALU_SLT
+                         : i_sltu     ? ALU_SLTU
+                         : i_and      ? ALU_AND
+                         : i_andi     ? ALU_ANDI
+                         : i_or       ? ALU_OR
+                         : i_ori      ? ALU_ORI
+                         : i_xor      ? ALU_XOR
+                         : i_xori     ? ALU_XORI
+                         : i_sll      ? ALU_SLL
+                         : i_sllv     ? ALU_SLLV
+                         : i_sra      ? ALU_SRA
+                         : i_srav     ? ALU_SRAV
+                         : i_srl      ? ALU_SRL
+                         : i_srlv     ? ALU_SRLV
+                         : i_lui      ? ALU_LUI
+                         :              ALU_NOP;
+
+        //
+        decoded.mul_cmd  = i_mul      ? MUL_EN
+                         :              MUL_NOP;
+
+        //
+        decoded.mem_cmd  = i_lb       ? MEM_LB
+                         : i_lw       ? MEM_LW
+                         : i_sb       ? MEM_SB
+                         : i_sw       ? MEM_SW
+                         :              MEM_NOP;
+
+        //
+        decoded.bru_cmd  = i_beq      ? BRU_BRANCH_EQ
+                         : i_bne      ? BRU_BRANCH_NEQ
+                         : i_bgez     ? BRU_BRANCH_GEZ
+                         : i_bgtz     ? BRU_BRANCH_GTZ
+                         : i_blez     ? BRU_BRANCH_LEZ
+                         : i_bltz     ? BRU_BRANCH_LTZ
+                         : i_j        ? BRU_JUMP
+                         : i_jal      ? BRU_JCALL
+                         : i_jr       ? BRU_JUMP
+                         : i_jalr     ? BRU_JCALL
+                         :              BRU_NOP;
+
+        //
+        decoded.bagu_cmd = i_beq     ? BAGU_RLT
+                         : i_bne     ? BAGU_RLT
+                         : i_bgez    ? BAGU_RLT
+                         : i_bgtz    ? BAGU_RLT
+                         : i_blez    ? BAGU_RLT
+                         : i_bltz    ? BAGU_RLT
+                         : i_j       ? BAGU_IMM
+                         : i_jal     ? BAGU_IMM
+                         : i_jr      ? BAGU_REG
+                         : i_jalr    ? BAGU_REG
+                         :             BAGU_NOP;
+
+        //
+        decoded.pipe_alu = decoded.alu_cmd != ALU_NOP;
+        decoded.pipe_mul = decoded.mul_cmd != MUL_NOP;
+        decoded.pipe_mem = decoded.mem_cmd != MEM_NOP;
+        decoded.pipe_bru = decoded.bru_cmd != BRU_NOP;
+
+        //
+        decoded.src0 = iform_i_1op   ? rs
+                     : iform_i_1opn  ? rs
+                     : iform_i_2opn  ? rs
+                     : iform_r       ? rs
+                     : iform_j_n     ? uint5_t(0)
+                     : iform_j_r31   ? uint5_t(0)
+                     :                 uint5_t(0);
+
+        decoded.src1 = iform_i_1op   ? uint5_t(0)
+                     : iform_i_1opn  ? uint5_t(0)
+                     : iform_i_2opn  ? rt
+                     : iform_r       ? rt
+                     : iform_j_n     ? uint5_t(0)
+                     : iform_j_r31   ? uint5_t(0)
+                     :                 uint5_t(0);
+
+        decoded.dst  = iform_i_1op   ? rt
+                     : iform_i_1opn  ? uint5_t(0)
+                     : iform_i_2opn  ? uint5_t(0)
+                     : iform_r       ? rd
+                     : iform_j_n     ? uint5_t(0)
+                     : iform_j_r31   ? uint5_t(31)
+                     :                 uint5_t(0);
+
+        decoded.imm  = iform_i_1op   ? uint26_t(iimm )
+                     : iform_i_1opn  ? uint26_t(iimm )
+                     : iform_i_2opn  ? uint26_t(iimm )
+                     : iform_r       ? uint26_t(sa   )
+                     : iform_j_n     ? jindex
+                     : iform_j_r31   ? jindex
+                     :                 uint26_t(0);
+
+        //
+        decoded.branch  = iattr_branch;
+        decoded.load    = iattr_load;
+        decoded.store   = iattr_store;
+
+        //
+        return decoded;
+    }
+}
+
+
+// Implementation of: class InstructionDecoderDFFs
+namespace BullsEye::Gemini30F2::Decode {
+    //
+    // Global::PC                      last_pc;
+    // InstructionDecoder::Decoded     last_decoded;
+    // Fetch::Fetch::BranchPrediction  last_branch_prediction;
+    // bool                            last_allocation_enable;
+    //
+    // Global::PC                      next_pc;
+    // InstructionDecoder::Decoded     next_decoded;
+    // Fetch::Fetch::BranchPrediction  next_branch_prediction;
+    // bool                            next_allocation_enable;
+    //
+    // bool                            next_bco_valid;
+    //
+    // bool                            next_reset;
+    //
+
+    InstructionDecoderDFFs::InstructionDecoderDFFs() noexcept
+        : last_pc                   ()
+        , last_decoded              ()
+        , last_branch_prediction    ()
+        , last_allocation_enable    (false)
+        , next_pc                   ()
+        , next_decoded              ()
+        , next_branch_prediction    ()
+        , next_allocation_enable    (false)
+        , next_bco_valid            (false)
+        , next_reset                (false)
+    { }
+
+    InstructionDecoderDFFs::~InstructionDecoderDFFs() noexcept
+    { }
+
+    inline void InstructionDecoderDFFs::NextPC(Global::PC pc) noexcept
+    {
+        next_pc = pc;
+    }
+
+    inline void InstructionDecoderDFFs::NextDecoded(InstructionDecoder::Decoded bundle) noexcept
+    {
+        next_decoded = bundle;
+    }
+
+    inline void InstructionDecoderDFFs::NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept
+    {
+        next_branch_prediction = bundle;
+    }
+
+    inline void InstructionDecoderDFFs::NextAllocationEnable(bool enable) noexcept
+    {
+        next_allocation_enable = enable;
+    }
+
+    inline void InstructionDecoderDFFs::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        next_bco_valid = bco_valid;
+    }
+
+    inline void InstructionDecoderDFFs::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline Global::PC InstructionDecoderDFFs::GetLastPC() const noexcept
+    {
+        return last_pc;
+    }
+
+    inline InstructionDecoder::Decoded InstructionDecoderDFFs::GetLastDecoded() const noexcept
+    {
+        return last_decoded;
+    }
+
+    inline Fetch::Fetch::BranchPrediction InstructionDecoderDFFs::GetLastBranchPrediction() const noexcept
+    {
+        return last_branch_prediction;
+    }
+
+    inline bool InstructionDecoderDFFs::GetLastAllocationEnable() const noexcept
+    {
+        return last_allocation_enable;
+    }
+
+    void InstructionDecoderDFFs::Reset() noexcept
+    {
+        last_allocation_enable = false;
+
+        next_allocation_enable = false;
+        next_bco_valid         = false;
+        next_reset             = false;
+    }
+
+    void InstructionDecoderDFFs::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        last_pc                 = next_pc;
+        last_decoded            = next_decoded;
+        last_branch_prediction  = next_branch_prediction;
+
+        last_allocation_enable  = next_bco_valid ? false : next_allocation_enable;
+    }
 }
 
 
@@ -670,7 +1262,7 @@ namespace BullsEye::Gemini30F2::Decode {
         next_allocation = allocation;
     }
 
-    inline void RegisterAliasTable::NextWriteback(Writeback writeback) noexcept
+    inline void RegisterAliasTable::NextROBCommit(ROBCommit writeback) noexcept
     {
         next_writeback = writeback;
     }
@@ -735,6 +1327,131 @@ namespace BullsEye::Gemini30F2::Decode {
                 rat[next_allocation.addr - 1].rob   = next_allocation.rob; 
             }
         }
+    }
+}
+
+
+// Implementation of: class RegisterAndRename
+namespace BullsEye::Gemini30F2::Decode {
+    //
+    // RegisterFile            module_regfile;
+    //
+    // RegisterAliasTable      module_rat;
+    //
+    // ReOrderBuffer&          module_rob;
+    //
+    // RenameAndAllocation     next_rename_and_allocation;
+    //
+    // ROBCommit               next_rob_commit;
+    //
+    // bool                    next_bco_valid;
+    //
+    // bool                    next_reset;
+    //
+
+    RegisterAndRename::RegisterAndRename(ReOrderBuffer& rob) noexcept
+        : module_regfile            ()
+        , module_rat                ()
+        , module_rob                (rob)
+        , next_rename_and_allocation{ .enable = false }
+        , next_rob_commit           { .enable = false }
+        , next_bco_valid            (false)
+        , next_reset                (false)
+    { }
+
+    RegisterAndRename::~RegisterAndRename() noexcept
+    { }
+
+    inline void RegisterAndRename::NextRenameAndAllocation(RenameAndAllocation bundle) noexcept
+    {
+        next_rename_and_allocation = bundle;
+    }
+
+    inline void RegisterAndRename::NextROBCommit(ROBCommit bundle) noexcept
+    {
+        next_rob_commit = bundle;
+    }
+
+    inline void RegisterAndRename::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        next_bco_valid = bco_valid;
+    }
+
+    inline void RegisterAndRename::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    RegisterAndRename::RenameResult RegisterAndRename::CombReadAndRename() const noexcept
+    {
+        RegisterValue regfs_data0 = module_regfile.CombReadPortA(next_rename_and_allocation.src0);
+        RegisterValue regfs_data1 = module_regfile.CombReadPortB(next_rename_and_allocation.src1);
+
+        RegisterAliasTable::ReadResult rat_src0 = module_rat.CombReadPortA(next_rename_and_allocation.src0);
+        RegisterAliasTable::ReadResult rat_src1 = module_rat.CombReadPortB(next_rename_and_allocation.src1);
+
+        ReOrderBuffer::ReadValueResult rob_src0 = module_rob.CombReadValuePortA(rat_src0.rob);
+        ReOrderBuffer::ReadValueResult rob_src1 = module_rob.CombReadValuePortB(rat_src1.rob);
+
+        return RenameResult {
+            .src0_rob   = rat_src0.rob,
+            .src0_ready = rat_src0.valid ? rob_src0.ready : true,
+            .src0_value = rat_src0.valid ? rob_src0.value : regfs_data0,
+
+            .src1_rob   = rat_src1.rob,
+            .src1_ready = rat_src1.valid ? rob_src1.ready : true,
+            .src1_value = rat_src1.valid ? rob_src1.value : regfs_data1
+        };
+    }
+
+    void RegisterAndRename::Reset() noexcept
+    {
+        module_rat.Reset();
+
+        next_rename_and_allocation.enable = false;
+        next_rob_commit.enable            = false;
+
+        next_bco_valid  = false;
+
+        next_reset      = false;
+    }
+
+    void RegisterAndRename::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        module_rat.NextAllocation({
+            .enable = next_rename_and_allocation.enable,
+            .addr   = next_rename_and_allocation.dst,
+            .fid    = next_rename_and_allocation.fid,
+            .rob    = next_rename_and_allocation.rob
+        });
+
+        //
+        module_regfile.NextWrite(
+            next_rob_commit.enable,
+            next_rob_commit.addr,
+            next_rob_commit.data
+        );
+
+        module_rat.NextROBCommit({
+            .enable = next_rob_commit.enable,
+            .addr   = next_rob_commit.addr,
+            .fid    = next_rob_commit.fid
+        });
+
+        //
+        module_rat.NextBranchCommitOverride(next_bco_valid);
+
+        //
+        module_regfile.Eval();
+        module_rat.Eval();
     }
 }
 
@@ -934,6 +1651,11 @@ namespace BullsEye::Gemini30F2::Decode {
         return fifo_pos.Get() & 0x01;
     }
 
+    inline bool PreAllocatorStoreBuffer::_SignalNotReady() const noexcept
+    {
+        return fifo_pos.Get() & 0x7C;
+    }
+
     inline void PreAllocatorStoreBuffer::NextAllocationEnable(bool enable, bool enable_store) noexcept
     {
         next_allocation_enable          = enable;
@@ -958,7 +1680,7 @@ namespace BullsEye::Gemini30F2::Decode {
 
     inline bool PreAllocatorStoreBuffer::CombNotReady() const noexcept
     {
-        return fifo_pos.Get() & 0x7C;
+        return _SignalNotReady();
     }
 
     void PreAllocatorStoreBuffer::Reset() noexcept
@@ -996,4 +1718,121 @@ namespace BullsEye::Gemini30F2::Decode {
         //
         fifo_pos.Eval();
     }
+}
+
+
+// Implementation of: class PreAllocator
+namespace BullsEye::Gemini30F2::Decode {
+    //
+    // PreAllocatorROB         model_allocator_rob;
+    // PreAllocatorStoreBuffer model_allocator_storebuffer;
+    //
+    // SteppingDFF<bool>       readyn_sync1;
+    // SteppingDFF<bool>       readyn_sync2;
+    //
+    // bool                    next_allocation_enable;
+    //
+    // bool                    next_readyn;
+    //
+    // bool                    next_reset;
+    //
+
+    PreAllocator::PreAllocator() noexcept
+        : model_allocator_rob           ()
+        , model_allocator_storebuffer   ()
+        , readyn_sync1                  ()
+        , readyn_sync2                  ()
+        , next_allocation_enable        (false)
+        , next_readyn                   (false)
+        , next_reset                    (false)
+    { }
+
+    PreAllocator::~PreAllocator() noexcept
+    { }
+
+    inline bool PreAllocator::_SignalNotReady() const noexcept
+    {
+        return model_allocator_rob.CombNotReady() || model_allocator_storebuffer.CombNotReady() || next_readyn;
+    }
+
+    inline void PreAllocator::NextAllocationEnable(bool enable, bool enable_store) noexcept
+    {
+        model_allocator_rob         .NextAllocationEnable(enable);
+        model_allocator_storebuffer .NextAllocationEnable(enable, enable_store);
+    }
+
+    inline void PreAllocator::NextCommitEnable(bool enable, bool enable_store) noexcept
+    {
+        model_allocator_rob         .NextCommitEnable(enable);
+        model_allocator_storebuffer .NextCommitEnable(enable, enable_store);
+    }
+
+    inline void PreAllocator::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        model_allocator_rob         .NextBranchCommitOverride(bco_valid);
+        model_allocator_storebuffer .NextBranchCommitOverride(bco_valid);
+    }
+
+    inline void PreAllocator::NextNotReady(bool readyn) noexcept
+    {
+        next_readyn = readyn;
+    }
+
+    inline void PreAllocator::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline bool PreAllocator::CombAllocationEnable() const noexcept
+    {
+        return next_allocation_enable && !readyn_sync2.Get();
+    }
+
+    inline bool PreAllocator::CombNotReady() const noexcept
+    {
+        return _SignalNotReady();
+    }
+
+    void PreAllocator::Reset() noexcept
+    {
+        model_allocator_rob         .Reset();
+        model_allocator_storebuffer .Reset();
+
+        readyn_sync1.Reset();
+        readyn_sync2.Reset();
+
+        next_allocation_enable  = false;
+
+        next_readyn = false;
+
+        next_reset = false;
+    }
+
+    void PreAllocator::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        readyn_sync1.Next(_SignalNotReady());
+        readyn_sync2.Next(readyn_sync1.Get());
+
+        //
+        model_allocator_rob.Eval();
+        model_allocator_storebuffer.Eval();
+
+        readyn_sync1.Eval();
+        readyn_sync2.Eval();
+    }
+}
+
+
+
+// Implementation of: class Decode
+namespace BullsEye::Gemini30F2::Decode {
+    
 }
