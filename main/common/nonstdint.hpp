@@ -411,22 +411,22 @@ namespace BullsEye {
     //
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::_truncated_uint_base() noexcept
+    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::_truncated_uint_base() noexcept
         : val()
     { }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::_truncated_uint_base(const _truncated_uint_base<_Tsv, _Tuv, _L>& other) noexcept
+    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::_truncated_uint_base(const _truncated_uint_base<_Tsv, _Tuv, _L>& other) noexcept
         : val(other.val)
     { }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::_truncated_uint_base(const _truncated_int_base<_Tsv, _Tuv, _L>& other) noexcept
+    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::_truncated_uint_base(const _truncated_int_base<_Tsv, _Tuv, _L>& other) noexcept
         : val(static_cast<_Tuv>(other))
     { }
 
     template<class _Tsv, class _Tuv, unsigned _L>
-    constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::_truncated_uint_base(_Tuv val) noexcept
+    inline constexpr _truncated_uint_base<_Tsv, _Tuv, _L>::_truncated_uint_base(_Tuv val) noexcept
         : val(val)
     { }
 
