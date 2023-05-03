@@ -635,9 +635,7 @@ namespace BullsEye::Gemini30F2::Decode {
     public:
         using Writeback     = BeforeStageDFFs::Writeback;
 
-        struct BeforeIssue {
-            bool                                valid;
-
+        struct PreIssueMicroCode {
             Global::PC                          pc;
 
             ReOrderBuffer::Index                src0_rob;
@@ -668,6 +666,10 @@ namespace BullsEye::Gemini30F2::Decode {
             MEMCommand                          mem_cmd;
             BRUCommand                          bru_cmd;
             BAGUCommand                         bagu_cmd;
+        };
+
+        struct BeforeIssue : public PreIssueMicroCode {
+            bool                                valid;
         };
 
         using ToCommit      = ReOrderBuffer::CommitCandidate;
