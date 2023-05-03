@@ -144,11 +144,13 @@ namespace BullsEye::Gemini30F2::Decode {
     class InstructionDecoderDFFs {
     private:
         Global::PC                      last_pc;
+        Global::FID                     last_fid;
         InstructionDecoder::Decoded     last_decoded;
         Fetch::Fetch::BranchPrediction  last_branch_prediction;
         bool                            last_allocation_enable;
 
         Global::PC                      next_pc;
+        Global::FID                     next_fid;
         InstructionDecoder::Decoded     next_decoded;
         Fetch::Fetch::BranchPrediction  next_branch_prediction;
         bool                            next_allocation_enable;
@@ -162,6 +164,7 @@ namespace BullsEye::Gemini30F2::Decode {
         ~InstructionDecoderDFFs() noexcept;
 
         void                            NextPC(Global::PC pc) noexcept;
+        void                            NextFID(Global::FID fid) noexcept;
         void                            NextDecoded(InstructionDecoder::Decoded bundle) noexcept;
         void                            NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept;
         void                            NextAllocationEnable(bool enable) noexcept;
@@ -171,6 +174,7 @@ namespace BullsEye::Gemini30F2::Decode {
         void                            NextReset() noexcept;
 
         Global::PC                      GetLastPC() const noexcept;
+        Global::FID                     GetLastFID() const noexcept;
         InstructionDecoder::Decoded     GetLastDecoded() const noexcept;
         Fetch::Fetch::BranchPrediction  GetLastBranchPrediction() const noexcept;
         bool                            GetLastAllocationEnable() const noexcept;
@@ -178,6 +182,7 @@ namespace BullsEye::Gemini30F2::Decode {
         void                            Reset() noexcept;
         void                            Eval() noexcept;
     };
+
 
 
     // Register File (32b x 32)
@@ -248,8 +253,8 @@ namespace BullsEye::Gemini30F2::Decode {
 
         struct Writeback {
             bool                                enable;
+
             Index                               addr;
-            
             Global::FID                         fid;
             RegisterFile::Value                 value;
             bool                                lsmiss;
@@ -316,6 +321,7 @@ namespace BullsEye::Gemini30F2::Decode {
         ReadValueResult CombReadValuePortB(Index index) const noexcept;
 
         CommitCandidate GetLastCommit() const noexcept;
+        Index           GetLastROBNext() const noexcept;
 
         void            Reset() noexcept;
         void            Eval() noexcept;
@@ -500,7 +506,7 @@ namespace BullsEye::Gemini30F2::Decode {
     // Pre-Allocator of StoreBuffer
     class PreAllocatorStoreBuffer {
     private:
-        SteppingDFF<uint7_t, DFFResetValue<uint7_t, 0b0000001>> fifo_pos;
+        SteppingDFF<uint7_t, DFFResetValue<uint8_t, 0b0000001>> fifo_pos;
 
         bool        next_allocation_enable;
         bool        next_allocation_enable_store;
@@ -584,9 +590,148 @@ namespace BullsEye::Gemini30F2::Decode {
 
 
 
+    // Before-Stage DFFs
+    class BeforeStageDFFs {
+    public:
+        using Writeback         = ReOrderBuffer::Writeback;
+
+    private:
+        Writeback                       last_writeback;
+        Fetch::Fetch::FetchResult       last_fetch;
+        Fetch::Fetch::BranchPrediction  last_branch_prediction;
+
+        Writeback                       next_writeback;
+        Fetch::Fetch::FetchResult       next_fetch;
+        Fetch::Fetch::BranchPrediction  next_branch_prediction;
+
+        bool                            next_bco_valid;
+
+        bool                            next_reset;
+
+    public:
+        BeforeStageDFFs() noexcept;
+        ~BeforeStageDFFs() noexcept;
+
+        void                            NextWriteback(Writeback bundle) noexcept;
+        void                            NextFetch(Fetch::Fetch::FetchResult bundle) noexcept;
+        void                            NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept;
+
+        void                            NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void                            NextReset() noexcept;
+
+        Writeback                       GetLastWriteback() const noexcept;
+        Fetch::Fetch::FetchResult       GetLastFetch() const noexcept;
+        Fetch::Fetch::BranchPrediction  GetLastBranchPrediction() const noexcept;
+
+        void                            Reset() noexcept;
+        void                            Eval() noexcept;
+    };
+
+
+
     // Decode AIO
     class Decode {
+    public:
+        using Writeback     = BeforeStageDFFs::Writeback;
 
+        struct BeforeIssue {
+            bool                                valid;
+
+            Global::PC                          pc;
+
+            ReOrderBuffer::Index                src0_rob;
+            bool                                src0_ready;
+            RegisterValue                       src0_value;
+
+            ReOrderBuffer::Index                src1_rob;
+            bool                                src1_ready;
+            RegisterValue                       src1_value;
+
+            ReOrderBuffer::Index                dst_rob;
+
+            Immediate                           imm;
+
+            Global::FID                         fid;
+
+            bool                                branch;
+            bool                                load;
+            bool                                store;
+
+            bool                                pipe_alu;
+            bool                                pipe_mul;
+            bool                                pipe_mem;
+            bool                                pipe_bru;
+
+            ALUCommand                          alu_cmd;
+            MULCommand                          mul_cmd;
+            MEMCommand                          mem_cmd;
+            BRUCommand                          bru_cmd;
+            BAGUCommand                         bagu_cmd;
+        };
+
+        using ToCommit      = ReOrderBuffer::CommitCandidate;
+
+        struct FromCommit {
+            bool                                enable;
+            bool                                store;
+            Global::FID                         fid;
+            RegisterIndex                       dst;
+            RegisterValue                       result;
+        };
+
+        struct BranchPrediction {
+            Fetch::BranchPredictor::PHTEntry    pattern;
+            bool                                taken;
+            bool                                hit;
+            Global::PC                          target;
+        };
+
+    private:
+        BeforeStageDFFs                 module_input_dffs;
+
+        PreAllocator                    module_preallocator;
+
+        InstructionDecoder              module_idecode;
+
+        InstructionDecoderDFFs          module_idecdffs;
+
+        ReOrderBuffer                   module_rob;
+
+        RegisterAndRename               module_regnrename;
+
+        BeforeIssue                     last_before_issue;
+        BranchPrediction                last_branch_prediction;
+
+        bool                            next_reset;
+
+    public:
+        Decode() noexcept;
+        ~Decode() noexcept;
+
+        void                NextIssueNotReady(bool readyn) noexcept;
+
+        void                NextBranchCommitOverride(bool bco_valid);
+
+        void                NextFetch(Fetch::Fetch::FetchResult bundle) noexcept;
+        void                NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept;
+
+        void                NextFromCommit(FromCommit bundle) noexcept;
+
+        void                NextWriteback(Writeback bundle) noexcept;
+
+        void                NextReset() noexcept;
+
+        bool                CombNotReady() const noexcept;
+
+        ToCommit            GetLastToCommit() const noexcept;
+
+        BeforeIssue         GetLastBeforeIssue() const noexcept;
+
+        BranchPrediction    GetLastBranchPrediction() const noexcept;
+
+        void                Reset() noexcept;
+        void                Eval() noexcept;
     };
 }
 
@@ -823,11 +968,13 @@ namespace BullsEye::Gemini30F2::Decode {
 namespace BullsEye::Gemini30F2::Decode {
     //
     // Global::PC                      last_pc;
+    // Global::FID                     last_fid;
     // InstructionDecoder::Decoded     last_decoded;
     // Fetch::Fetch::BranchPrediction  last_branch_prediction;
     // bool                            last_allocation_enable;
     //
     // Global::PC                      next_pc;
+    // Global::FID                     next_fid;
     // InstructionDecoder::Decoded     next_decoded;
     // Fetch::Fetch::BranchPrediction  next_branch_prediction;
     // bool                            next_allocation_enable;
@@ -839,10 +986,12 @@ namespace BullsEye::Gemini30F2::Decode {
 
     InstructionDecoderDFFs::InstructionDecoderDFFs() noexcept
         : last_pc                   ()
+        , last_fid                  ()
         , last_decoded              ()
         , last_branch_prediction    ()
         , last_allocation_enable    (false)
         , next_pc                   ()
+        , next_fid                  ()
         , next_decoded              ()
         , next_branch_prediction    ()
         , next_allocation_enable    (false)
@@ -856,6 +1005,11 @@ namespace BullsEye::Gemini30F2::Decode {
     inline void InstructionDecoderDFFs::NextPC(Global::PC pc) noexcept
     {
         next_pc = pc;
+    }
+
+    inline void InstructionDecoderDFFs::NextFID(Global::FID fid) noexcept
+    {
+        next_fid = fid;
     }
 
     inline void InstructionDecoderDFFs::NextDecoded(InstructionDecoder::Decoded bundle) noexcept
@@ -886,6 +1040,11 @@ namespace BullsEye::Gemini30F2::Decode {
     inline Global::PC InstructionDecoderDFFs::GetLastPC() const noexcept
     {
         return last_pc;
+    }
+
+    inline Global::FID InstructionDecoderDFFs::GetLastFID() const noexcept
+    {
+        return last_fid;
     }
 
     inline InstructionDecoder::Decoded InstructionDecoderDFFs::GetLastDecoded() const noexcept
@@ -923,6 +1082,7 @@ namespace BullsEye::Gemini30F2::Decode {
 
         //
         last_pc                 = next_pc;
+        last_fid                = next_fid;
         last_decoded            = next_decoded;
         last_branch_prediction  = next_branch_prediction;
 
@@ -1097,6 +1257,11 @@ namespace BullsEye::Gemini30F2::Decode {
     inline ReOrderBuffer::CommitCandidate ReOrderBuffer::GetLastCommit() const noexcept
     {
         return last_commit;
+    }
+
+    inline ReOrderBuffer::Index ReOrderBuffer::GetLastROBNext() const noexcept
+    {
+        return Index(wptr.Get() & 0x0F);
     }
 
     void ReOrderBuffer::Reset() noexcept
@@ -1831,8 +1996,344 @@ namespace BullsEye::Gemini30F2::Decode {
 }
 
 
+// Implementation of: class BeforeStageDFFs
+namespace BullsEye::Gemini30F2::Decode {
+    //
+    // Writeback                       last_writeback;
+    // Fetch::Fetch::FetchResult       last_fetch;
+    // Fetch::Fetch::BranchPrediction  last_branch_prediction;
+    //
+    // Writeback                       next_writeback;
+    // Fetch::Fetch::FetchResult       next_fetch;
+    // Fetch::Fetch::BranchPrediction  next_branch_prediction;
+    //
+    // bool                            next_bco_valid;
+    //
+    // bool                            next_reset;   
+    //
+
+    BeforeStageDFFs::BeforeStageDFFs() noexcept
+        : last_writeback            { .enable   = false }
+        , last_fetch                { .valid    = false }
+        , last_branch_prediction    ()
+        , next_writeback            { .enable   = false }
+        , next_fetch                { .valid    = false }
+        , next_branch_prediction    ()
+        , next_bco_valid            (false)
+        , next_reset                (false)
+    { }
+
+    BeforeStageDFFs::~BeforeStageDFFs() noexcept
+    { }
+
+    inline void BeforeStageDFFs::NextWriteback(Writeback bundle) noexcept
+    {
+        next_writeback = bundle;
+    }
+
+    inline void BeforeStageDFFs::NextFetch(Fetch::Fetch::FetchResult bundle) noexcept
+    {
+        next_fetch = bundle;
+    }
+
+    inline void BeforeStageDFFs::NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept
+    {
+        next_branch_prediction = bundle;
+    }
+
+    inline void BeforeStageDFFs::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        next_bco_valid = bco_valid;
+    }
+
+    inline void BeforeStageDFFs::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline BeforeStageDFFs::Writeback BeforeStageDFFs::GetLastWriteback() const noexcept
+    {
+        return last_writeback;
+    }
+
+    inline Fetch::Fetch::FetchResult BeforeStageDFFs::GetLastFetch() const noexcept
+    {
+        return last_fetch;
+    }
+
+    inline Fetch::Fetch::BranchPrediction BeforeStageDFFs::GetLastBranchPrediction() const noexcept
+    {
+        return last_branch_prediction;
+    }
+
+    void BeforeStageDFFs::Reset() noexcept
+    {
+        last_writeback.enable = false;
+        last_fetch.valid = false;
+
+        next_writeback.enable = false;
+        next_fetch.valid    = false;
+
+        next_bco_valid = false;
+        next_reset = false;
+    }
+
+    void BeforeStageDFFs::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        last_writeback          = next_writeback;
+        last_fetch              = next_fetch;
+        last_branch_prediction  = next_branch_prediction;
+
+        //
+        if (next_bco_valid)
+            last_fetch.valid = false;
+    }
+}
+
 
 // Implementation of: class Decode
 namespace BullsEye::Gemini30F2::Decode {
-    
+    //
+    // BeforeStageDFFs                 module_input_dffs;
+    //
+    // PreAllocator                    module_preallocator;
+    //
+    // InstructionDecoder              module_idecode;
+    //
+    // InstructionDecoderDFFs          module_idecdffs;
+    //
+    // ReOrderBuffer                   module_rob;
+    //
+    // RegisterAndRename               module_regnrename;
+    //
+    // bool                            next_reset;
+    //
+
+    Decode::Decode() noexcept
+        : module_input_dffs         ()
+        , module_preallocator       ()
+        , module_idecode            ()
+        , module_idecdffs           ()
+        , module_rob                ()
+        , module_regnrename         (module_rob)
+        , last_before_issue         ()
+        , last_branch_prediction    ()
+        , next_reset                (false)
+    { }
+
+    Decode::~Decode() noexcept
+    { }
+
+    inline void Decode::NextIssueNotReady(bool issue_readyn) noexcept
+    {
+        module_preallocator.NextNotReady(issue_readyn);
+    }
+
+    inline void Decode::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        module_input_dffs   .NextBranchCommitOverride(bco_valid);
+        module_preallocator .NextBranchCommitOverride(bco_valid);
+        module_idecdffs     .NextBranchCommitOverride(bco_valid);
+        module_rob          .NextBranchCommitOverride(bco_valid);
+        module_regnrename   .NextBranchCommitOverride(bco_valid);
+    }
+
+    inline void Decode::NextFetch(Fetch::Fetch::FetchResult bundle) noexcept
+    {
+        //
+        module_input_dffs.NextFetch(bundle);
+
+        //
+        
+    }
+
+    inline void Decode::NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept
+    {
+        module_input_dffs.NextBranchPrediction(bundle);
+    }
+
+    inline void Decode::NextFromCommit(FromCommit bundle) noexcept
+    {
+        module_preallocator.NextCommitEnable(
+            bundle.enable, 
+            bundle.store
+        );
+
+        module_rob.NextCommitEnable(
+            bundle.enable
+        );
+
+        module_regnrename.NextROBCommit({
+            .enable = bundle.enable,
+            .addr   = bundle.dst,
+            .fid    = bundle.fid,
+            .data   = bundle.result
+        });
+    }
+
+    inline void Decode::NextWriteback(Writeback bundle) noexcept
+    {
+        module_input_dffs.NextWriteback(bundle);
+    }
+
+    inline void Decode::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline bool Decode::CombNotReady() const noexcept
+    {
+        return module_preallocator.CombNotReady();
+    }
+
+    inline Decode::ToCommit Decode::GetLastToCommit() const noexcept
+    {
+        return module_rob.GetLastCommit();
+    }
+
+    inline Decode::BeforeIssue Decode::GetLastBeforeIssue() const noexcept
+    {
+        // *NOTICE: Do LastBeforeIssue emulations in Eval() function.
+        return last_before_issue;
+    }
+
+    inline Decode::BranchPrediction Decode::GetLastBranchPrediction() const noexcept
+    {
+        // *NOTICE: Do LastBranchPrediction emulations in Eval() function.
+        return last_branch_prediction;
+    }
+
+    void Decode::Reset() noexcept
+    {
+        module_input_dffs.Reset();
+        module_preallocator.Reset();
+        module_idecdffs.Reset();
+        module_rob.Reset();
+        module_regnrename.Reset();
+
+        next_reset = false;
+    }
+
+    void Decode::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+
+        //
+        Writeback                       idffs_writeback         = module_input_dffs.GetLastWriteback();
+        Fetch::Fetch::FetchResult       idffs_fetch             = module_input_dffs.GetLastFetch();
+        Fetch::Fetch::BranchPrediction  idffs_branch_prediction = module_input_dffs.GetLastBranchPrediction();
+
+        //
+        module_rob.NextWriteback(idffs_writeback);
+
+        //
+        InstructionDecoder::Decoded idec = module_idecode.CombDecode(
+            idffs_fetch.data,
+            idffs_fetch.valid
+        );
+
+        module_preallocator.NextAllocationEnable(
+            idffs_fetch.valid,
+            idec.store
+        );
+
+        //
+        module_idecdffs.NextPC(idffs_fetch.pc);
+        module_idecdffs.NextFID(idffs_fetch.fid);
+        module_idecdffs.NextDecoded(idec);
+        module_idecdffs.NextBranchPrediction(idffs_branch_prediction);
+        module_idecdffs.NextAllocationEnable(module_preallocator.CombAllocationEnable());
+
+
+        //
+        Global::PC                      idecdffs_pc                 = module_idecdffs.GetLastPC();
+        Global::FID                     idecdffs_fid                = module_idecdffs.GetLastFID();
+        InstructionDecoder::Decoded     idecdffs_decoded            = module_idecdffs.GetLastDecoded();
+        Fetch::Fetch::BranchPrediction  idecdffs_branch_prediction  = module_idecdffs.GetLastBranchPrediction();
+        bool                            idecdffs_allocation_enable  = module_idecdffs.GetLastAllocationEnable();
+
+        //
+        module_rob.NextAllocation({
+            .enable     = idecdffs_allocation_enable,
+            .pc         = idecdffs_pc,
+            .dst        = idecdffs_decoded.dst,
+            .fid        = idecdffs_fid,
+            .load       = idecdffs_decoded.load,
+            .store      = idecdffs_decoded.store,
+            .lswidth    = idecdffs_decoded.lswidth
+        });
+
+        //
+        module_regnrename.NextRenameAndAllocation({
+            .enable     = idecdffs_allocation_enable,
+            .fid        = idecdffs_fid,
+            .rob        = module_rob.GetLastROBNext(),
+            .src0       = idecdffs_decoded.src0,
+            .src1       = idecdffs_decoded.src1,
+            .dst        = idecdffs_decoded.dst
+        });
+
+
+        //
+        RegisterAndRename::RenameResult regnrename = module_regnrename.CombReadAndRename();
+
+
+        //
+        last_before_issue.valid         = idecdffs_allocation_enable;
+
+        last_before_issue.pc            = idecdffs_pc;
+        last_before_issue.fid           = idecdffs_fid;
+
+        last_before_issue.src0_rob      = regnrename.src0_rob;
+        last_before_issue.src0_ready    = regnrename.src0_ready;
+        last_before_issue.src0_value    = regnrename.src0_value;
+
+        last_before_issue.src1_rob      = regnrename.src1_rob;
+        last_before_issue.src1_ready    = regnrename.src1_ready;
+        last_before_issue.src1_value    = regnrename.src1_value;
+
+        last_before_issue.imm           = idecdffs_decoded.imm;
+        last_before_issue.branch        = idecdffs_decoded.branch;
+        last_before_issue.load          = idecdffs_decoded.load;
+        last_before_issue.store         = idecdffs_decoded.store;
+
+        last_before_issue.pipe_alu      = idecdffs_decoded.pipe_alu;
+        last_before_issue.pipe_mul      = idecdffs_decoded.pipe_mul;
+        last_before_issue.pipe_mem      = idecdffs_decoded.pipe_mem;
+        last_before_issue.pipe_bru      = idecdffs_decoded.pipe_bru;
+
+        last_before_issue.alu_cmd       = idecdffs_decoded.alu_cmd;
+        last_before_issue.mul_cmd       = idecdffs_decoded.mul_cmd;
+        last_before_issue.mem_cmd       = idecdffs_decoded.mem_cmd;
+        last_before_issue.bru_cmd       = idecdffs_decoded.bru_cmd;
+        last_before_issue.bagu_cmd      = idecdffs_decoded.bagu_cmd;
+
+        //
+        last_branch_prediction.pattern  = idecdffs_branch_prediction.pattern;
+        last_branch_prediction.taken    = idecdffs_branch_prediction.taken;
+        last_branch_prediction.hit      = idecdffs_branch_prediction.hit;
+        last_branch_prediction.target   = idecdffs_branch_prediction.target;
+
+
+        //
+        module_input_dffs.Eval();
+        module_preallocator.Eval();
+        module_idecdffs.Eval();
+        module_rob.Eval();
+        module_regnrename.Eval();
+    }
 }
