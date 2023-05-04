@@ -229,16 +229,192 @@ namespace BullsEye::Gemini30F2::Issue {
 
     // Issue Pick (MicroCode) Core
     class Pick4Core {
+    public:
+        using ForwardOnehotEnable       = std::bitset<4>;
+
+        using PickOnehotEnable          = IssueQueue::PickOnehotEnable;
+
+        using PickIndex                 = uint2_t;
+
+        struct PickInfo {
+            PickOnehotEnable        pick_enable;
+            PickIndex               pick_index;
+
+            ForwardOnehotEnable     forward_src0_enable;
+            ForwardOnehotEnable     forward_src1_enable;
+        };
+
+        struct PostPick {
+            bool                    valid;
+
+            ROBIndex                dst_rob;
+
+            bool                    pipe_alu;
+            bool                    pipe_mul;
+            bool                    pipe_mem;
+            bool                    pipe_bru;
+        };
     
+    private:
+        struct ALUForward {
+            bool                valid;
+            ROBIndex            rob;
+        };
+
+        using APHD      = std::bitset<4>;
+
+    private:
+        SteppingDFF<ALUForward>     alu_forward;
+        SteppingDFF<APHD>           aphd;
+
+        PickInfo                    comb_pick_info;
+        PostPick                    comb_post_pick;
+
+        IssueQueue::PickWindow      next_pick_window;
+
+        bool                        next_bco_valid;
+
+        bool                        next_reset;
+
+    private:
+        std::bitset<4>  _FenceNormal() const noexcept;
+        std::bitset<4>  _FenceBranch() const noexcept;
+        std::bitset<4>  _FenceLoadStore() const noexcept;
+
+        std::bitset<4>  _APHDTest() const noexcept;
+
+        std::bitset<4>  _PrepickForwardSrc0() const noexcept;
+        std::bitset<4>  _PrepickForwardSrc1() const noexcept;
+
+        std::bitset<4>  _PrepickReadySrc0(std::bitset<4> prepick_forward_src0) const noexcept;
+        std::bitset<4>  _PrepickReadySrc1(std::bitset<4> prepick_forward_src1) const noexcept;
+        std::bitset<4>  _PrepickReady(std::bitset<4> prepick_forward_src0, std::bitset<4> prepick_forward_src1) const noexcept;
+
+        std::bitset<4>  _PickReady(std::bitset<4> prepick_forward_src0, std::bitset<4> prepick_forward_src1) const noexcept;
+
+    public:
+        Pick4Core() noexcept;
+        ~Pick4Core() noexcept;
+
+        void            NextPickWindow(IssueQueue::PickWindow bundle) noexcept;
+
+        void            NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void            NextReset() noexcept;
+
+        PickInfo        GetCombPickInfo() const noexcept;
+        PostPick        GetCombPostPick() const noexcept;
+
+        void            Comb() noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
     };
+
 
     // Issue Pick (MicroCode) Control Mux
     class Pick4MuxControl {
+    public:
+        using PickInfo          = Pick4Core::PickInfo;
 
+        struct PostPick {
+            bool                    valid;
+
+            Global::PC              pc;
+
+            ROBIndex                dst_rob;
+
+            Decode::Immediate       imm;
+
+            Global::FID             fid;
+
+            bool                    pipe_alu;
+            bool                    pipe_mul;
+            bool                    pipe_mem;
+            bool                    pipe_bru;
+
+            Decode::ALUCommand      alu_cmd;
+            Decode::MULCommand      mul_cmd;
+            Decode::MEMCommand      mem_cmd;
+            Decode::BRUCommand      bru_cmd;
+            Decode::BAGUCommand     bagu_cmd;
+        };
+
+    private:
+        Pick4Core               module_pick_core;
+
+        PostPick                comb_post_pick;
+
+        IssueQueue::PickWindow  next_pick_window;
+
+        bool                    next_reset;
+
+    public:
+        Pick4MuxControl() noexcept;
+        ~Pick4MuxControl() noexcept;
+
+        void            NextPickWindow(IssueQueue::PickWindow bundle) noexcept;
+
+        void            NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void            NextReset() noexcept;
+
+        PostPick        GetCombPostPick() const noexcept;
+        PickInfo        GetCombPickInfo() const noexcept;
+
+        void            Comb() noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
     };
+
 
     // Issue Pick (MicroCode) Data Mux
     class Pick4MuxData {
+    public:
+        using PickInfo          = Pick4Core::PickInfo;
+
+        struct PostPick {
+            RegisterValue       src0_value;
+            bool                src0_forward_alu;
+
+            RegisterValue       src1_value;
+            bool                src1_forward_alu;
+
+            BranchPrediction    branch_prediction;
+        };
+
+    private:
+        Pick4Core               module_pick_core;
+
+        PostPick                comb_post_pick;
+
+        IssueQueue::PickWindow  next_pick_window;
+
+        bool                    next_reset;
+
+    public:
+        Pick4MuxData() noexcept;
+        ~Pick4MuxData() noexcept;
+
+        void            NextPickWindow(IssueQueue::PickWindow bundle) noexcept;
+
+        void            NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void            NextReset() noexcept;
+
+        PostPick        GetCombPostPick() const noexcept;
+        PickInfo        GetCombPickInfo() const noexcept;
+
+        void            Comb() noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
+    };
+
+
+    // Issue Pick-4
+    class Pick4 {
 
     };
 }
@@ -842,5 +1018,459 @@ namespace BullsEye::Gemini30F2::Issue {
 
 // Implementation of: class Pick4Core
 namespace BullsEye::Gemini30F2::Issue {
+    //
+    // SteppingDFF<ALUForward>     forward;
+    // SteppingDFF<APHD>           aphd;
+    //
+    // PickInfo                    last_pick_info;
+    // PostPick                    last_post_pick;
+    //
+    // IssueQueue::PickWindow      next_pick_window;
+    //
+    // bool                        next_bco_valid;
+    //
+    // bool                        next_reset;
+    //
 
+    Pick4Core::Pick4Core() noexcept
+        : alu_forward       ()
+        , aphd              ()
+        , comb_pick_info    { .pick_enable  = false }
+        , comb_post_pick    { .valid        = false }
+        , next_pick_window  ()
+        , next_bco_valid    ()
+        , next_reset        (false)
+    { }
+
+    Pick4Core::~Pick4Core() noexcept
+    { }
+
+    inline std::bitset<4> Pick4Core::_FenceNormal() const noexcept
+    {
+        return std::bitset<4>();
+    }
+
+    std::bitset<4> Pick4Core::_FenceBranch() const noexcept
+    {
+        std::bitset<4> fence_b;
+        std::bitset<4> fence_b_carrier;
+
+        fence_b         [0] = false;
+        fence_b_carrier [0] = false;
+
+        for (int i = 1; i < 4; i++)
+        {
+            fence_b_carrier [i] = next_pick_window.port[i - 1].microcode.branch || fence_b_carrier[i - 1];
+            fence_b         [i] = next_pick_window.port[i].microcode.branch && fence_b_carrier[i];
+        }
+
+        return fence_b;
+    }
+
+    std::bitset<4> Pick4Core::_FenceLoadStore() const noexcept
+    {
+        std::bitset<4> fence_ls;
+        std::bitset<4> fence_ls_carrier;
+
+        fence_ls        [0] = false;
+        fence_ls_carrier[0] = false;
+
+        for (int i = 1; i < 4; i++)
+        {
+            fence_ls_carrier[i] = next_pick_window.port[i - 1].microcode.store || fence_ls_carrier[i - 1];
+            fence_ls        [i] = (next_pick_window.port[i].microcode.store || next_pick_window.port[i].microcode.load) && fence_ls_carrier[i];
+        }
+
+        return fence_ls;
+    }
+
+    std::bitset<4> Pick4Core::_APHDTest() const noexcept
+    {
+        std::bitset<4> aphd = this->aphd.Get();
+
+        std::bitset<4> aphd_hit;
+
+        for (int i = 0; i < 4; i++)
+        {
+            aphd_hit[i] = next_pick_window.port[i].microcode.pipe_alu ? aphd[1 - 1]
+                        : next_pick_window.port[i].microcode.pipe_mul ? aphd[3 - 1]
+                        : next_pick_window.port[i].microcode.pipe_mem ? aphd[3 - 1]
+                        : next_pick_window.port[i].microcode.pipe_bru ? aphd[1 - 1]
+                        : false;
+        }
+
+        return aphd_hit;
+    }
+
+    std::bitset<4> Pick4Core::_PrepickForwardSrc0() const noexcept
+    {
+        std::bitset<4>  prepick_forward_src0;
+
+        for (int i = 0; i < 4; i++)
+        {
+            prepick_forward_src0[i] = !next_pick_window.port[i].microcode.src0_ready
+                                   &&  alu_forward.Get().valid
+                                   && (next_pick_window.port[i].microcode.src0_rob == alu_forward.Get().rob);
+        }
+
+        return prepick_forward_src0;
+    }
+
+    std::bitset<4> Pick4Core::_PrepickForwardSrc1() const noexcept
+    {
+        std::bitset<4>  prepick_forward_src1;
+
+        for (int i = 0; i < 4; i++)
+        {
+            prepick_forward_src1[i] = !next_pick_window.port[i].microcode.src1_ready
+                                   &&  alu_forward.Get().valid
+                                   && (next_pick_window.port[i].microcode.src1_rob == alu_forward.Get().rob);
+        }
+
+        return prepick_forward_src1;
+    }
+
+    std::bitset<4> Pick4Core::_PrepickReadySrc0(std::bitset<4> prepick_forward_src0) const noexcept
+    {
+        std::bitset<4> prepick_ready_src0;
+
+        for (int i = 0; i < 4; i++)
+        {
+            prepick_ready_src0[i] = next_pick_window.port[i].microcode.src0_ready
+                                 || prepick_forward_src0[i];
+        }
+
+        return prepick_ready_src0;
+    }
+
+    std::bitset<4> Pick4Core::_PrepickReadySrc1(std::bitset<4> prepick_forward_src1) const noexcept
+    {
+        std::bitset<4> prepick_ready_src1;
+
+        for (int i = 0; i < 4; i++)
+        {
+            prepick_ready_src1[i] = next_pick_window.port[i].microcode.src1_ready
+                                 || prepick_forward_src1[i];
+        }
+
+        return prepick_ready_src1;
+    }
+
+    std::bitset<4> Pick4Core::_PrepickReady(std::bitset<4> prepick_forward_src0, std::bitset<4> prepick_forward_src1) const noexcept
+    {
+        std::bitset<4> prepick_ready;
+
+        for (int i = 0; i < 4; i++)
+            prepick_ready[i] = next_pick_window.port[i].valid;
+
+        return prepick_ready & _PrepickReadySrc0(prepick_forward_src0) & _PrepickReadySrc1(prepick_forward_src1);
+    }
+
+    inline std::bitset<4> Pick4Core::_PickReady(std::bitset<4> prepick_forward_src0, std::bitset<4> prepick_forward_src1) const noexcept
+    {
+        return _PrepickReady(prepick_forward_src0, prepick_forward_src1) & _FenceNormal() & _FenceBranch() & _FenceLoadStore() & _APHDTest();
+    }
+
+    inline void Pick4Core::NextPickWindow(IssueQueue::PickWindow bundle) noexcept
+    {
+        next_pick_window = bundle;
+    }
+
+    inline void Pick4Core::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        next_bco_valid = bco_valid;
+    }
+
+    inline void Pick4Core::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline Pick4Core::PickInfo Pick4Core::GetCombPickInfo() const noexcept
+    {
+        return comb_pick_info;
+    }
+
+    inline Pick4Core::PostPick Pick4Core::GetCombPostPick() const noexcept
+    {
+        return comb_post_pick;
+    }
+
+    void Pick4Core::Comb() noexcept
+    {
+        //
+        std::bitset<4> prepick_forward_src0 = _PrepickForwardSrc0();
+        std::bitset<4> prepick_forward_src1 = _PrepickForwardSrc1();
+
+        std::bitset<4> pick_ready = _PickReady(prepick_forward_src0, prepick_forward_src1);
+
+        //
+        comb_pick_info.pick_enable = pick_ready;
+
+        comb_pick_info.pick_index = pick_ready[0] ? 0
+                                  : pick_ready[1] ? 1
+                                  : pick_ready[2] ? 2
+                                  : pick_ready[3] ? 3
+                                  :                 0;
+
+        comb_pick_info.forward_src0_enable = prepick_forward_src0;
+        comb_pick_info.forward_src1_enable = prepick_forward_src1;
+
+        //
+        comb_post_pick.valid = pick_ready.any();
+
+        comb_post_pick.dst_rob  = next_pick_window.port[comb_pick_info.pick_index].microcode.dst_rob;
+
+        comb_post_pick.pipe_alu = next_pick_window.port[comb_pick_info.pick_index].microcode.pipe_alu;
+        comb_post_pick.pipe_mul = next_pick_window.port[comb_pick_info.pick_index].microcode.pipe_mul;
+        comb_post_pick.pipe_mem = next_pick_window.port[comb_pick_info.pick_index].microcode.pipe_mem;
+        comb_post_pick.pipe_bru = next_pick_window.port[comb_pick_info.pick_index].microcode.pipe_bru;
+    }
+
+    void Pick4Core::Reset() noexcept
+    {
+        alu_forward.Reset();
+        aphd.Reset();
+
+        comb_pick_info.pick_enable = false;
+        comb_post_pick.valid       = false;
+
+        next_reset = false;
+    }
+
+    void Pick4Core::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        
+        //
+        alu_forward.Next({
+            .valid = comb_post_pick.valid && comb_post_pick.pipe_alu,
+            .rob   = comb_post_pick.dst_rob
+        });
+
+
+        //
+        std::bitset<4> aphd_next = aphd.Get();
+
+        aphd_next >>= 1;
+
+        if (comb_post_pick.valid)
+        {
+            if (comb_post_pick.pipe_alu)
+                ;
+            else if (comb_post_pick.pipe_mul)
+                aphd_next[3 - 2] = true;
+            else if (comb_post_pick.pipe_mem)
+                aphd_next[3 - 2] = true;
+            else if (comb_post_pick.pipe_bru)
+                ;
+        }
+
+        aphd.Next(aphd_next);
+
+
+        //
+        alu_forward.Eval();
+        aphd.Eval();
+    }
+}
+
+
+// Implementation of: class Pick4MuxControl
+namespace BullsEye::Gemini30F2::Issue {
+    //
+    // Pick4Core               module_pick_core;
+    //
+    // PostPick                last_post_pick;
+    //
+    // IssueQueue::PickWindow  next_pick_window;
+    //
+    // bool                    next_reset;
+    //
+
+    Pick4MuxControl::Pick4MuxControl() noexcept
+        : module_pick_core  ()
+        , comb_post_pick    { .valid    = false }
+        , next_pick_window  ()
+        , next_reset        (false)
+    { }
+
+    Pick4MuxControl::~Pick4MuxControl() noexcept
+    { }
+
+    inline void Pick4MuxControl::NextPickWindow(IssueQueue::PickWindow bundle) noexcept
+    {
+        next_pick_window = bundle;
+
+        module_pick_core.NextPickWindow(bundle);
+    }
+
+    inline void Pick4MuxControl::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        module_pick_core.NextBranchCommitOverride(bco_valid);
+    }
+
+    inline void Pick4MuxControl::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline Pick4MuxControl::PostPick Pick4MuxControl::GetCombPostPick() const noexcept
+    {
+        return comb_post_pick;
+    }
+
+    inline Pick4MuxControl::PickInfo Pick4MuxControl::GetCombPickInfo() const noexcept
+    {
+        return module_pick_core.GetCombPickInfo();
+    }
+
+    void Pick4MuxControl::Comb() noexcept
+    {
+        Pick4Core::PickInfo pick_info = module_pick_core.GetCombPickInfo();
+        Pick4Core::PostPick post_pick = module_pick_core.GetCombPostPick();
+
+        //
+        comb_post_pick.pc       = next_pick_window.port[pick_info.pick_index].microcode.pc;
+
+        comb_post_pick.imm      = next_pick_window.port[pick_info.pick_index].microcode.imm;
+
+        comb_post_pick.fid      = next_pick_window.port[pick_info.pick_index].microcode.fid;
+
+        comb_post_pick.alu_cmd  = next_pick_window.port[pick_info.pick_index].microcode.alu_cmd;
+        comb_post_pick.mul_cmd  = next_pick_window.port[pick_info.pick_index].microcode.mul_cmd;
+        comb_post_pick.mem_cmd  = next_pick_window.port[pick_info.pick_index].microcode.mem_cmd;
+        comb_post_pick.bru_cmd  = next_pick_window.port[pick_info.pick_index].microcode.bru_cmd;
+        comb_post_pick.bagu_cmd = next_pick_window.port[pick_info.pick_index].microcode.bagu_cmd;
+
+        //
+        comb_post_pick.valid    = post_pick.valid;
+
+        comb_post_pick.dst_rob  = post_pick.dst_rob;
+
+        comb_post_pick.pipe_alu = post_pick.pipe_alu;
+        comb_post_pick.pipe_mul = post_pick.pipe_mul;
+        comb_post_pick.pipe_mem = post_pick.pipe_mem;
+        comb_post_pick.pipe_bru = post_pick.pipe_bru;
+    }
+
+    void Pick4MuxControl::Reset() noexcept
+    {
+        module_pick_core.Reset();
+
+        comb_post_pick.valid = false;
+
+        next_reset = false;
+    }
+
+    void Pick4MuxControl::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        module_pick_core.Eval();
+    }
+}
+
+
+// Implementation of: class Pick4MuxData 
+namespace BullsEye::Gemini30F2::Issue {
+    //
+    // Pick4Core               module_pick_core;
+    //
+    // PostPick                comb_post_pick;
+    //
+    // IssueQueue::PickWindow  next_pick_window;
+    //
+    // bool                    next_reset;
+    //
+
+    Pick4MuxData::Pick4MuxData() noexcept
+        : module_pick_core  ()
+        , comb_post_pick    ()
+        , next_pick_window  ()
+        , next_reset        ()
+    { }
+
+    Pick4MuxData::~Pick4MuxData() noexcept
+    { }
+
+    inline void Pick4MuxData::NextPickWindow(IssueQueue::PickWindow bundle) noexcept
+    {
+        next_pick_window = bundle;
+
+        module_pick_core.NextPickWindow(bundle);
+    }
+
+    inline void Pick4MuxData::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        module_pick_core.NextBranchCommitOverride(bco_valid);
+    }
+
+    inline void Pick4MuxData::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline Pick4MuxData::PostPick Pick4MuxData::GetCombPostPick() const noexcept
+    {
+        return comb_post_pick;
+    }
+
+    inline Pick4MuxData::PickInfo Pick4MuxData::GetCombPickInfo() const noexcept
+    {
+        return module_pick_core.GetCombPickInfo();
+    }
+
+    void Pick4MuxData::Comb() noexcept
+    {
+        Pick4Core::PickInfo pick_info = module_pick_core.GetCombPickInfo();
+        Pick4Core::PostPick post_pick = module_pick_core.GetCombPostPick();
+
+        //
+        comb_post_pick.src0_value           = next_pick_window.port[pick_info.pick_index].microcode.src0_value;
+        comb_post_pick.src0_forward_alu     = pick_info.forward_src0_enable[pick_info.pick_index];
+
+        comb_post_pick.src1_value           = next_pick_window.port[pick_info.pick_index].microcode.src1_value;
+        comb_post_pick.src1_forward_alu     = pick_info.forward_src1_enable[pick_info.pick_index];
+
+        comb_post_pick.branch_prediction    = next_pick_window.port[pick_info.pick_index].bp;
+    }
+
+    void Pick4MuxData::Reset() noexcept
+    {
+        module_pick_core.Reset();
+
+        next_reset = false;
+    }
+
+    void Pick4MuxData::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        module_pick_core.Eval();
+    }
+}
+
+
+// Implementation of: class Pick4
+namespace BullsEye::Gemini30F2::Issue {
+    
 }
