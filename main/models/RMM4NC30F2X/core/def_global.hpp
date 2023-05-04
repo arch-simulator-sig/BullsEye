@@ -35,6 +35,11 @@ namespace BullsEye::Gemini30F2::Global {
     struct _PredecodedInstruction {
         RawInstruction  insn;
         uint4_t         tag;
+
+        inline constexpr operator uint36_t() const noexcept
+        {
+            return ((uint64_t) insn) | (((uint64_t) tag) << 32);
+        }
     };
 
     using PredecodedInstruction     = _PredecodedInstruction;
