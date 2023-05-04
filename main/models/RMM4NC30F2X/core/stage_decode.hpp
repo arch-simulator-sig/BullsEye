@@ -506,7 +506,7 @@ namespace BullsEye::Gemini30F2::Decode {
     // Pre-Allocator of StoreBuffer
     class PreAllocatorStoreBuffer {
     private:
-        SteppingDFF<uint7_t, DFFResetValue<uint8_t, 0b0000001>> fifo_pos;
+        SteppingDFF<uint7_t, DFFResetValue<0b0000001U>> fifo_pos;
 
         bool        next_allocation_enable;
         bool        next_allocation_enable_store;
@@ -595,18 +595,22 @@ namespace BullsEye::Gemini30F2::Decode {
     public:
         using Writeback         = ReOrderBuffer::Writeback;
 
+        using FetchResult       = Fetch::Fetch::FetchResult;
+
+        using BranchPrediction  = Fetch::Fetch::BranchPrediction;
+
     private:
-        Writeback                       last_writeback;
-        Fetch::Fetch::FetchResult       last_fetch;
-        Fetch::Fetch::BranchPrediction  last_branch_prediction;
+        SteppingDFF<Writeback, decltype([] (Writeback& obj) {
+            obj.enable  = false;
+        })>                                         dff_writeback;
 
-        Writeback                       next_writeback;
-        Fetch::Fetch::FetchResult       next_fetch;
-        Fetch::Fetch::BranchPrediction  next_branch_prediction;
+        SteppingDFF<FetchResult, decltype([] (FetchResult& obj) {
+            obj.valid   = false;
+        })>                                         dff_fetch;
 
-        bool                            next_bco_valid;
+        SteppingDFF<BranchPrediction, DFFNoReset>   dff_branch_prediction;
 
-        bool                            next_reset;
+        bool                                        next_bco_valid;
 
     public:
         BeforeStageDFFs() noexcept;
@@ -1068,8 +1072,6 @@ namespace BullsEye::Gemini30F2::Decode {
     {
         last_allocation_enable = false;
 
-        next_allocation_enable = false;
-        next_bco_valid         = false;
         next_reset             = false;
     }
 
@@ -2001,28 +2003,24 @@ namespace BullsEye::Gemini30F2::Decode {
 // Implementation of: class BeforeStageDFFs
 namespace BullsEye::Gemini30F2::Decode {
     //
-    // Writeback                       last_writeback;
-    // Fetch::Fetch::FetchResult       last_fetch;
-    // Fetch::Fetch::BranchPrediction  last_branch_prediction;
+    // SteppingDFF<Writeback, decltype([] (Writeback& obj) {
+    //     obj.enable  = false;
+    // })>                                         dff_writeback;
     //
-    // Writeback                       next_writeback;
-    // Fetch::Fetch::FetchResult       next_fetch;
-    // Fetch::Fetch::BranchPrediction  next_branch_prediction;
+    // SteppingDFF<FetchResult, decltype([] (FetchResult& obj) {
+    //     obj.valid   = false;
+    // })>                                         dff_fetch;
     //
-    // bool                            next_bco_valid;
+    // SteppingDFF<BranchPrediction, DFFNoReset>   dff_branch_prediction;
     //
-    // bool                            next_reset;   
+    // bool                                        next_bco_valid;
     //
 
     BeforeStageDFFs::BeforeStageDFFs() noexcept
-        : last_writeback            { .enable   = false }
-        , last_fetch                { .valid    = false }
-        , last_branch_prediction    ()
-        , next_writeback            { .enable   = false }
-        , next_fetch                { .valid    = false }
-        , next_branch_prediction    ()
+        : dff_writeback             ()
+        , dff_fetch                 ()
+        , dff_branch_prediction     ()
         , next_bco_valid            (false)
-        , next_reset                (false)
     { }
 
     BeforeStageDFFs::~BeforeStageDFFs() noexcept
@@ -2030,17 +2028,17 @@ namespace BullsEye::Gemini30F2::Decode {
 
     inline void BeforeStageDFFs::NextWriteback(Writeback bundle) noexcept
     {
-        next_writeback = bundle;
+        dff_writeback.Next(bundle);
     }
 
     inline void BeforeStageDFFs::NextFetch(Fetch::Fetch::FetchResult bundle) noexcept
     {
-        next_fetch = bundle;
+        dff_fetch.Next(bundle);
     }
 
     inline void BeforeStageDFFs::NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept
     {
-        next_branch_prediction = bundle;
+        dff_branch_prediction.Next(bundle);
     }
 
     inline void BeforeStageDFFs::NextBranchCommitOverride(bool bco_valid) noexcept
@@ -2050,53 +2048,43 @@ namespace BullsEye::Gemini30F2::Decode {
 
     inline void BeforeStageDFFs::NextReset() noexcept
     {
-        next_reset = true;
+        dff_writeback           .NextReset();
+        dff_fetch               .NextReset();
+        dff_branch_prediction   .NextReset();
     }
 
     inline BeforeStageDFFs::Writeback BeforeStageDFFs::GetLastWriteback() const noexcept
     {
-        return last_writeback;
+        return dff_writeback.Get();
     }
 
     inline Fetch::Fetch::FetchResult BeforeStageDFFs::GetLastFetch() const noexcept
     {
-        return last_fetch;
+        return dff_fetch.Get();
     }
 
     inline Fetch::Fetch::BranchPrediction BeforeStageDFFs::GetLastBranchPrediction() const noexcept
     {
-        return last_branch_prediction;
+        return dff_branch_prediction.Get();
     }
 
     void BeforeStageDFFs::Reset() noexcept
     {
-        last_writeback.enable = false;
-        last_fetch.valid = false;
-
-        next_writeback.enable = false;
-        next_fetch.valid    = false;
-
-        next_bco_valid = false;
-        next_reset = false;
+        dff_writeback           .Reset();
+        dff_fetch               .Reset();
+        dff_branch_prediction   .Reset();
     }
 
     void BeforeStageDFFs::Eval() noexcept
     {
         //
-        if (next_reset)
-        {
-            Reset();
-            return;
-        }
-
-        //
-        last_writeback          = next_writeback;
-        last_fetch              = next_fetch;
-        last_branch_prediction  = next_branch_prediction;
-
-        //
         if (next_bco_valid)
-            last_fetch.valid = false;
+            dff_fetch.GetNext().valid = false;
+
+        //
+        dff_writeback           .Eval();
+        dff_fetch               .Eval();
+        dff_branch_prediction   .Eval();
     }
 }
 
