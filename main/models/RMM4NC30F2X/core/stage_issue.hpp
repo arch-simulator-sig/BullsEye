@@ -71,8 +71,13 @@ namespace BullsEye::Gemini30F2::Issue {
         };
 
     private:
-        SteppingDFF<Entry, DFFResetValue<Entry, Entry { .valid = false }>>  wht0;
-        SteppingDFF<Entry, DFFResetValue<Entry, Entry { .valid = false }>>  wht1;
+        SteppingDFF<Entry, decltype([] (Entry& obj) {
+            obj.valid = false;
+        })>         wht0;
+
+        SteppingDFF<Entry, decltype([] (Entry& obj) {
+            obj.valid = false;
+        })>         wht1;
 
         bool        next_reset;
 
@@ -131,7 +136,7 @@ namespace BullsEye::Gemini30F2::Issue {
         };
 
     private:
-        SteppingDFF<FIFOPosition, DFFResetValue<uint16_t, 1>>   fifo_pos;
+        SteppingDFF<FIFOPosition, DFFResetValue<1>> fifo_pos;
 
         Entry               queue[8];
 
@@ -415,7 +420,114 @@ namespace BullsEye::Gemini30F2::Issue {
 
     // Issue Pick-4
     class Pick4 {
+    public:
+        using PickInfo =        Pick4Core::PickInfo;
 
+        struct PostPick {
+            bool                valid;
+
+            Global::PC          pc;
+
+            RegisterValue       src0_value;
+            bool                src0_forward_alu;
+
+            RegisterValue       src1_value;
+            bool                src1_forward_alu;
+
+            ROBIndex            dst_rob;
+
+            Decode::Immediate   imm;
+
+            Global::FID         fid;
+
+            bool                pipe_alu;
+            bool                pipe_mul;
+            bool                pipe_mem;
+            bool                pipe_bru;
+
+            Decode::ALUCommand  alu_cmd;
+            Decode::MULCommand  mul_cmd;
+            Decode::MEMCommand  mem_cmd;
+            Decode::BRUCommand  bru_cmd;
+            Decode::BAGUCommand bagu_cmd;
+
+            BranchPrediction    branch_prediction;
+        };
+
+    private:
+        Pick4MuxControl     module_mux_control;
+        Pick4MuxData        module_mux_data;
+
+        PostPick            comb_post_pick;
+
+        bool                next_reset;
+
+    public:
+        Pick4() noexcept;
+        ~Pick4() noexcept;
+
+        void            NextPickWindow(IssueQueue::PickWindow bundle) noexcept;
+
+        void            NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void            NextReset() noexcept;
+
+        PostPick        GetCombPostPick() const noexcept;
+        PickInfo        GetCombPickInfo() const noexcept;
+
+        void            Comb() noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
+    };
+
+
+
+    // Before-Stage DFFs
+    class BeforeStageDFFs {
+    public:
+        using BranchPrediction      = BranchPrediction;
+
+        using FromDecode            = BeforeIssue;
+
+        struct Writeback {
+            bool                enable;
+            ROBIndex            dst_rob;
+            RegisterValue       value;
+            bool                lsmiss;
+        };
+        
+    private:
+        SteppingDFF<BranchPrediction>   dff_branch_prediction;
+
+        SteppingDFF<FromDecode, decltype([] (FromDecode& obj) {
+            obj.valid   = false;
+        })>                             dff_from_decode;
+
+        SteppingDFF<Writeback, decltype([] (Writeback& obj) {
+            obj.enable  = false;
+        })>                             dff_writeback;
+
+        bool                            next_bco_valid;
+
+    public:
+        BeforeStageDFFs() noexcept;
+        ~BeforeStageDFFs() noexcept;
+
+        void                NextBranchPrediction(BranchPrediction bundle) noexcept;
+        void                NextFromDecode(FromDecode bundle) noexcept;
+        void                NextWriteback(Writeback bundle) noexcept;
+
+        void                NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void                NextReset() noexcept;
+
+        BranchPrediction    GetLastBranchPrediction() const noexcept;
+        FromDecode          GetLastFromDecode() const noexcept;
+        Writeback           GetLastWriteback() const noexcept;
+
+        void                Reset();
+        void                Eval();
     };
 }
 
@@ -1472,5 +1584,200 @@ namespace BullsEye::Gemini30F2::Issue {
 
 // Implementation of: class Pick4
 namespace BullsEye::Gemini30F2::Issue {
-    
+    //
+    // Pick4MuxControl     module_mux_control;
+    // Pick4MuxData        module_mux_data;
+    //
+    // PostPick            comb_post_pick;
+    //
+    // bool                next_reset;
+    //
+
+    Pick4::Pick4() noexcept
+        : module_mux_control    ()
+        , module_mux_data       ()
+        , comb_post_pick        { .valid = false }
+        , next_reset            (false)
+    { }
+
+    Pick4::~Pick4() noexcept
+    { }
+
+    inline void Pick4::NextPickWindow(IssueQueue::PickWindow bundle) noexcept
+    {
+        module_mux_control  .NextPickWindow(bundle);
+        module_mux_data     .NextPickWindow(bundle);
+    }
+
+    inline void Pick4::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        module_mux_control  .NextBranchCommitOverride(bco_valid);
+        module_mux_data     .NextBranchCommitOverride(bco_valid);
+    }
+
+    inline void Pick4::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline Pick4::PostPick Pick4::GetCombPostPick() const noexcept
+    {
+        return comb_post_pick;
+    }
+
+    inline Pick4::PickInfo Pick4::GetCombPickInfo() const noexcept
+    {
+        return module_mux_control.GetCombPickInfo();
+    }
+
+    void Pick4::Comb() noexcept
+    {
+        module_mux_control.Comb();
+        module_mux_data   .Comb();
+
+        //
+        Pick4MuxControl::PostPick   post_pick_control   = module_mux_control.GetCombPostPick();
+        Pick4MuxData::PostPick      post_pick_data      = module_mux_data   .GetCombPostPick();
+
+        //
+        comb_post_pick.valid        = post_pick_control.valid;
+
+        comb_post_pick.pc           = post_pick_control.pc;
+
+        comb_post_pick.dst_rob      = post_pick_control.dst_rob;
+
+        comb_post_pick.imm          = post_pick_control.imm;
+
+        comb_post_pick.fid          = post_pick_control.fid;
+
+        comb_post_pick.pipe_alu     = post_pick_control.pipe_alu;
+        comb_post_pick.pipe_mul     = post_pick_control.pipe_mul;
+        comb_post_pick.pipe_mem     = post_pick_control.pipe_mem;
+        comb_post_pick.pipe_bru     = post_pick_control.pipe_bru;
+        
+        comb_post_pick.alu_cmd      = post_pick_control.alu_cmd;
+        comb_post_pick.mul_cmd      = post_pick_control.mul_cmd;
+        comb_post_pick.mem_cmd      = post_pick_control.mem_cmd;
+        comb_post_pick.bru_cmd      = post_pick_control.bru_cmd;
+        comb_post_pick.bagu_cmd     = post_pick_control.bagu_cmd;
+
+        //
+        comb_post_pick.src0_value           = post_pick_data.src0_value;
+        comb_post_pick.src0_forward_alu     = post_pick_data.src0_forward_alu;
+
+        comb_post_pick.src1_value           = post_pick_data.src1_value;
+        comb_post_pick.src1_forward_alu     = post_pick_data.src1_forward_alu;
+
+        //
+        comb_post_pick.branch_prediction    = post_pick_data.branch_prediction;
+    }
+
+    void Pick4::Reset() noexcept
+    {
+        module_mux_control.Reset();
+        module_mux_data   .Reset();
+
+        comb_post_pick.valid = false;
+    }
+
+    void Pick4::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        module_mux_control.Eval();
+        module_mux_data   .Eval();
+    }
+}
+
+
+// Implementation of: class BeforeStageDFFs
+namespace BullsEye::Gemini30F2::Issue {
+    //
+    // SteppingDFF<BranchPrediction>   dff_branch_prediction;
+    //
+    // SteppingDFF<FromDecode, decltype([] (FromDecode& obj) {
+    //     obj.valid   = false;
+    // })>                             dff_from_decode;
+    //
+    // SteppingDFF<Writeback, decltype([] (Writeback& obj) {
+    //     obj.enable  = false;
+    // })>                             dff_writeback;
+    //
+
+    BeforeStageDFFs::BeforeStageDFFs() noexcept
+        : dff_branch_prediction ()
+        , dff_from_decode       ()
+        , dff_writeback         ()
+        , next_bco_valid        (false)
+    { }
+
+    BeforeStageDFFs::~BeforeStageDFFs() noexcept
+    { }
+
+    inline void BeforeStageDFFs::NextBranchPrediction(BranchPrediction bp) noexcept
+    {
+        dff_branch_prediction.Next(bp);
+    }
+
+    inline void BeforeStageDFFs::NextFromDecode(FromDecode fd) noexcept
+    {
+        dff_from_decode.Next(fd);
+    }
+
+    inline void BeforeStageDFFs::NextWriteback(Writeback wb) noexcept
+    {
+        dff_writeback.Next(wb);
+    }
+
+    inline void BeforeStageDFFs::NextBranchCommitOverride(bool bco_valid)
+    {
+        next_bco_valid = bco_valid;
+    }
+
+    inline void BeforeStageDFFs::NextReset() noexcept
+    {
+        dff_branch_prediction.NextReset();
+        dff_from_decode      .NextReset();
+        dff_writeback        .NextReset();
+    }
+
+    inline BeforeStageDFFs::BranchPrediction BeforeStageDFFs::GetLastBranchPrediction() const noexcept
+    {
+        return dff_branch_prediction.Get();
+    }
+
+    inline BeforeStageDFFs::FromDecode BeforeStageDFFs::GetLastFromDecode() const noexcept
+    {
+        return dff_from_decode.Get();
+    }
+
+    inline BeforeStageDFFs::Writeback BeforeStageDFFs::GetLastWriteback() const noexcept
+    {
+        return dff_writeback.Get();
+    }
+
+    void BeforeStageDFFs::Reset() noexcept
+    {
+        dff_branch_prediction   .Reset();
+        dff_from_decode         .Reset();
+        dff_writeback           .Reset();
+    }
+
+    void BeforeStageDFFs::Eval() noexcept
+    {
+        //
+        if (next_bco_valid)
+            dff_from_decode.GetNext().valid = false;
+
+        //
+        dff_branch_prediction   .Eval();
+        dff_from_decode         .Eval();
+        dff_writeback           .Eval();
+    }
 }
