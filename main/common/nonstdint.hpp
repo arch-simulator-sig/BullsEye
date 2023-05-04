@@ -25,10 +25,10 @@ namespace BullsEye {
     
     //
     template<class _Tsv, class _Tuv, unsigned _L>
-    class _truncated_int_base;
+    struct _truncated_int_base;
     
     template<class _Tsv, class _Tuv, unsigned _L>
-    class _truncated_uint_base;
+    struct _truncated_uint_base;
 
 
     //
@@ -191,7 +191,7 @@ namespace BullsEye {
 
     //
     template<class _Tsv, class _Tuv, unsigned _L>
-    class _truncated_uint_base {
+    struct _truncated_uint_base {
     private:
         static constexpr _Tuv       MASK            = (_Tuv(1) << _L) - 1;
         static constexpr unsigned   SIGN_SHIFT      = sizeof(_Tuv) * 8 - _L;
@@ -298,7 +298,7 @@ namespace BullsEye {
 
     //
     template<class _Tsv, class _Tuv, unsigned _L>
-    class _truncated_int_base {
+    struct _truncated_int_base {
     private:
         static constexpr _Tuv       MASK            = (_Tuv(1) << _L) - 1;
         static constexpr unsigned   SIGN_SHIFT      = sizeof(_Tuv) * 8 - _L;
@@ -404,7 +404,7 @@ namespace BullsEye {
 }
 
 
-// Implementation of: class _truncated_uint_base
+// Implementation of: struct _truncated_uint_base
 namespace BullsEye {
     //
     // _Tuv    val;
@@ -671,7 +671,7 @@ namespace BullsEye {
 }
 
 
-// Implementation of: class truncated_int_base
+// Implementation of: struct truncated_int_base
 namespace BullsEye {
     //
     // _Tsv    val;
