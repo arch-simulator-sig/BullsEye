@@ -364,8 +364,8 @@ namespace BullsEye::Gemini30F2::Fetch {
         };
 
     private:
-        SteppingDFF<State, DFFResetValue<State, FETCH_STATE_SEQUENTIAL>>    state;
-        SteppingDFF<State, DFFResetValue<State, FETCH_STATE_SEQUENTIAL>>    state_last;
+        SteppingDFF<State, DFFResetValue<FETCH_STATE_SEQUENTIAL>>   state;
+        SteppingDFF<State, DFFResetValue<FETCH_STATE_SEQUENTIAL>>   state_last;
 
         SteppingDFF<Global::PC>     pc_value[2];
         SteppingDFF<bool>           pc_valid[2];
