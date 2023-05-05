@@ -51,7 +51,7 @@ namespace BullsEye::Gemini30F2::Dispatch {
         DispatchDFFs() noexcept;
         ~DispatchDFFs() noexcept;
 
-        void        NextFromIssue(FromIssue bundle) noexcept;
+        void        NextFromIssue(const FromIssue& bundle) noexcept;
 
         void        NextBranchCommitOverride(bool bco_valid) noexcept;
 
@@ -78,7 +78,7 @@ namespace BullsEye::Gemini30F2::Dispatch {
         Dispatch() noexcept;
         ~Dispatch() noexcept;
 
-        void        NextFromIssue(FromIssue bundle) noexcept;
+        void        NextFromIssue(const FromIssue& bundle) noexcept;
 
         void        NextBranchCommitOverride(bool bco_valid) noexcept;
 
@@ -110,7 +110,7 @@ namespace BullsEye::Gemini30F2::Dispatch {
     DispatchDFFs::DispatchDFFs() noexcept
     { }
 
-    inline void DispatchDFFs::NextFromIssue(FromIssue bundle) noexcept 
+    inline void DispatchDFFs::NextFromIssue(const FromIssue& bundle) noexcept 
     {
         dff.Next(bundle);
     }
@@ -160,7 +160,7 @@ namespace BullsEye::Gemini30F2::Dispatch {
     Dispatch::~Dispatch() noexcept
     { }
 
-    inline void Dispatch::NextFromIssue(FromIssue bundle) noexcept
+    inline void Dispatch::NextFromIssue(const FromIssue& bundle) noexcept
     {
         module_dffs.NextFromIssue(bundle);
     }
