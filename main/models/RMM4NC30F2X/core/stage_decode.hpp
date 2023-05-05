@@ -165,8 +165,8 @@ namespace BullsEye::Gemini30F2::Decode {
 
         void                            NextPC(Global::PC pc) noexcept;
         void                            NextFID(Global::FID fid) noexcept;
-        void                            NextDecoded(InstructionDecoder::Decoded bundle) noexcept;
-        void                            NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept;
+        void                            NextDecoded(const InstructionDecoder::Decoded& bundle) noexcept;
+        void                            NextBranchPrediction(const Fetch::Fetch::BranchPrediction& bundle) noexcept;
         void                            NextAllocationEnable(bool enable) noexcept;
 
         void                            NextBranchCommitOverride(bool bco_valid) noexcept;
@@ -374,8 +374,8 @@ namespace BullsEye::Gemini30F2::Decode {
         RegisterAliasTable() noexcept;
         ~RegisterAliasTable() noexcept;
 
-        void            NextAllocation(Allocation bundle) noexcept;
-        void            NextROBCommit(ROBCommit bundle) noexcept;
+        void            NextAllocation(const Allocation& bundle) noexcept;
+        void            NextROBCommit(const ROBCommit& bundle) noexcept;
 
         void            NextBranchCommitOverride(bool valid) noexcept;
 
@@ -444,9 +444,9 @@ namespace BullsEye::Gemini30F2::Decode {
         RegisterAndRename(ReOrderBuffer& rob) noexcept;
         ~RegisterAndRename() noexcept;
 
-        void            NextRenameAndAllocation(RenameAndAllocation bundle) noexcept;
+        void            NextRenameAndAllocation(const RenameAndAllocation& bundle) noexcept;
 
-        void            NextROBCommit(ROBCommit bundle) noexcept;
+        void            NextROBCommit(const ROBCommit& bundle) noexcept;
 
         void            NextBranchCommitOverride(bool bco_valid) noexcept;
 
@@ -616,9 +616,9 @@ namespace BullsEye::Gemini30F2::Decode {
         BeforeStageDFFs() noexcept;
         ~BeforeStageDFFs() noexcept;
 
-        void                            NextWriteback(Writeback bundle) noexcept;
-        void                            NextFetch(Fetch::Fetch::FetchResult bundle) noexcept;
-        void                            NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept;
+        void                            NextWriteback(const Writeback& bundle) noexcept;
+        void                            NextFetch(const Fetch::Fetch::FetchResult& bundle) noexcept;
+        void                            NextBranchPrediction(const Fetch::Fetch::BranchPrediction& bundle) noexcept;
 
         void                            NextBranchCommitOverride(bool bco_valid) noexcept;
 
@@ -721,12 +721,12 @@ namespace BullsEye::Gemini30F2::Decode {
 
         void                NextBranchCommitOverride(bool bco_valid);
 
-        void                NextFetch(Fetch::Fetch::FetchResult bundle) noexcept;
-        void                NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept;
+        void                NextFetch(const Fetch::Fetch::FetchResult& bundle) noexcept;
+        void                NextBranchPrediction(const Fetch::Fetch::BranchPrediction& bundle) noexcept;
 
-        void                NextFromCommit(FromCommit bundle) noexcept;
+        void                NextFromCommit(const FromCommit& bundle) noexcept;
 
-        void                NextWriteback(Writeback bundle) noexcept;
+        void                NextWriteback(const Writeback& bundle) noexcept;
 
         void                NextReset() noexcept;
 
@@ -1020,12 +1020,12 @@ namespace BullsEye::Gemini30F2::Decode {
         next_fid = fid;
     }
 
-    inline void InstructionDecoderDFFs::NextDecoded(InstructionDecoder::Decoded bundle) noexcept
+    inline void InstructionDecoderDFFs::NextDecoded(const InstructionDecoder::Decoded& bundle) noexcept
     {
         next_decoded = bundle;
     }
 
-    inline void InstructionDecoderDFFs::NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept
+    inline void InstructionDecoderDFFs::NextBranchPrediction(const Fetch::Fetch::BranchPrediction& bundle) noexcept
     {
         next_branch_prediction = bundle;
     }
@@ -1428,12 +1428,12 @@ namespace BullsEye::Gemini30F2::Decode {
         };
     }
 
-    inline void RegisterAliasTable::NextAllocation(Allocation allocation) noexcept
+    inline void RegisterAliasTable::NextAllocation(const Allocation& allocation) noexcept
     {
         next_allocation = allocation;
     }
 
-    inline void RegisterAliasTable::NextROBCommit(ROBCommit writeback) noexcept
+    inline void RegisterAliasTable::NextROBCommit(const ROBCommit& writeback) noexcept
     {
         next_writeback = writeback;
     }
@@ -1533,12 +1533,12 @@ namespace BullsEye::Gemini30F2::Decode {
     RegisterAndRename::~RegisterAndRename() noexcept
     { }
 
-    inline void RegisterAndRename::NextRenameAndAllocation(RenameAndAllocation bundle) noexcept
+    inline void RegisterAndRename::NextRenameAndAllocation(const RenameAndAllocation& bundle) noexcept
     {
         next_rename_and_allocation = bundle;
     }
 
-    inline void RegisterAndRename::NextROBCommit(ROBCommit bundle) noexcept
+    inline void RegisterAndRename::NextROBCommit(const ROBCommit& bundle) noexcept
     {
         next_rob_commit = bundle;
     }
@@ -2028,17 +2028,17 @@ namespace BullsEye::Gemini30F2::Decode {
     BeforeStageDFFs::~BeforeStageDFFs() noexcept
     { }
 
-    inline void BeforeStageDFFs::NextWriteback(Writeback bundle) noexcept
+    inline void BeforeStageDFFs::NextWriteback(const Writeback& bundle) noexcept
     {
         dff_writeback.Next(bundle);
     }
 
-    inline void BeforeStageDFFs::NextFetch(Fetch::Fetch::FetchResult bundle) noexcept
+    inline void BeforeStageDFFs::NextFetch(const Fetch::Fetch::FetchResult& bundle) noexcept
     {
         dff_fetch.Next(bundle);
     }
 
-    inline void BeforeStageDFFs::NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept
+    inline void BeforeStageDFFs::NextBranchPrediction(const Fetch::Fetch::BranchPrediction& bundle) noexcept
     {
         dff_branch_prediction.Next(bundle);
     }
@@ -2138,21 +2138,18 @@ namespace BullsEye::Gemini30F2::Decode {
         module_regnrename   .NextBranchCommitOverride(bco_valid);
     }
 
-    inline void Decode::NextFetch(Fetch::Fetch::FetchResult bundle) noexcept
+    inline void Decode::NextFetch(const Fetch::Fetch::FetchResult& bundle) noexcept
     {
         //
         module_input_dffs.NextFetch(bundle);
-
-        //
-        
     }
 
-    inline void Decode::NextBranchPrediction(Fetch::Fetch::BranchPrediction bundle) noexcept
+    inline void Decode::NextBranchPrediction(const Fetch::Fetch::BranchPrediction& bundle) noexcept
     {
         module_input_dffs.NextBranchPrediction(bundle);
     }
 
-    inline void Decode::NextFromCommit(FromCommit bundle) noexcept
+    inline void Decode::NextFromCommit(const FromCommit& bundle) noexcept
     {
         module_preallocator.NextCommitEnable(
             bundle.enable, 
@@ -2171,7 +2168,7 @@ namespace BullsEye::Gemini30F2::Decode {
         });
     }
 
-    inline void Decode::NextWriteback(Writeback bundle) noexcept
+    inline void Decode::NextWriteback(const Writeback& bundle) noexcept
     {
         module_input_dffs.NextWriteback(bundle);
     }
