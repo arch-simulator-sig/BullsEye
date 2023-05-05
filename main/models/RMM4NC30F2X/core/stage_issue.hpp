@@ -90,19 +90,19 @@ namespace BullsEye::Gemini30F2::Issue {
         bool            _QueryHit0(ROBIndex rob) const noexcept;
         bool            _QueryHit1(ROBIndex rob) const noexcept;
 
-        QueryResult     _Query(Query bundle) const noexcept;
+        QueryResult     _Query(const Query& bundle) const noexcept;
 
     public:
         WakeupHistoryTable() noexcept;
         ~WakeupHistoryTable() noexcept;
 
-        void            NextWritebackPortA(Writeback bundle) noexcept;
-        void            NextWritebackPortB(Writeback bundle) noexcept;
+        void            NextWritebackPortA(const Writeback& bundle) noexcept;
+        void            NextWritebackPortB(const Writeback& bundle) noexcept;
 
         void            NextReset() noexcept;
 
-        QueryResult     CombQueryPortA(Query bundle) const noexcept;
-        QueryResult     CombQueryPortB(Query bundle) const noexcept;
+        QueryResult     CombQueryPortA(const Query& bundle) const noexcept;
+        QueryResult     CombQueryPortB(const Query& bundle) const noexcept;
 
         void            Reset() noexcept;
         void            Eval() noexcept;
@@ -188,10 +188,10 @@ namespace BullsEye::Gemini30F2::Issue {
         IssueQueue() noexcept;
         ~IssueQueue() noexcept;
 
-        void            NextFromDecode(BeforeIssue bundle, BranchPrediction bundle_bp) noexcept;
+        void            NextFromDecode(const BeforeIssue& bundle, const BranchPrediction& bundle_bp) noexcept;
 
-        void            NextWakeupPortA(Wakeup bundle) noexcept;
-        void            NextWakeupPortB(Wakeup bundle) noexcept;
+        void            NextWakeupPortA(const Wakeup& bundle) noexcept;
+        void            NextWakeupPortB(const Wakeup& bundle) noexcept;
 
         void            NextPickEnable(PickOnehotEnable enable) noexcept;
 
@@ -369,7 +369,7 @@ namespace BullsEye::Gemini30F2::Issue {
         Pick4MuxControl() noexcept;
         ~Pick4MuxControl() noexcept;
 
-        void            NextPickWindow(IssueQueue::PickWindow bundle) noexcept;
+        void            NextPickWindow(const IssueQueue::PickWindow& bundle) noexcept;
 
         void            NextBranchCommitOverride(bool bco_valid) noexcept;
 
@@ -417,7 +417,7 @@ namespace BullsEye::Gemini30F2::Issue {
         Pick4MuxData() noexcept;
         ~Pick4MuxData() noexcept;
 
-        void            NextPickWindow(IssueQueue::PickWindow bundle) noexcept;
+        void            NextPickWindow(const IssueQueue::PickWindow& bundle) noexcept;
 
         void            NextBranchCommitOverride(bool bco_valid) noexcept;
 
@@ -487,7 +487,7 @@ namespace BullsEye::Gemini30F2::Issue {
         Pick4() noexcept;
         ~Pick4() noexcept;
 
-        void            NextPickWindow(IssueQueue::PickWindow bundle) noexcept;
+        void            NextPickWindow(const IssueQueue::PickWindow& bundle) noexcept;
 
         void            NextBranchCommitOverride(bool bco_valid) noexcept;
 
@@ -539,9 +539,9 @@ namespace BullsEye::Gemini30F2::Issue {
         BeforeStageDFFs() noexcept;
         ~BeforeStageDFFs() noexcept;
 
-        void                NextBranchPrediction(BranchPrediction bundle) noexcept;
-        void                NextFromDecode(FromDecode bundle) noexcept;
-        void                NextWriteback(Writeback bundle) noexcept;
+        void                NextBranchPrediction(const BranchPrediction& bundle) noexcept;
+        void                NextFromDecode(const FromDecode& bundle) noexcept;
+        void                NextWriteback(const Writeback& bundle) noexcept;
 
         void                NextBranchCommitOverride(bool bco_valid) noexcept;
 
@@ -595,19 +595,19 @@ namespace BullsEye::Gemini30F2::Issue {
         Issue() noexcept;
         ~Issue() noexcept;
 
-        void            NextBranchPrediction(BranchPrediction bundle) noexcept;
-        void            NextWriteback(Writeback bundle) noexcept;
-        void            NextNoWriteback(NoWriteback bundle) noexcept;
+        void            NextBranchPrediction(const BranchPrediction& bundle) noexcept;
+        void            NextWriteback(const Writeback& bundle) noexcept;
+        void            NextNoWriteback(const NoWriteback& bundle) noexcept;
 
-        void            NextFromDecode(FromDecode bundle) noexcept;
+        void            NextFromDecode(const FromDecode& bundle) noexcept;
 
         void            NextBranchCommitOverride(bool bco_valid) noexcept;
 
         void            NextReset() noexcept;
 
-        bool            GetLastNotReady() noexcept;
+        bool            GetLastNotReady() const noexcept;
 
-        ToDispatch      GetLastToDispatch() noexcept;
+        ToDispatch      GetLastToDispatch() const noexcept;
 
         void            Reset() noexcept;
         void            Eval() noexcept;
@@ -643,7 +643,7 @@ namespace BullsEye::Gemini30F2::Issue {
         return wht1.Get().valid && (wht1.Get().rob == rob);
     }
 
-    inline WakeupHistoryTable::QueryResult WakeupHistoryTable::_Query(Query bundle) const noexcept
+    inline WakeupHistoryTable::QueryResult WakeupHistoryTable::_Query(const Query& bundle) const noexcept
     {
         bool hit0 = _QueryHit0(bundle.rob);
         bool hit1 = _QueryHit1(bundle.rob);
@@ -656,7 +656,7 @@ namespace BullsEye::Gemini30F2::Issue {
         };
     }
 
-    inline void WakeupHistoryTable::NextWritebackPortA(Writeback bundle) noexcept
+    inline void WakeupHistoryTable::NextWritebackPortA(const Writeback& bundle) noexcept
     {
         wht0.Next({
             .valid  = bundle.enable,
@@ -665,7 +665,7 @@ namespace BullsEye::Gemini30F2::Issue {
         });
     }
 
-    inline void WakeupHistoryTable::NextWritebackPortB(Writeback bundle) noexcept
+    inline void WakeupHistoryTable::NextWritebackPortB(const Writeback& bundle) noexcept
     {
         wht1.Next({
             .valid  = bundle.enable,
@@ -679,12 +679,12 @@ namespace BullsEye::Gemini30F2::Issue {
         next_reset = true;
     }
 
-    inline WakeupHistoryTable::QueryResult WakeupHistoryTable::CombQueryPortA(Query bundle) const noexcept
+    inline WakeupHistoryTable::QueryResult WakeupHistoryTable::CombQueryPortA(const Query& bundle) const noexcept
     {
         return _Query(bundle);
     }
 
-    inline WakeupHistoryTable::QueryResult WakeupHistoryTable::CombQueryPortB(Query bundle) const noexcept
+    inline WakeupHistoryTable::QueryResult WakeupHistoryTable::CombQueryPortB(const Query& bundle) const noexcept
     {
         return _Query(bundle);
     }
@@ -858,18 +858,18 @@ namespace BullsEye::Gemini30F2::Issue {
         window.port[_Index].bp          = queue[_Index].bp;
     }
 
-    inline void IssueQueue::NextFromDecode(BeforeIssue bundle, BranchPrediction bundle_bp) noexcept
+    inline void IssueQueue::NextFromDecode(const BeforeIssue& bundle, const BranchPrediction& bundle_bp) noexcept
     {
         next_from_decode     = bundle;
         next_from_decode_bp  = bundle_bp;
     }
 
-    inline void IssueQueue::NextWakeupPortA(Wakeup bundle) noexcept
+    inline void IssueQueue::NextWakeupPortA(const Wakeup& bundle) noexcept
     {
         next_wakeup0 = bundle;
     }
 
-    inline void IssueQueue::NextWakeupPortB(Wakeup bundle) noexcept
+    inline void IssueQueue::NextWakeupPortB(const Wakeup& bundle) noexcept
     {
         next_wakeup1 = bundle;
     }
@@ -1502,7 +1502,7 @@ namespace BullsEye::Gemini30F2::Issue {
     Pick4MuxControl::~Pick4MuxControl() noexcept
     { }
 
-    inline void Pick4MuxControl::NextPickWindow(IssueQueue::PickWindow bundle) noexcept
+    inline void Pick4MuxControl::NextPickWindow(const IssueQueue::PickWindow& bundle) noexcept
     {
         next_pick_window = bundle;
 
@@ -1604,7 +1604,7 @@ namespace BullsEye::Gemini30F2::Issue {
     Pick4MuxData::~Pick4MuxData() noexcept
     { }
 
-    inline void Pick4MuxData::NextPickWindow(IssueQueue::PickWindow bundle) noexcept
+    inline void Pick4MuxData::NextPickWindow(const IssueQueue::PickWindow& bundle) noexcept
     {
         next_pick_window = bundle;
 
@@ -1689,7 +1689,7 @@ namespace BullsEye::Gemini30F2::Issue {
     Pick4::~Pick4() noexcept
     { }
 
-    inline void Pick4::NextPickWindow(IssueQueue::PickWindow bundle) noexcept
+    inline void Pick4::NextPickWindow(const IssueQueue::PickWindow& bundle) noexcept
     {
         module_mux_control  .NextPickWindow(bundle);
         module_mux_data     .NextPickWindow(bundle);
@@ -1806,17 +1806,17 @@ namespace BullsEye::Gemini30F2::Issue {
     BeforeStageDFFs::~BeforeStageDFFs() noexcept
     { }
 
-    inline void BeforeStageDFFs::NextBranchPrediction(BranchPrediction bp) noexcept
+    inline void BeforeStageDFFs::NextBranchPrediction(const BranchPrediction& bp) noexcept
     {
         dff_branch_prediction.Next(bp);
     }
 
-    inline void BeforeStageDFFs::NextFromDecode(FromDecode fd) noexcept
+    inline void BeforeStageDFFs::NextFromDecode(const FromDecode& fd) noexcept
     {
         dff_from_decode.Next(fd);
     }
 
-    inline void BeforeStageDFFs::NextWriteback(Writeback wb) noexcept
+    inline void BeforeStageDFFs::NextWriteback(const Writeback& wb) noexcept
     {
         dff_writeback.Next(wb);
     }
@@ -1897,22 +1897,22 @@ namespace BullsEye::Gemini30F2::Issue {
     Issue::~Issue() noexcept
     { }
 
-    inline void Issue::NextBranchPrediction(BranchPrediction bundle) noexcept
+    inline void Issue::NextBranchPrediction(const BranchPrediction& bundle) noexcept
     {
         module_idffs.NextBranchPrediction(bundle);
     }
 
-    inline void Issue::NextFromDecode(FromDecode bundle) noexcept
+    inline void Issue::NextFromDecode(const FromDecode& bundle) noexcept
     {
         module_idffs.NextFromDecode(bundle);
     }
 
-    inline void Issue::NextWriteback(Writeback bundle) noexcept
+    inline void Issue::NextWriteback(const Writeback& bundle) noexcept
     {
         module_idffs.NextWriteback(bundle);
     }
 
-    inline void Issue::NextNoWriteback(NoWriteback bundle) noexcept
+    inline void Issue::NextNoWriteback(const NoWriteback& bundle) noexcept
     {
         module_wht.NextWritebackPortB({
             .enable     = bundle.enable,
@@ -1939,12 +1939,12 @@ namespace BullsEye::Gemini30F2::Issue {
         next_reset = true;
     }
 
-    inline bool Issue::GetLastNotReady() noexcept
+    inline bool Issue::GetLastNotReady() const noexcept
     {
         return module_alloc.CombNotReady();
     }
 
-    inline Issue::ToDispatch Issue::GetLastToDispatch() noexcept
+    inline Issue::ToDispatch Issue::GetLastToDispatch() const noexcept
     {
         return module_pick.GetCombPostPick();
     }
