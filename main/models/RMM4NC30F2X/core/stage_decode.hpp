@@ -672,8 +672,10 @@ namespace BullsEye::Gemini30F2::Decode {
             BAGUCommand                         bagu_cmd;
         };
 
-        struct BeforeIssue : public PreIssueMicroCode {
+        struct BeforeIssue {
             bool                                valid;
+
+            PreIssueMicroCode                   microcode;
         };
 
         using ToCommit      = ReOrderBuffer::CommitCandidate;
@@ -2285,32 +2287,32 @@ namespace BullsEye::Gemini30F2::Decode {
         //
         last_before_issue.valid         = idecdffs_allocation_enable;
 
-        last_before_issue.pc            = idecdffs_pc;
-        last_before_issue.fid           = idecdffs_fid;
+        last_before_issue.microcode.pc          = idecdffs_pc;
+        last_before_issue.microcode.fid         = idecdffs_fid;
 
-        last_before_issue.src0_rob      = regnrename.src0_rob;
-        last_before_issue.src0_ready    = regnrename.src0_ready;
-        last_before_issue.src0_value    = regnrename.src0_value;
+        last_before_issue.microcode.src0_rob    = regnrename.src0_rob;
+        last_before_issue.microcode.src0_ready  = regnrename.src0_ready;
+        last_before_issue.microcode.src0_value  = regnrename.src0_value;
 
-        last_before_issue.src1_rob      = regnrename.src1_rob;
-        last_before_issue.src1_ready    = regnrename.src1_ready;
-        last_before_issue.src1_value    = regnrename.src1_value;
+        last_before_issue.microcode.src1_rob    = regnrename.src1_rob;
+        last_before_issue.microcode.src1_ready  = regnrename.src1_ready;
+        last_before_issue.microcode.src1_value  = regnrename.src1_value;
 
-        last_before_issue.imm           = idecdffs_decoded.imm;
-        last_before_issue.branch        = idecdffs_decoded.branch;
-        last_before_issue.load          = idecdffs_decoded.load;
-        last_before_issue.store         = idecdffs_decoded.store;
+        last_before_issue.microcode.imm         = idecdffs_decoded.imm;
+        last_before_issue.microcode.branch      = idecdffs_decoded.branch;
+        last_before_issue.microcode.load        = idecdffs_decoded.load;
+        last_before_issue.microcode.store       = idecdffs_decoded.store;
 
-        last_before_issue.pipe_alu      = idecdffs_decoded.pipe_alu;
-        last_before_issue.pipe_mul      = idecdffs_decoded.pipe_mul;
-        last_before_issue.pipe_mem      = idecdffs_decoded.pipe_mem;
-        last_before_issue.pipe_bru      = idecdffs_decoded.pipe_bru;
+        last_before_issue.microcode.pipe_alu    = idecdffs_decoded.pipe_alu;
+        last_before_issue.microcode.pipe_mul    = idecdffs_decoded.pipe_mul;
+        last_before_issue.microcode.pipe_mem    = idecdffs_decoded.pipe_mem;
+        last_before_issue.microcode.pipe_bru    = idecdffs_decoded.pipe_bru;
 
-        last_before_issue.alu_cmd       = idecdffs_decoded.alu_cmd;
-        last_before_issue.mul_cmd       = idecdffs_decoded.mul_cmd;
-        last_before_issue.mem_cmd       = idecdffs_decoded.mem_cmd;
-        last_before_issue.bru_cmd       = idecdffs_decoded.bru_cmd;
-        last_before_issue.bagu_cmd      = idecdffs_decoded.bagu_cmd;
+        last_before_issue.microcode.alu_cmd     = idecdffs_decoded.alu_cmd;
+        last_before_issue.microcode.mul_cmd     = idecdffs_decoded.mul_cmd;
+        last_before_issue.microcode.mem_cmd     = idecdffs_decoded.mem_cmd;
+        last_before_issue.microcode.bru_cmd     = idecdffs_decoded.bru_cmd;
+        last_before_issue.microcode.bagu_cmd    = idecdffs_decoded.bagu_cmd;
 
         //
         last_branch_prediction.pattern  = idecdffs_branch_prediction.pattern;
