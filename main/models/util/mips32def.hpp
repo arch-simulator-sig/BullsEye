@@ -38,6 +38,9 @@ typedef     uint32_t        insnraw_t;
 #define ZEXT32_B(expr)      ((uint32_t) ((uint8_t)  (expr)))
 #define ZEXT32_W(expr)      ((uint32_t) (           (expr)))
 
+#define ZEXT32_IMM16(expr)  ZEXT32_H(expr)
+#define ZEXT32_IMM26(expr)  ZEXT32_W(expr)
+
 // Integral extension alias
 #define SEXT32_HALF_WORD    SEXT32_H
 #define SEXT32_BYTE         SEXT32_B
