@@ -45,6 +45,11 @@ namespace BullsEye::Gemini30F2::Issue {
 
     // Wake-up History Table
     class WakeupHistoryTable {
+    public:
+        using ROBIndex          = ROBIndex;
+
+        using RegisterValue     = RegisterValue;
+
     private:
         struct Entry {
             bool            valid;
@@ -108,6 +113,10 @@ namespace BullsEye::Gemini30F2::Issue {
     // Issue Queue
     class IssueQueue {
     public:
+        using BeforeIssue           = BeforeIssue;
+
+        using BranchPrediction      = BranchPrediction;
+
         using FIFOPosition          = std::bitset<9>;
 
         struct Wakeup {
@@ -320,6 +329,8 @@ namespace BullsEye::Gemini30F2::Issue {
     // Issue Pick (MicroCode) Control Mux
     class Pick4MuxControl {
     public:
+        using ROBIndex          = ROBIndex;
+
         using PickInfo          = Pick4Core::PickInfo;
 
         struct PostPick {
@@ -377,6 +388,10 @@ namespace BullsEye::Gemini30F2::Issue {
     // Issue Pick (MicroCode) Data Mux
     class Pick4MuxData {
     public:
+        using RegisterValue     = RegisterValue;
+
+        using BranchPrediction  = BranchPrediction;
+        
         using PickInfo          = Pick4Core::PickInfo;
 
         struct PostPick {
@@ -421,7 +436,13 @@ namespace BullsEye::Gemini30F2::Issue {
     // Issue Pick-4
     class Pick4 {
     public:
-        using PickInfo =        Pick4Core::PickInfo;
+        using RegisterValue         = RegisterValue;
+
+        using ROBIndex              = ROBIndex;
+
+        using BranchPrediction      = BranchPrediction;
+
+        using PickInfo              = Pick4Core::PickInfo;
 
         struct PostPick {
             bool                valid;
@@ -486,6 +507,10 @@ namespace BullsEye::Gemini30F2::Issue {
     // Before-Stage DFFs
     class BeforeStageDFFs {
     public:
+        using ROBIndex              = ROBIndex;
+
+        using RegisterValue         = RegisterValue;
+
         using BranchPrediction      = BranchPrediction;
 
         using FromDecode            = BeforeIssue;
@@ -528,6 +553,64 @@ namespace BullsEye::Gemini30F2::Issue {
 
         void                Reset();
         void                Eval();
+    };
+
+
+
+    // Issue AIO
+    class Issue {
+    public:
+        using ROBIndex              = ROBIndex;
+
+        using RegisterValue         = RegisterValue;
+
+        using BranchPrediction      = BranchPrediction;
+
+        using Writeback             = BeforeStageDFFs::Writeback;
+
+        struct NoWriteback {
+            bool            enable;
+            ROBIndex        dst_rob;
+            RegisterValue   value;
+        };
+
+        using FromDecode            = BeforeStageDFFs::FromDecode;
+
+        using ToDispatch            = Pick4::PostPick;
+
+    private:
+        BeforeStageDFFs     module_idffs;
+
+        WakeupHistoryTable  module_wht;
+
+        IssueQueue          module_queue;
+
+        IssueQueueAllocator module_alloc;
+
+        Pick4               module_pick;
+
+        bool                next_reset;
+
+    public:
+        Issue() noexcept;
+        ~Issue() noexcept;
+
+        void            NextBranchPrediction(BranchPrediction bundle) noexcept;
+        void            NextWriteback(Writeback bundle) noexcept;
+        void            NextNoWriteback(NoWriteback bundle) noexcept;
+
+        void            NextFromDecode(FromDecode bundle) noexcept;
+
+        void            NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void            NextReset() noexcept;
+
+        bool            GetLastNotReady() noexcept;
+
+        ToDispatch      GetLastToDispatch() noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
     };
 }
 
@@ -858,18 +941,18 @@ namespace BullsEye::Gemini30F2::Issue {
         {
             if (p_fifo_write[i])
             {
-                bool wakeup0_hit = next_wakeup0.enable && next_wakeup0.rob == next_from_decode.src0_rob;
-                bool wakeup1_hit = next_wakeup1.enable && next_wakeup1.rob == next_from_decode.src0_rob;
+                bool wakeup0_hit = next_wakeup0.enable && next_wakeup0.rob == next_from_decode.microcode.src0_rob;
+                bool wakeup1_hit = next_wakeup1.enable && next_wakeup1.rob == next_from_decode.microcode.src0_rob;
 
-                queue[i].microcode.src0_rob     = next_from_decode.src0_rob;
+                queue[i].microcode.src0_rob     = next_from_decode.microcode.src0_rob;
                 
-                queue[i].microcode.src0_ready   = next_from_decode.src0_ready
+                queue[i].microcode.src0_ready   = next_from_decode.microcode.src0_ready
                                                || (wakeup0_hit)
                                                || (wakeup1_hit);
 
-                queue[i].microcode.src0_value   = (wakeup0_hit && !next_from_decode.src0_ready) ? next_wakeup0.value
-                                                : (wakeup1_hit && !next_from_decode.src0_ready) ? next_wakeup1.value
-                                                : next_from_decode.src0_value;
+                queue[i].microcode.src0_value   = (wakeup0_hit && !next_from_decode.microcode.src0_ready) ? next_wakeup0.value
+                                                : (wakeup1_hit && !next_from_decode.microcode.src0_ready) ? next_wakeup1.value
+                                                : next_from_decode.microcode.src0_value;
             }
             else if (p_fifo_shr[i])
             {
@@ -913,18 +996,18 @@ namespace BullsEye::Gemini30F2::Issue {
         {
             if (p_fifo_write[i])
             {
-                bool wakeup0_hit = next_wakeup0.enable && next_wakeup0.rob == next_from_decode.src1_rob;
-                bool wakeup1_hit = next_wakeup1.enable && next_wakeup1.rob == next_from_decode.src1_rob;
+                bool wakeup0_hit = next_wakeup0.enable && next_wakeup0.rob == next_from_decode.microcode.src1_rob;
+                bool wakeup1_hit = next_wakeup1.enable && next_wakeup1.rob == next_from_decode.microcode.src1_rob;
 
-                queue[i].microcode.src1_rob     = next_from_decode.src1_rob;
+                queue[i].microcode.src1_rob     = next_from_decode.microcode.src1_rob;
                 
-                queue[i].microcode.src1_ready   = next_from_decode.src1_ready
+                queue[i].microcode.src1_ready   = next_from_decode.microcode.src1_ready
                                                || (wakeup0_hit)
                                                || (wakeup1_hit);
 
-                queue[i].microcode.src1_value   = (wakeup0_hit && !next_from_decode.src1_ready) ? next_wakeup0.value
-                                                : (wakeup1_hit && !next_from_decode.src1_ready) ? next_wakeup1.value
-                                                : next_from_decode.src1_value;
+                queue[i].microcode.src1_value   = (wakeup0_hit && !next_from_decode.microcode.src1_ready) ? next_wakeup0.value
+                                                : (wakeup1_hit && !next_from_decode.microcode.src1_ready) ? next_wakeup1.value
+                                                : next_from_decode.microcode.src1_value;
             }
             else if (p_fifo_shr[i])
             {
@@ -970,26 +1053,26 @@ namespace BullsEye::Gemini30F2::Issue {
         {
             if (p_fifo_write[i])
             {
-                queue[i].microcode.pc       = next_from_decode.pc;
-                queue[i].microcode.imm      = next_from_decode.imm;
-                queue[i].microcode.dst_rob  = next_from_decode.dst_rob;
+                queue[i].microcode.pc       = next_from_decode.microcode.pc;
+                queue[i].microcode.imm      = next_from_decode.microcode.imm;
+                queue[i].microcode.dst_rob  = next_from_decode.microcode.dst_rob;
 
-                queue[i].microcode.fid      = next_from_decode.fid;
+                queue[i].microcode.fid      = next_from_decode.microcode.fid;
 
-                queue[i].microcode.branch   = next_from_decode.branch;
-                queue[i].microcode.load     = next_from_decode.load;
-                queue[i].microcode.store    = next_from_decode.store;
+                queue[i].microcode.branch   = next_from_decode.microcode.branch;
+                queue[i].microcode.load     = next_from_decode.microcode.load;
+                queue[i].microcode.store    = next_from_decode.microcode.store;
 
-                queue[i].microcode.pipe_alu = next_from_decode.pipe_alu;
-                queue[i].microcode.pipe_mul = next_from_decode.pipe_mul;
-                queue[i].microcode.pipe_mem = next_from_decode.pipe_mem;
-                queue[i].microcode.pipe_bru = next_from_decode.pipe_bru;
+                queue[i].microcode.pipe_alu = next_from_decode.microcode.pipe_alu;
+                queue[i].microcode.pipe_mul = next_from_decode.microcode.pipe_mul;
+                queue[i].microcode.pipe_mem = next_from_decode.microcode.pipe_mem;
+                queue[i].microcode.pipe_bru = next_from_decode.microcode.pipe_bru;
 
-                queue[i].microcode.alu_cmd  = next_from_decode.alu_cmd;
-                queue[i].microcode.mul_cmd  = next_from_decode.mul_cmd;
-                queue[i].microcode.mem_cmd  = next_from_decode.mem_cmd;
-                queue[i].microcode.bru_cmd  = next_from_decode.bru_cmd;
-                queue[i].microcode.bagu_cmd = next_from_decode.bagu_cmd;
+                queue[i].microcode.alu_cmd  = next_from_decode.microcode.alu_cmd;
+                queue[i].microcode.mul_cmd  = next_from_decode.microcode.mul_cmd;
+                queue[i].microcode.mem_cmd  = next_from_decode.microcode.mem_cmd;
+                queue[i].microcode.bru_cmd  = next_from_decode.microcode.bru_cmd;
+                queue[i].microcode.bagu_cmd = next_from_decode.microcode.bagu_cmd;
 
                 queue[i].bp.pattern = next_from_decode_bp.pattern;
                 queue[i].bp.taken   = next_from_decode_bp.taken;
@@ -1365,6 +1448,9 @@ namespace BullsEye::Gemini30F2::Issue {
             .valid = comb_post_pick.valid && comb_post_pick.pipe_alu,
             .rob   = comb_post_pick.dst_rob
         });
+
+        if (next_bco_valid)
+            alu_forward.GetNext().valid = false;
 
 
         //
@@ -1779,5 +1865,206 @@ namespace BullsEye::Gemini30F2::Issue {
         dff_branch_prediction   .Eval();
         dff_from_decode         .Eval();
         dff_writeback           .Eval();
+    }
+}
+
+
+// Implementation of: class Issue
+namespace BullsEye::Gemini30F2::Issue {
+    //
+    // BeforeStageDFFs     module_idffs;
+    //
+    // WakeupHistoryTable  module_wht;
+    //
+    // IssueQueue          module_queue;
+    //
+    // IssueQueueAllocator module_alloc;
+    //
+    // Pick4               module_pick;
+    //
+    // bool                next_reset;
+    //
+
+    Issue::Issue() noexcept
+        : module_idffs  ()
+        , module_wht    ()
+        , module_queue  ()
+        , module_alloc  ()
+        , module_pick   ()
+        , next_reset    (false)
+    { }
+
+    Issue::~Issue() noexcept
+    { }
+
+    inline void Issue::NextBranchPrediction(BranchPrediction bundle) noexcept
+    {
+        module_idffs.NextBranchPrediction(bundle);
+    }
+
+    inline void Issue::NextFromDecode(FromDecode bundle) noexcept
+    {
+        module_idffs.NextFromDecode(bundle);
+    }
+
+    inline void Issue::NextWriteback(Writeback bundle) noexcept
+    {
+        module_idffs.NextWriteback(bundle);
+    }
+
+    inline void Issue::NextNoWriteback(NoWriteback bundle) noexcept
+    {
+        module_wht.NextWritebackPortB({
+            .enable     = bundle.enable,
+            .rob        = bundle.dst_rob,
+            .value      = bundle.value
+        });
+
+        module_queue.NextWakeupPortB({
+            .enable     = bundle.enable,
+            .rob        = bundle.dst_rob,
+            .value      = bundle.value
+        });
+    }
+
+    inline void Issue::NextBranchCommitOverride(bool bco_valid)
+    {
+        module_idffs.NextBranchCommitOverride(bco_valid);
+        module_queue.NextBranchCommitOverride(bco_valid);
+        module_pick .NextBranchCommitOverride(bco_valid);
+    }
+
+    inline void Issue::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline bool Issue::GetLastNotReady() noexcept
+    {
+        return module_alloc.CombNotReady();
+    }
+
+    inline Issue::ToDispatch Issue::GetLastToDispatch() noexcept
+    {
+        return module_pick.GetCombPostPick();
+    }
+
+    void Issue::Reset() noexcept
+    {
+        module_idffs.Reset();
+        module_wht  .Reset();
+        module_queue.Reset();
+        module_alloc.Reset();
+        module_pick .Reset();
+
+        next_reset = false;
+    }
+
+    void Issue::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+
+        //
+        BeforeStageDFFs::FromDecode         idffs       = module_idffs.GetLastFromDecode();
+        BeforeStageDFFs::BranchPrediction   idffs_bp    = module_idffs.GetLastBranchPrediction();
+        BeforeStageDFFs::Writeback          idffs_wb    = module_idffs.GetLastWriteback();
+
+
+        //
+        WakeupHistoryTable::QueryResult wht_src0 = module_wht.CombQueryPortA({
+            .rob    = idffs.microcode.src0_rob,
+            .ready  = idffs.microcode.src0_ready,
+            .value  = idffs.microcode.src0_value
+        });
+
+        WakeupHistoryTable::QueryResult wht_src1 = module_wht.CombQueryPortB({
+            .rob    = idffs.microcode.src1_rob,
+            .ready  = idffs.microcode.src1_ready,
+            .value  = idffs.microcode.src1_value
+        });
+
+        module_wht.NextWritebackPortA({
+            .enable = idffs_wb.enable && !idffs_wb.lsmiss,
+            .rob    = idffs_wb.dst_rob,
+            .value  = idffs_wb.value
+        });
+
+
+        //
+        bool    queue_alloc_enable;
+
+        queue_alloc_enable = module_alloc.CombAllocationEnable();
+
+
+        //
+        module_queue.NextFromDecode({
+            .valid      = queue_alloc_enable,
+            
+            .microcode  = {
+                .pc         = idffs.microcode.pc,
+
+                .src0_rob   = idffs.microcode.src0_rob,
+                .src0_ready = wht_src0.ready,
+                .src0_value = wht_src0.value,
+
+                .src1_rob   = idffs.microcode.src1_rob,
+                .src1_ready = wht_src1.ready,
+                .src1_value = wht_src1.value,
+
+                .dst_rob    = idffs.microcode.dst_rob,
+
+                .imm        = idffs.microcode.imm,
+
+                .fid        = idffs.microcode.fid,
+
+                .branch     = idffs.microcode.branch,
+                .load       = idffs.microcode.load,
+                .store      = idffs.microcode.store,
+
+                .pipe_alu   = idffs.microcode.pipe_alu,
+                .pipe_mul   = idffs.microcode.pipe_mul,
+                .pipe_mem   = idffs.microcode.pipe_mem,
+                .pipe_bru   = idffs.microcode.pipe_bru,
+
+                .alu_cmd    = idffs.microcode.alu_cmd,
+                .mul_cmd    = idffs.microcode.mul_cmd,
+                .mem_cmd    = idffs.microcode.mem_cmd,
+                .bru_cmd    = idffs.microcode.bru_cmd,
+                .bagu_cmd   = idffs.microcode.bagu_cmd
+            }
+        }, idffs_bp);
+
+        module_queue.NextWakeupPortA({
+            .enable = idffs_wb.enable && !idffs_wb.lsmiss,
+            .rob    = idffs_wb.dst_rob,
+            .value  = idffs_wb.value
+        });
+
+        module_queue.NextPickEnable(
+            module_pick.GetCombPickInfo().pick_enable
+        );
+
+
+        //
+        module_idffs.Eval();
+        module_wht  .Eval();
+        module_queue.Eval();
+        module_alloc.Eval();
+        module_pick .Eval();
+
+
+        //
+        module_alloc.NextFIFOPosition(module_queue.GetLastFIFOPosition());
+        module_alloc.NextValid(module_idffs.GetLastFromDecode().valid);
+
+        //
+        module_pick.NextPickWindow(module_queue.GetLastPickWindow());
+        module_pick.Comb();
     }
 }
