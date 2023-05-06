@@ -1054,9 +1054,6 @@ namespace BullsEye::Gemini30F2::Execute {
     };
 
 
-
-
-
     // MEM
     class MEM {
     public:
@@ -1193,6 +1190,182 @@ namespace BullsEye::Gemini30F2::Execute {
 
     // DFFs after MEM
     class DFFsAfterMEM {
+    public:
+        using FromMEM           = MEM::FromMEM;
+
+    private:
+        SteppingDFF<FromMEM, decltype([] (FromMEM& bundle) {
+            bundle.valid = false;
+        })>                             dff;
+
+    public:
+        DFFsAfterMEM() noexcept;
+        ~DFFsAfterMEM() noexcept;
+
+        void        NextFromMEM(const FromMEM& bundle) noexcept;
+
+        void        NextReset() noexcept;
+
+        FromMEM     GetLastFromMEM() const noexcept;
+
+        void        Reset() noexcept;
+        void        Eval() noexcept;
+    };
+
+
+
+    // Pipeline of ALU
+    class PipelineALU {
+    public:
+        using ToALU                 = ALU::ToALU;
+
+        using FromALU               = ALU::FromALU;
+
+    private:
+        ALU             module_alu_impl;
+
+        DFFsBeforeALU   module_idffs;
+
+        DFFsAfterALU    module_odffs;
+
+        bool            next_reset;
+
+    public:
+        PipelineALU() noexcept;
+        ~PipelineALU() noexcept;
+
+        void            NextToALU(const ToALU& bundle) noexcept;
+
+        void            NextReset() noexcept;
+
+        FromALU         GetLastFromALU() const noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
+    };
+
+
+    // Pipeline of MUL
+    class PipelineMUL {
+    public:
+        using ToMUL                 = MUL::ToMUL;
+
+        using FromMUL               = MUL::FromMUL;
+
+    private:
+        MUL             module_mul_impl;
+
+        DFFsBeforeMUL   module_idffs;
+
+        bool            next_reset;
+
+    public:
+        PipelineMUL() noexcept;
+        ~PipelineMUL() noexcept;
+
+        void            NextToMUL(const ToMUL& bundle) noexcept;
+
+        void            NextReset() noexcept;
+
+        FromMUL         GetLastFromMUL() const noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
+    };
+
+
+    // Pipeline of BRU
+    class PipelineBRU {
+    public:
+        using ToBRU                 = BRU::ToBRU;
+
+        using FromBRU               = BRU::FromBRU;
+
+    private:
+        BRU             module_bru_impl;
+
+        DFFsBeforeBRU   module_idffs;
+
+        DFFsAfterBRU    module_odffs;
+
+        bool            next_reset;
+
+    public:
+        PipelineBRU() noexcept;
+        ~PipelineBRU() noexcept;
+
+        void            NextToBRU(const ToBRU& bundle) noexcept;
+
+        void            NextReset() noexcept;
+
+        FromBRU         GetLastFromBRU() const noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
+    };
+
+
+    // Pipeline of MEM
+    class PipelineMEM {
+    public:
+        using CacheUpdateTag            = MEM::CacheUpdateTag;
+
+        using CacheUpdateData           = MEM::CacheUpdateData;
+
+        using PhysicalAddress           = MEM::PhysicalAddress;
+
+        using MemoryWritebackCandidate  = MEM::MemoryWritebackCandidate;
+
+        using ToMEM                     = MEM::ToMEM;
+
+        using FromMEM                   = MEM::FromMEM;
+
+    private:
+        MEM             module_mem_impl;
+
+        DFFsBeforeMEM   module_idffs;
+
+        DFFsAfterMEM    module_odffs;
+
+        bool            next_reset;
+
+    public:
+        PipelineMEM() noexcept;
+        ~PipelineMEM() noexcept;
+
+        void                        NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void                        NextLoadBufferBusyHit(bool hit) noexcept;
+
+        void                        NextStoreCommitEnable(bool enable) noexcept;
+
+        void                        NextMemoryWritebackEnable(bool enable) noexcept;
+
+        void                        NextCacheUpdateTag(const CacheUpdateTag& bundle) noexcept;
+        void                        NextCacheUpdateData(const CacheUpdateData& bundle) noexcept;
+
+        void                        NextToMEM(const ToMEM& bundle) noexcept;
+
+        void                        NextReset() noexcept;
+
+        bool                        CombCacheUpdateDataReady() const noexcept;
+
+        PhysicalAddress             GetLastLoadBufferQuery() const noexcept;
+
+        bool                        GetLastCommitNotReady() const noexcept;
+
+        MemoryWritebackCandidate    GetLastMemoryWritebackCandidate() const noexcept;
+
+        FromMEM                     GetLastFromMEM() const noexcept;
+
+        void                        Reset() noexcept;
+        void                        Eval() noexcept;
+    };
+
+
+
+    // Execute AIO
+    class Execute {
 
     };
 }
@@ -1311,6 +1484,8 @@ namespace BullsEye::Gemini30F2::Execute {
             default:
                 break;
         }
+
+        forward.Next(result);
 
         //
         FromALU out;
@@ -3227,4 +3402,371 @@ namespace BullsEye::Gemini30F2::Execute {
         //
         dff.Eval();
     }
+}
+
+
+// Implementation of: class DFFsAfterMEM
+namespace BullsEye::Gemini30F2::Execute {
+    //
+    // SteppingDFF<FromMEM, decltype([] (FromMEM& bundle) {
+    //     bundle.valid = false;
+    // })>                             dff;
+    //
+
+    DFFsAfterMEM::DFFsAfterMEM() noexcept
+        : dff()
+    { }
+
+    DFFsAfterMEM::~DFFsAfterMEM() noexcept
+    { }
+
+    inline void DFFsAfterMEM::NextFromMEM(const FromMEM& bundle) noexcept
+    {
+        dff.Next(bundle);
+    }
+
+    inline void DFFsAfterMEM::NextReset() noexcept
+    {
+        dff.NextReset();
+    }
+
+    inline DFFsAfterMEM::FromMEM DFFsAfterMEM::GetLastFromMEM() const noexcept
+    {
+        return dff.Get();
+    }
+
+    inline void DFFsAfterMEM::Reset() noexcept
+    {
+        dff.Reset();
+    }
+
+    inline void DFFsAfterMEM::Eval() noexcept
+    {
+        dff.Eval();
+    }
+}
+
+
+// Implementation of: class PipelineALU
+namespace BullsEye::Gemini30F2::Execute {
+    //
+    // ALU             module_alu_impl;
+    //
+    // DFFsBeforeALU   module_idffs;
+    //
+    // DFFsAfterALU    module_odffs;
+    //
+    // bool            next_reset;
+    //
+
+    PipelineALU::PipelineALU() noexcept
+        : module_alu_impl   ()
+        , module_idffs      ()
+        , module_odffs      ()
+        , next_reset        (false)
+    { }
+
+    PipelineALU::~PipelineALU() noexcept
+    { }
+
+    inline void PipelineALU::NextToALU(const ToALU& bundle) noexcept
+    {
+        module_idffs.NextToALU(bundle);
+    }
+
+    inline void PipelineALU::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline PipelineALU::FromALU PipelineALU::GetLastFromALU() const noexcept
+    {
+        return module_odffs.GetLastFromALU();
+    }
+
+    void PipelineALU::Reset() noexcept
+    {
+        module_idffs.Reset();
+        module_odffs.Reset();
+
+        module_alu_impl.Reset();
+
+        next_reset = false;
+    }
+
+    void PipelineALU::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        module_odffs.NextFromALU(
+            module_alu_impl.Comb(module_idffs.GetLastToALU()));
+
+        //
+        module_idffs.Eval();
+        module_odffs.Eval();
+
+        module_alu_impl.Eval();
+    }
+}
+
+
+// Implementation of: class PipelineMUL
+namespace BullsEye::Gemini30F2::Execute {
+    //
+    // MUL             module_mul_impl;
+    //
+    // DFFsBeforeMUL   module_idffs;
+    //
+    // bool            next_reset;
+    //
+
+    PipelineMUL::PipelineMUL() noexcept
+        : module_mul_impl   ()
+        , module_idffs      ()
+        , next_reset        (false)
+    { }
+
+    PipelineMUL::~PipelineMUL() noexcept
+    { }
+
+    inline void PipelineMUL::NextToMUL(const ToMUL& bundle) noexcept
+    {
+        module_idffs.NextToMUL(bundle);
+    }
+
+    inline void PipelineMUL::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline PipelineMUL::FromMUL PipelineMUL::GetLastFromMUL() const noexcept
+    {
+        return module_mul_impl.GetLastFromMUL();
+    }
+
+    void PipelineMUL::Reset() noexcept
+    {
+        module_idffs.Reset();
+        module_mul_impl.Reset();
+
+        next_reset = false;
+    }
+
+    void PipelineMUL::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        module_mul_impl.NextToMUL(
+            module_idffs.GetLastToMUL());
+
+        //
+        module_idffs.Eval();
+        module_mul_impl.Eval();
+    }
+}
+
+
+// Implementation of: class PiplineBRU
+namespace BullsEye::Gemini30F2::Execute {
+    //
+    // BRU             module_bru_impl;
+    //
+    // DFFsBeforeBRU   module_idffs;
+    //
+    // DFFsAfterBRU    module_odffs;
+    //
+    // bool            next_reset;
+    //
+
+    PipelineBRU::PipelineBRU() noexcept
+        : module_bru_impl   ()
+        , module_idffs      ()
+        , module_odffs      ()
+        , next_reset        (false)
+    { }
+
+    PipelineBRU::~PipelineBRU() noexcept
+    { }
+
+    inline void PipelineBRU::NextToBRU(const ToBRU& bundle) noexcept
+    {
+        module_idffs.NextToBRU(bundle);
+    }
+
+    inline void PipelineBRU::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline PipelineBRU::FromBRU PipelineBRU::GetLastFromBRU() const noexcept
+    {
+        return module_odffs.GetLastFromBRU();
+    }
+
+    void PipelineBRU::Reset() noexcept
+    {
+        module_idffs.Reset();
+        module_odffs.Reset();
+
+        next_reset = false;
+    }
+
+    void PipelineBRU::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        module_odffs.NextFromBRU(
+            module_bru_impl.Comb(module_idffs.GetLastToBRU()));
+
+        //
+        module_idffs.Eval();
+        module_odffs.Eval();
+    }
+}
+
+
+// Implementation of: class PipelineMEM
+namespace BullsEye::Gemini30F2::Execute {
+    //
+    // MEM             module_mem_impl;
+    //
+    // DFFsBeforeMEM   module_idffs;
+    //
+    // DFFsAfterMEM    module_odffs;
+    //
+    // bool            next_reset;
+    //
+
+    PipelineMEM::PipelineMEM() noexcept
+        : module_mem_impl   ()
+        , module_idffs      ()
+        , module_odffs      ()
+        , next_reset        (false)
+    { }
+
+    PipelineMEM::~PipelineMEM() noexcept
+    { }
+
+    inline void PipelineMEM::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        module_idffs.NextBranchCommitOverride(bco_valid);
+        module_mem_impl.NextBranchCommitOverride(bco_valid);
+    }
+
+    inline void PipelineMEM::NextLoadBufferBusyHit(bool hit) noexcept
+    {
+        module_mem_impl.NextLoadBufferBusyHit(hit);
+    }
+
+    inline void PipelineMEM::NextStoreCommitEnable(bool enable) noexcept
+    {
+        module_mem_impl.NextStoreCommitEnable(enable);
+    }
+
+    inline void PipelineMEM::NextMemoryWritebackEnable(bool enable) noexcept
+    {
+        module_mem_impl.NextMemoryWritebackEnable(enable);
+    }
+
+    inline void PipelineMEM::NextCacheUpdateTag(const CacheUpdateTag& bundle) noexcept
+    {
+        module_mem_impl.NextCacheUpdateTag(bundle);
+    }
+
+    inline void PipelineMEM::NextCacheUpdateData(const CacheUpdateData& bundle) noexcept
+    {
+        module_mem_impl.NextCacheUpdateData(bundle);
+    }
+
+    inline void PipelineMEM::NextToMEM(const ToMEM& bundle) noexcept
+    {
+        module_idffs.NextToMEM(bundle);
+    }
+
+    inline void PipelineMEM::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline bool PipelineMEM::CombCacheUpdateDataReady() const noexcept
+    {
+        return module_mem_impl.CombCacheUpdateDataReady();
+    }
+
+    inline PipelineMEM::PhysicalAddress PipelineMEM::GetLastLoadBufferQuery() const noexcept
+    {
+        return module_mem_impl.GetLastLoadBufferQuery();
+    }
+
+    inline bool PipelineMEM::GetLastCommitNotReady() const noexcept
+    {
+        return module_mem_impl.GetLastCommitNotReady();
+    }
+
+    inline PipelineMEM::MemoryWritebackCandidate PipelineMEM::GetLastMemoryWritebackCandidate() const noexcept
+    {
+        return module_mem_impl.GetLastMemoryWritebackCandidate();
+    }
+
+    inline PipelineMEM::FromMEM PipelineMEM::GetLastFromMEM() const noexcept
+    {
+        return module_odffs.GetLastFromMEM();
+    }
+
+    void PipelineMEM::Reset() noexcept
+    {
+        module_idffs.Reset();
+        module_odffs.Reset();
+
+        module_mem_impl.Reset();
+
+        next_reset = false;
+    }
+
+    void PipelineMEM::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+        //
+        module_mem_impl.NextToMEM(
+            module_idffs.GetLastToMEM());
+
+        module_odffs.NextFromMEM(
+            module_mem_impl.GetLastFromMEM());
+
+        //
+        module_idffs.Eval();
+        module_odffs.Eval();
+
+        module_mem_impl.Eval();
+    }
+}
+
+
+// Implementation of: class Execute
+namespace BullsEye::Gemini30F2::Execute {
+    
 }
