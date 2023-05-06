@@ -23,6 +23,9 @@ namespace BullsEye::Gemini30F2::Global {
         };
 
     public:
+        VPAddressConvertion() noexcept;
+        ~VPAddressConvertion() noexcept;
+
         PhysicalAddressBundle   Comb(Global::VirtualAddress vaddr) const noexcept;
     };
 }
@@ -30,6 +33,12 @@ namespace BullsEye::Gemini30F2::Global {
 
 // Implementation of: class VPAddressConvertion
 namespace BullsEye::Gemini30F2::Global {
+
+    inline VPAddressConvertion::VPAddressConvertion() noexcept
+    { }
+
+    inline VPAddressConvertion::~VPAddressConvertion() noexcept
+    { }
 
     inline VPAddressConvertion::PhysicalAddressBundle VPAddressConvertion::Comb(Global::VirtualAddress vaddr) const noexcept
     {
