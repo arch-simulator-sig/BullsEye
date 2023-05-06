@@ -733,7 +733,7 @@ namespace BullsEye::Gemini30F2::Execute {
 
         void                NextWriteOnStore(const WriteOnStore& bundle) noexcept;
 
-        void                NextCommitEnable(bool enable) noexcept;
+        void                NextStoreCommitEnable(bool enable) noexcept;
 
         void                NextBranchCommitOverride(bool bco_valid) noexcept;
 
@@ -778,12 +778,7 @@ namespace BullsEye::Gemini30F2::Execute {
             bool                uncached;
         };
 
-        struct CacheStore {
-            bool                enable;
-            PhysicalAddress     address;
-            DataStrobe          strobe;
-            Data                data;
-        };
+        using CacheStore            = L1DataCache::CacheStore;
 
         struct CacheStoreCandidate {
             bool                enable;
@@ -907,16 +902,175 @@ namespace BullsEye::Gemini30F2::Execute {
     };
 
 
-    // MEM
-    class MEM {
+    // MEMDataMUX 
+    class MEMDataMUX {
+    public:
+        struct MUXInfo {
+            bool        byte_mode;
+            uint2_t     byte_address;
+            bool        uncached;
+        };
+
+        using DataCacheQueryResult          = L1DataCache::CacheQueryResult;
+
+        using StoreBufferQueryResult        = StoreBuffer::QueryResult;
+
+        using PostCommitBufferQueryResult   = PostCommitBuffer::QueryResult;
+
+        using Data                          = uint32_t;
+
+        struct MUXOutput {
+            bool        valid;
+            Data        data;
+        };
+
+    public:
+        MEMDataMUX() noexcept;
+        ~MEMDataMUX() noexcept;
+
+        MUXOutput   Comb(const MUXInfo&                     bundle, 
+                         const DataCacheQueryResult&        bundle_cache,
+                         const StoreBufferQueryResult&      bundle_storebuffer, 
+                         const PostCommitBufferQueryResult& bundle_postcommitbuffer) const noexcept;
+    };
+
+
+    // MEMQueryDFFs
+    class MEMQueryDFFs {
+    public:
+        using Data              = uint32_t;
+
+        using DataStrobe        = std::bitset<4>;
+
+        struct QueryResult {
+            DataStrobe  strobe;
+            Data        data;  
+        };
+
+    private:
+        SteppingDFF<QueryResult, DFFNoReset>    dffs;
+
+    public:
+        MEMQueryDFFs() noexcept;
+        ~MEMQueryDFFs() noexcept;
+        
+        void            NextQueryResult(const QueryResult& bundle) noexcept;
+
+        void            NextReset() noexcept;
+
+        QueryResult     GetLastQueryResult() const noexcept;
+
+        void            Reset() noexcept;
+        void            Eval() noexcept;
+    };
+
+
+    // MEMFirstStageDFFs
+    class MEMFirstStageDFFs {
     public:
         using RegisterValue         = RegisterValue;
 
         using ROBIndex              = ROBIndex;
 
-        using Immediate             = Immediate;
+        using FromMEMAGU            = MemoryAddressGenerationUnit::FromMEMAGU;
 
-        using MEMCommand            = MEMCommand;
+    public:
+        struct FromFirstStage {
+            RegisterValue       src1_value;
+
+            bool                valid;
+            ROBIndex            dst_rob;
+            Global::FID         fid;
+
+            bool                mode_byte;
+            bool                mode_store;
+            bool                mode_load;
+
+            FromMEMAGU          agu;
+        };
+
+    private:
+        SteppingDFF<FromFirstStage, decltype([] (FromFirstStage& bundle) {
+            bundle.valid = false;
+        })>                             dffs;
+
+        bool                            next_bco_valid;
+
+    public:
+        MEMFirstStageDFFs() noexcept;
+        ~MEMFirstStageDFFs() noexcept;
+
+        void                NextFromFirstStage(const FromFirstStage& bundle) noexcept;
+
+        void                NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void                NextReset() noexcept;
+
+        FromFirstStage      GetLastFromFirstStage() const noexcept;
+
+        void                Reset() noexcept;
+        void                Eval() noexcept;
+    };
+
+
+    // MEMSecondStageDFFs
+    class MEMSecondStageDFFs {
+    public:
+        using ROBIndex              = ROBIndex;
+
+        using FromMEMAGU            = MemoryAddressGenerationUnit::FromMEMAGU;
+
+    public:
+        struct FromSecondStage {
+            bool                valid;
+
+            ROBIndex            dst_rob;
+            Global::FID         fid;
+
+            bool                mode_byte;
+            bool                mode_store;
+            bool                mode_load;
+
+            FromMEMAGU          agu;
+        };
+
+    private:
+        SteppingDFF<FromSecondStage, decltype([] (FromSecondStage& bundle) {
+            bundle.valid = false;
+        })>                             dffs;
+
+    public:
+        MEMSecondStageDFFs() noexcept;
+        ~MEMSecondStageDFFs() noexcept;
+
+        void                NextFromSecondStage(const FromSecondStage& bundle) noexcept;
+
+        void                NextReset() noexcept;
+
+        FromSecondStage     GetLastFromSecondStage() const noexcept;
+
+        void                Reset() noexcept;
+        void                Eval() noexcept;
+    };
+
+
+
+
+
+    // MEM
+    class MEM {
+    public:
+        using RegisterValue             = RegisterValue;
+
+        using ROBIndex                  = ROBIndex;
+
+        using Immediate                 = Immediate;
+
+        using MEMCommand                = MEMCommand;
+
+        using CommitDelay               = CommitDelay;
+
+        using PhysicalAddress           = PhysicalAddress;
 
     public:
         struct ToMEM {
@@ -934,6 +1088,77 @@ namespace BullsEye::Gemini30F2::Execute {
             MEMCommand          mem_cmd;
         };
 
+        struct FromMEM {
+            bool                valid;
+            ROBIndex            dst_rob;
+            Global::FID         fid;
+
+            RegisterValue       result;
+            bool                lsmiss;
+
+            CommitDelay         cmtdelay;
+        };
+
+        using CacheUpdateTag            = L1DataCache::CacheUpdateTag;
+
+        using CacheUpdateData           = L1DataCache::CacheUpdateData;
+
+        using MemoryWritebackCandidate  = PostCommitBuffer::MemoryWritebackCandidate;
+
+    private:
+        MemoryAddressGenerationUnit     module_agu;
+
+        MEMFirstStageDFFs               module_s1dffs;
+
+        L1DataCache                     module_dcache;
+
+        StoreBuffer                     module_storebuffer;
+
+        MEMQueryDFFs                    module_storebuffer_qdffs;
+
+        PostCommitBuffer                module_postcmtbuffer;
+
+        MEMQueryDFFs                    module_postcmtbuffer_qdffs;
+
+        MEMSecondStageDFFs              module_s2dffs;
+
+        MEMDataMUX                      module_dmux;
+
+        bool                            next_store_commit_enable;
+
+        bool                            next_reset;
+
+    public:
+        MEM() noexcept;
+        ~MEM() noexcept;
+
+        void                        NextLoadBufferBusyHit(bool hit) noexcept;
+
+        void                        NextStoreCommitEnable(bool enable) noexcept;
+
+        void                        NextMemoryWritebackEnable(bool enable) noexcept;
+
+        void                        NextCacheUpdateTag(const CacheUpdateTag& bundle) noexcept;
+        void                        NextCacheUpdateData(const CacheUpdateData& bundle) noexcept;
+
+        void                        NextToMEM(const ToMEM& bundle) noexcept;
+
+        void                        NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void                        NextReset() noexcept;
+
+        bool                        CombCacheUpdateDataReady() const noexcept;
+
+        PhysicalAddress             GetLastLoadBufferQuery() const noexcept;
+
+        bool                        GetLastCommitNotReady() const noexcept;
+
+        MemoryWritebackCandidate    GetLastMemoryWritebackCandidate() const noexcept;
+
+        FromMEM                     GetLastFromMEM() const noexcept;
+
+        void                        Reset() noexcept;
+        void                        Eval() noexcept;
     };
 
 
@@ -963,6 +1188,12 @@ namespace BullsEye::Gemini30F2::Execute {
 
         void        Reset() noexcept;
         void        Eval() noexcept;
+    };
+
+
+    // DFFs after MEM
+    class DFFsAfterMEM {
+
     };
 }
 
@@ -1912,7 +2143,7 @@ namespace BullsEye::Gemini30F2::Execute {
         next_write_on_store = bundle;
     }
 
-    inline void StoreBuffer::NextCommitEnable(bool enable) noexcept
+    inline void StoreBuffer::NextStoreCommitEnable(bool enable) noexcept
     {
         next_commit_enable = enable;
     }
@@ -2449,9 +2680,498 @@ namespace BullsEye::Gemini30F2::Execute {
 }
 
 
-// Implementation of: class MEM
+// Implementation of: class MEMDataMUX
 namespace BullsEye::Gemini30F2::Execute {
 
+    MEMDataMUX::MEMDataMUX() noexcept
+    { }
+
+    MEMDataMUX::~MEMDataMUX() noexcept
+    { }
+
+    MEMDataMUX::MUXOutput MEMDataMUX::Comb(const MUXInfo&                     bundle, 
+                                           const DataCacheQueryResult&        bundle_cache,
+                                           const StoreBufferQueryResult&      bundle_storebuffer, 
+                                           const PostCommitBufferQueryResult& bundle_postcommitbuffer) const noexcept
+    {
+        //
+        std::bitset<4> vmask_word;
+        std::bitset<4> vmask_byte;
+
+        vmask_word = 0b1111;
+
+        vmask_byte[bundle.byte_address] = true;
+
+        //
+        std::bitset<4> vmask = bundle.byte_mode ? vmask_byte : vmask_word;
+
+        //
+        uint8_t bn_data[4];
+        bool    bn_strb[4];
+
+        for (int i = 0; i < 4; i++)
+        {
+            bn_data[i] = bundle_storebuffer.strobe[i]       ? ((bundle_storebuffer.data         >> (i << 3)) & 0xFF)
+                       : bundle_postcommitbuffer.strobe[i]  ? ((bundle_postcommitbuffer.data    >> (i << 3)) & 0xFF)
+                       :                                      ((bundle_cache.data               >> (i << 3)) & 0xFF);
+
+            bn_strb[i] = bundle_cache.hit || bundle_postcommitbuffer.strobe[i] || bundle_storebuffer.strobe[i];
+        }
+
+        // 
+        MUXOutput result;
+
+        result.valid = (!vmask[0] || bn_strb[0])
+                    && (!vmask[1] || bn_strb[1])
+                    && (!vmask[2] || bn_strb[2])
+                    && (!vmask[3] || bn_strb[3])
+                    &&  !bundle.uncached;
+
+        result.data = bundle.byte_mode ? bn_data[bundle.byte_address]
+                    : ( (bn_data[0] << 0)
+                      | (bn_data[1] << 8)
+                      | (bn_data[2] << 16)
+                      | (bn_data[3] << 24));
+
+        return result;
+    }
+}
+
+
+// Implementation of: class MEMQueryDFFs
+namespace BullsEye::Gemini30F2::Execute {
+    //
+    // SteppingDFF<QueryResult, DFFNoReset>    dffs;
+    //
+
+    MEMQueryDFFs::MEMQueryDFFs() noexcept
+        : dffs  ()
+    { }
+
+    MEMQueryDFFs::~MEMQueryDFFs() noexcept
+    { }
+
+    inline void MEMQueryDFFs::NextQueryResult(const QueryResult& bundle) noexcept
+    {
+        dffs.Next(bundle);
+    }
+
+    inline void MEMQueryDFFs::NextReset() noexcept
+    { 
+        dffs.NextReset();
+    }
+
+    inline MEMQueryDFFs::QueryResult MEMQueryDFFs::GetLastQueryResult() const noexcept
+    {
+        return dffs.Get();
+    }
+
+    inline void MEMQueryDFFs::Reset() noexcept
+    { 
+        dffs.Reset();
+    }
+
+    inline void MEMQueryDFFs::Eval() noexcept
+    {
+        dffs.Eval();
+    }
+}
+
+
+// Implementation of: class MEMFirstStageDFFs
+namespace BullsEye::Gemini30F2::Execute {
+    //
+    // SteppingDFF<FromFirstStage, decltype([] (FromFirstStage& bundle) {
+    //     bundle.valid = false;
+    // })>                             dffs;
+    //
+    // bool                            next_bco_valid;
+    //
+
+    MEMFirstStageDFFs::MEMFirstStageDFFs() noexcept
+        : dffs              ()
+        , next_bco_valid    ()
+    { }
+
+    MEMFirstStageDFFs::~MEMFirstStageDFFs() noexcept
+    { }
+
+    inline void MEMFirstStageDFFs::NextFromFirstStage(const FromFirstStage& bundle) noexcept
+    {
+        dffs.Next(bundle);
+    }
+
+    inline void MEMFirstStageDFFs::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        next_bco_valid = bco_valid;
+    }
+
+    inline void MEMFirstStageDFFs::NextReset() noexcept
+    { 
+        dffs.NextReset();
+    }
+
+    inline MEMFirstStageDFFs::FromFirstStage MEMFirstStageDFFs::GetLastFromFirstStage() const noexcept
+    {
+        return dffs.Get();
+    }
+
+    inline void MEMFirstStageDFFs::Reset() noexcept
+    { 
+        dffs.Reset();
+    }
+
+    inline void MEMFirstStageDFFs::Eval() noexcept
+    {
+        //
+        if (next_bco_valid)
+            dffs.GetNext().valid = false;
+
+        //
+        dffs.Eval();
+    }
+}
+
+
+// Implementation of: class MEMSecondStageDFFs
+namespace BullsEye::Gemini30F2::Execute {
+    //
+    // SteppingDFF<FromSecondStage, decltype([] (FromSecondStage& bundle) {
+    //     bundle.valid = false;
+    // })>                             dffs;
+    //
+
+    MEMSecondStageDFFs::MEMSecondStageDFFs() noexcept
+        : dffs  ()
+    { }
+
+    MEMSecondStageDFFs::~MEMSecondStageDFFs() noexcept
+    { }
+
+    inline void MEMSecondStageDFFs::NextFromSecondStage(const FromSecondStage& bundle) noexcept
+    {
+        dffs.Next(bundle);
+    }
+
+    inline void MEMSecondStageDFFs::NextReset() noexcept
+    { 
+        dffs.NextReset();
+    }
+
+    inline MEMSecondStageDFFs::FromSecondStage MEMSecondStageDFFs::GetLastFromSecondStage() const noexcept
+    {
+        return dffs.Get();
+    }
+
+    inline void MEMSecondStageDFFs::Reset() noexcept
+    { 
+        dffs.Reset();
+    }
+
+    inline void MEMSecondStageDFFs::Eval() noexcept
+    {
+        dffs.Eval();
+    }
+}
+
+
+// Implementation of: class MEM
+namespace BullsEye::Gemini30F2::Execute {
+    //
+    // MemoryAddressGenerationUnit     module_agu;
+    //
+    // MEMFirstStageDFFs               module_s1dffs;
+    //
+    // L1DataCache                     module_dcache;
+    //
+    // StoreBuffer                     module_storebuffer;
+    //
+    // MEMQueryDFFs                    module_storebuffer_qdffs;
+    //
+    // PostCommitBuffer                module_postcmtbuffer;
+    //
+    // MEMQueryDFFs                    module_postcmtbuffer_qdffs;
+    //
+    // MEMSecondStageDFFs              module_s2dffs;
+    //
+    // MEMDataMUX                      module_dmux;
+    //
+    // bool                            next_store_commit_enable;
+    //
+    // bool                            next_reset;
+    //
+
+    MEM::MEM() noexcept
+        : module_agu                    ()
+        , module_s1dffs                 ()
+        , module_dcache                 ()
+        , module_storebuffer            ()
+        , module_storebuffer_qdffs      ()
+        , module_postcmtbuffer          ()
+        , module_postcmtbuffer_qdffs    ()
+        , module_s2dffs                 ()
+        , module_dmux                   ()
+        , next_store_commit_enable      ()
+        , next_reset                    (false)
+    { }
+
+    MEM::~MEM() noexcept
+    { }
+
+    inline void MEM::NextLoadBufferBusyHit(bool hit) noexcept
+    {
+        module_postcmtbuffer.NextLoadBufferBusyHit(hit);
+    }
+
+    inline void MEM::NextStoreCommitEnable(bool enable) noexcept
+    {
+        module_storebuffer.NextStoreCommitEnable(enable);
+
+        next_store_commit_enable = enable;
+    }
+
+    inline void MEM::NextMemoryWritebackEnable(bool enable) noexcept
+    {
+        module_postcmtbuffer.NextMemoryWritebackEnable(enable);
+    }
+
+    inline void MEM::NextCacheUpdateTag(const CacheUpdateTag& bundle) noexcept
+    {
+        module_dcache.NextUpdateTag(bundle);
+    }
+
+    inline void MEM::NextCacheUpdateData(const CacheUpdateData& bundle) noexcept
+    {
+        module_dcache.NextUpdateData(bundle);
+    }
+
+    inline void MEM::NextToMEM(const ToMEM& bundle) noexcept
+    {
+        //
+        MemoryAddressGenerationUnit::FromMEMAGU agu = module_agu.Comb({
+            .src0_value = bundle.src0_value,
+            .src1_value = bundle.src1_value,
+
+            .imm        = bundle.imm
+        });
+
+        //
+        module_s1dffs.NextFromFirstStage({
+            .src1_value = bundle.src1_value,
+
+            .valid      = bundle.valid,
+            .dst_rob    = bundle.dst_rob,
+            .fid        = bundle.fid,
+
+            .mode_byte  = bundle.mem_cmd & Decode::MEM_BITMASK_LSBYTE,
+            .mode_store = bundle.mem_cmd & Decode::MEM_BITMASK_STORE,
+            .mode_load  = bundle.mem_cmd & Decode::MEM_BITMASK_LOAD,
+
+            .agu        = agu
+        });
+    }
+
+    inline void MEM::NextBranchCommitOverride(bool bco_valid)
+    {
+        module_s1dffs.NextBranchCommitOverride(bco_valid);
+
+        module_storebuffer.NextBranchCommitOverride(bco_valid);
+    }
+
+    inline void MEM::NextReset() noexcept
+    {
+        next_reset = true;
+    }
+
+    inline bool MEM::CombCacheUpdateDataReady() const noexcept
+    {
+        return module_dcache.CombUpdateDataReady();
+    }
+
+    inline MEM::PhysicalAddress MEM::GetLastLoadBufferQuery() const noexcept
+    {
+        return module_postcmtbuffer.GetLastLoadBufferQuery();
+    }
+
+    inline bool MEM::GetLastCommitNotReady() const noexcept
+    {
+        return module_postcmtbuffer.GetLastCommitNotReady();
+    }
+
+    inline MEM::MemoryWritebackCandidate MEM::GetLastMemoryWritebackCandidate() const noexcept
+    {
+        return module_postcmtbuffer.GetLastMemoryWritebackCandidate();
+    }
+
+    MEM::FromMEM MEM::GetLastFromMEM() const noexcept
+    {
+        //
+        MEMSecondStageDFFs::FromSecondStage s2dffs = module_s2dffs.GetLastFromSecondStage();
+
+        //
+        L1DataCache::CacheQueryResult dcache = module_dcache.GetLastQueryCache();
+
+        //
+        MEMQueryDFFs::QueryResult storebuffer = module_storebuffer_qdffs.GetLastQueryResult();
+
+        //
+        MEMQueryDFFs::QueryResult postcmtbuffer = module_postcmtbuffer_qdffs.GetLastQueryResult();
+
+        // 
+        MEMDataMUX::MUXOutput dmux = module_dmux.Comb({
+            .byte_mode      = s2dffs.mode_byte,
+            .byte_address   = s2dffs.agu.paddr & 0x03,
+            .uncached       = s2dffs.agu.uncached
+        }, {
+            .hit            = dcache.hit,
+            .data           = dcache.data
+        }, {
+            .strobe         = storebuffer.strobe,
+            .data           = storebuffer.data
+        }, {
+            .strobe         = postcmtbuffer.strobe,
+            .data           = postcmtbuffer.data
+        });
+
+        //
+        return FromMEM {
+            .valid      = s2dffs.valid,
+            .dst_rob    = s2dffs.valid ? s2dffs.dst_rob : ROBIndex(0),
+            .fid        = s2dffs.valid ? s2dffs.fid     : Global::FID(0),
+
+            .result     = s2dffs.valid ? (!dmux.valid ? s2dffs.agu.vaddr : dmux.data) : 0,
+            .lsmiss     = s2dffs.valid ? (!dmux.valid && s2dffs.mode_load) : false,
+
+            .cmtdelay   = 0
+        };
+    }
+
+    void MEM::Reset() noexcept
+    {
+        module_s1dffs               .Reset();
+        module_dcache               .Reset();
+        module_storebuffer          .Reset();
+        module_storebuffer_qdffs    .Reset();
+        module_postcmtbuffer        .Reset();
+        module_postcmtbuffer_qdffs  .Reset();
+        module_s2dffs               .Reset();
+
+        next_reset = false;
+    }
+
+    void MEM::Eval() noexcept
+    {
+        //
+        if (next_reset)
+        {
+            Reset();
+            return;
+        }
+
+
+        //
+        MEMFirstStageDFFs::FromFirstStage s1dffs = module_s1dffs.GetLastFromFirstStage();
+
+
+        //
+        bool dcache_wbmem_hit = module_dcache.GetLastQueryTag().hit;
+
+        module_dcache.NextStore(module_postcmtbuffer.GetLastCacheStore());
+
+        module_dcache.NextQueryCache(s1dffs.agu.paddr);
+
+        module_dcache.NextQueryTag(module_postcmtbuffer.GetLastMemoryWritebackCandidate().address);
+
+
+        //
+        StoreBuffer::CommitCandidate storebuffer_cmt = module_storebuffer.GetLastCommitCandidate();
+
+        StoreBuffer::QueryResult storebuffer_q = module_storebuffer.CombQuery(s1dffs.agu.paddr);
+
+        bool                        storebuffer_wen;
+        StoreBuffer::DataStrobe     storebuffer_wstrb;
+        StoreBuffer::LoadStoreWidth storebuffer_wlswidth;
+        StoreBuffer::Data           storebuffer_wdata;
+
+        storebuffer_wen = s1dffs.mode_store && s1dffs.valid;
+
+        if (s1dffs.mode_byte)
+        {
+            storebuffer_wstrb                          = 0;
+            storebuffer_wstrb[s1dffs.agu.paddr & 0x03] = true;
+
+            storebuffer_wlswidth = Decode::LSWIDTH_BYTE;
+
+            storebuffer_wdata = ((s1dffs.src1_value & 0x000000FF) << 24)
+                              | ((s1dffs.src1_value & 0x000000FF) << 16)
+                              | ((s1dffs.src1_value & 0x000000FF) <<  8)
+                              | ((s1dffs.src1_value & 0x000000FF) <<  0);
+        }
+        else
+        {
+            storebuffer_wstrb       = 0b1111;
+            storebuffer_wdata       = s1dffs.src1_value;
+            storebuffer_wlswidth    = Decode::LSWIDTH_WORD;
+        }
+
+        module_storebuffer.NextWriteOnStore({
+            .enable     = storebuffer_wen,
+            .strobe     = storebuffer_wstrb,
+            .lswidth    = storebuffer_wlswidth,
+            .address    = s1dffs.agu.paddr,
+            .data       = storebuffer_wdata,
+            .uncached   = s1dffs.agu.uncached
+        });
+
+        //
+        module_storebuffer_qdffs.NextQueryResult({
+            .strobe     = storebuffer_q.strobe,
+            .data       = storebuffer_q.data
+        });
+
+
+        //
+        PostCommitBuffer::QueryResult postcmtbuffer_q = module_postcmtbuffer.CombQuery(s1dffs.agu.paddr);
+
+        module_postcmtbuffer.NextWriteOnCommit({
+            .enable     = storebuffer_cmt.valid && next_store_commit_enable,
+            .address    = storebuffer_cmt.address,
+            .strobe     = storebuffer_cmt.strobe,
+            .lswidth    = storebuffer_cmt.lswidth,
+            .data       = storebuffer_cmt.data,
+            .uncached   = storebuffer_cmt.uncached
+        });
+
+        //
+        module_postcmtbuffer_qdffs.NextQueryResult({
+            .strobe     = postcmtbuffer_q.strobe,
+            .data       = postcmtbuffer_q.data
+        });
+
+
+        //
+        module_s2dffs.NextFromSecondStage({
+            .valid      = s1dffs.valid,
+            .dst_rob    = s1dffs.dst_rob,
+            .fid        = s1dffs.fid,
+
+            .mode_byte  = s1dffs.mode_byte,
+            .mode_store = s1dffs.mode_store,
+            .mode_load  = s1dffs.mode_load,
+
+            .agu        = s1dffs.agu
+        });
+
+
+        //
+        module_s1dffs               .Eval();
+        module_dcache               .Eval();
+        module_storebuffer          .Eval();
+        module_storebuffer_qdffs    .Eval();
+        module_postcmtbuffer        .Eval();
+        module_postcmtbuffer_qdffs  .Eval();
+        module_s2dffs               .Eval();
+    }
 }
 
 
