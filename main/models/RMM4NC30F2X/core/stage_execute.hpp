@@ -336,6 +336,8 @@ namespace BullsEye::Gemini30F2::Execute {
 
         using ROBIndex              = ROBIndex;
 
+        using CommitDelay           = CommitDelay;
+
         using Immediate             = Immediate;
 
         using BRUCommand            = BRUCommand;
@@ -381,6 +383,7 @@ namespace BullsEye::Gemini30F2::Execute {
             Global::FID             fid;
 
             RegisterValue           result;
+            CommitDelay             cmtdelay;
 
             BranchCommitOverride    bco;
         };
@@ -1366,7 +1369,121 @@ namespace BullsEye::Gemini30F2::Execute {
 
     // Execute AIO
     class Execute {
+    public:
+        using RegisterValue                 = RegisterValue;
 
+        using ROBIndex                      = ROBIndex;
+
+        using Immediate                     = Immediate;
+
+        using CommitDelay                   = CommitDelay;
+
+        using BranchPrediction              = BranchPrediction;
+
+        using BranchCommitOverride          = BRU::BranchCommitOverride;
+
+        using ALUCommand                    = ALUCommand;
+
+        using MULCommand                    = MULCommand;
+
+        using BRUCommand                    = BRUCommand;
+
+        using BAGUCommand                   = BAGUCommand;
+
+        using MEMCommand                    = MEMCommand;
+
+        using PhysicalAddress               = PhysicalAddress;
+
+        using CacheUpdateTag                = PipelineMEM::CacheUpdateTag;
+
+        using CacheUpdateData               = PipelineMEM::CacheUpdateData;
+
+        using MemoryWritebackCandidate      = PipelineMEM::MemoryWritebackCandidate;
+
+    public:
+        struct ToExecute {
+            bool                    valid;
+
+            Global::PC              pc;
+
+            RegisterValue           src0_value;
+            bool                    src0_forward;
+
+            RegisterValue           src1_value;
+            bool                    src1_forward;
+
+            ROBIndex                dst_rob;
+
+            Immediate               imm;
+
+            Global::FID             fid;
+
+            bool                    pipe_alu;
+            bool                    pipe_mul;
+            bool                    pipe_mem;
+            bool                    pipe_bru;
+
+            ALUCommand              alu_cmd;
+            MULCommand              mul_cmd;
+            MEMCommand              mem_cmd;
+            BRUCommand              bru_cmd;
+            BAGUCommand             bagu_cmd;
+
+            BranchPrediction        bp;
+        };
+
+        struct FromExecute {
+            bool                    valid;
+            ROBIndex                dst_rob;
+            Global::FID             fid;
+
+            RegisterValue           result;
+            CommitDelay             cmtdelay;
+            bool                    lsmiss;
+            
+            BranchCommitOverride    bco;
+        };
+
+    private:
+        PipelineALU     module_alu;
+
+        PipelineMUL     module_mul;
+
+        PipelineBRU     module_bru;
+
+        PipelineMEM     module_mem;
+
+    public:
+        Execute() noexcept;
+        ~Execute() noexcept;
+
+        void                        NextBranchCommitOverride(bool bco_valid) noexcept;
+
+        void                        NextLoadBufferBusyHit(bool hit) noexcept;
+
+        void                        NextStoreCommitEnable(bool enable) noexcept;
+
+        void                        NextMemoryWritebackEnable(bool enable);
+
+        void                        NextCacheUpdateTag(const CacheUpdateTag& bundle) noexcept;
+        void                        NextCacheUpdateData(const CacheUpdateData& bundle) noexcept;
+
+        void                        NextToExecute(const ToExecute& bundle);
+
+        void                        NextReset() noexcept;
+
+        bool                        CombCacheUpdateDataReady() const noexcept;
+
+        PhysicalAddress             GetLastLoadBufferQuery() const noexcept;
+
+        bool                        GetLastCommitNotReady() const noexcept;
+
+        MemoryWritebackCandidate    GetLastMemoryWritebackCandidate() const noexcept;
+
+        FromExecute                 GetLastFromExecute() const noexcept;
+
+        void                        Reset() noexcept;
+        void                        Eval() noexcept;
     };
 }
 
@@ -1846,6 +1963,8 @@ namespace BullsEye::Gemini30F2::Execute {
         result.dst_rob  = bundle.valid ? bundle.dst_rob : ROBIndex(0);
         result.fid      = bundle.valid ? bundle.fid     : Global::FID(0);
         result.result   = bundle.valid ? agu.wavefront  : RegisterValue(0);
+
+        result.cmtdelay = 0;
 
         result.bco = {
             .valid      = false,
@@ -3768,5 +3887,187 @@ namespace BullsEye::Gemini30F2::Execute {
 
 // Implementation of: class Execute
 namespace BullsEye::Gemini30F2::Execute {
-    
+    //
+    // PipelineALU     module_alu;
+    //
+    // PipelineMUL     module_mul;
+    //
+    // PipelineBRU     module_bru;
+    //
+    // PipelineMEM     module_mem;
+    //
+
+    Execute::Execute() noexcept
+        : module_alu    ()
+        , module_mul    ()
+        , module_bru    ()
+        , module_mem    ()
+    { }
+
+    Execute::~Execute() noexcept
+    { }
+
+    inline void Execute::NextBranchCommitOverride(bool bco_valid) noexcept
+    {
+        module_mem.NextBranchCommitOverride(bco_valid);
+    }
+
+    inline void Execute::NextLoadBufferBusyHit(bool hit) noexcept
+    {
+        module_mem.NextLoadBufferBusyHit(hit);
+    }
+
+    inline void Execute::NextStoreCommitEnable(bool enable) noexcept
+    {
+        module_mem.NextStoreCommitEnable(enable);
+    }
+
+    inline void Execute::NextMemoryWritebackEnable(bool enable) noexcept
+    {
+        module_mem.NextMemoryWritebackEnable(enable);
+    }
+
+    inline void Execute::NextCacheUpdateTag(const CacheUpdateTag& bundle) noexcept
+    {
+        module_mem.NextCacheUpdateTag(bundle);
+    }
+
+    inline void Execute::NextCacheUpdateData(const CacheUpdateData& bundle) noexcept
+    {
+        module_mem.NextCacheUpdateData(bundle);
+    }
+
+    inline void Execute::NextToExecute(const ToExecute& bundle) noexcept
+    {
+        module_alu.NextToALU({
+            .valid          = bundle.valid && bundle.pipe_alu,
+
+            .src0_value     = bundle.src0_value,
+            .src0_forward   = bundle.src0_forward,
+
+            .src1_value     = bundle.src1_value,
+            .src1_forward   = bundle.src1_forward,
+
+            .dst_rob        = bundle.dst_rob,
+
+            .imm            = bundle.imm,
+
+            .fid            = bundle.fid,
+
+            .alu_cmd        = bundle.alu_cmd
+        });
+
+        module_mul.NextToMUL({
+            .valid          = bundle.valid && bundle.pipe_mul,
+
+            .src0_value     = bundle.src0_value,
+            .src1_value     = bundle.src1_value,
+
+            .dst_rob        = bundle.dst_rob,
+
+            .fid            = bundle.fid,
+
+            .mul_cmd        = bundle.mul_cmd
+        });
+
+        module_bru.NextToBRU({
+            .valid          = bundle.valid && bundle.pipe_bru,
+
+            .pc             = bundle.pc,
+
+            .src0_value     = bundle.src0_value,
+            .src1_value     = bundle.src1_value,
+
+            .dst_rob        = bundle.dst_rob,
+
+            .imm            = bundle.imm,
+
+            .fid            = bundle.fid,
+
+            .bru_cmd        = bundle.bru_cmd,
+            .bagu_cmd       = bundle.bagu_cmd,
+
+            .bp             = bundle.bp
+        });
+
+        module_mem.NextToMEM({
+            .valid          = bundle.valid && bundle.pipe_mem,
+
+            .src0_value     = bundle.src0_value,
+            .src1_value     = bundle.src1_value,
+
+            .dst_rob        = bundle.dst_rob,
+
+            .imm            = bundle.imm,
+
+            .fid            = bundle.fid,
+
+            .mem_cmd        = bundle.mem_cmd
+        });
+    }
+
+    inline void Execute::NextReset() noexcept
+    {
+        module_alu.NextReset();
+        module_mul.NextReset();
+        module_bru.NextReset();
+        module_mem.NextReset();
+    }
+
+    inline bool Execute::CombCacheUpdateDataReady() const noexcept
+    {
+        return module_mem.CombCacheUpdateDataReady();
+    }
+
+    inline Execute::PhysicalAddress Execute::GetLastLoadBufferQuery() const noexcept
+    {
+        return module_mem.GetLastLoadBufferQuery();
+    }
+
+    inline bool Execute::GetLastCommitNotReady() const noexcept
+    {
+        return module_mem.GetLastCommitNotReady();
+    }
+
+    inline Execute::MemoryWritebackCandidate Execute::GetLastMemoryWritebackCandidate() const noexcept
+    {
+        return module_mem.GetLastMemoryWritebackCandidate();
+    }
+
+    inline Execute::FromExecute Execute::GetLastFromExecute() const noexcept
+    {
+        PipelineALU::FromALU alu = module_alu.GetLastFromALU();
+        PipelineMUL::FromMUL mul = module_mul.GetLastFromMUL();
+        PipelineBRU::FromBRU bru = module_bru.GetLastFromBRU();
+        PipelineMEM::FromMEM mem = module_mem.GetLastFromMEM();
+
+        return FromExecute {
+            .valid      =             alu.valid    || mul.valid    || bru.valid    || mem.valid,
+            .dst_rob    =             alu.dst_rob   | mul.dst_rob   | bru.dst_rob   | mem.dst_rob,
+            .fid        = Global::FID(alu.fid       | mul.fid       | bru.fid       | mem.fid),
+
+            .result     =             alu.result    | mul.result    | bru.result    | mem.result,
+            .cmtdelay   =             alu.cmtdelay  | mul.cmtdelay  | bru.cmtdelay  | mem.cmtdelay,
+
+            .lsmiss     = mem.lsmiss,
+
+            .bco        = bru.bco
+        };
+    }
+
+    inline void Execute::Reset() noexcept
+    {
+        module_alu.Reset();
+        module_mul.Reset();
+        module_bru.Reset();
+        module_mem.Reset();
+    }
+
+    inline void Execute::Eval() noexcept
+    {
+        module_alu.Eval();
+        module_mul.Eval();
+        module_bru.Eval();
+        module_mem.Eval();
+    }
 }
