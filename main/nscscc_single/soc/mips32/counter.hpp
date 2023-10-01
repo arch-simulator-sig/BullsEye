@@ -2,7 +2,7 @@
 //
 //
 
-#include "isa/mips32.hpp"
+#include "isa/mips32/mips32.hpp"
 
 
 namespace BullsEye::NSCSCCSingle {

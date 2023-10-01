@@ -2,8 +2,8 @@
 //
 //
 
-#include "isa/mips32.hpp"
-#include "isa/mips32memutil.hpp"
+#include "isa/mips32/mips32.hpp"
+#include "isa/mips32/mips32memutil.hpp"
 
 
 using namespace Jasse;
