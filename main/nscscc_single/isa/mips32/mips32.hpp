@@ -657,11 +657,23 @@ namespace Jasse {
 
     inline MIPS32TracerContainer& MIPS32TracerContainer::operator=(MIPS32TracerContainer&& obj) noexcept
     {
-        gpr_tracer      = obj.gpr_tracer;
-        memory_tracer   = obj.memory_tracer;
+        if (this != &obj) 
+        {
+            DestroyPCTracer();
+            DestroyGPRTracer();
+            DestroyHiLoTracer();
+            DestroyMemoryTracer();
 
-        obj.gpr_tracer      = nullptr;
-        obj.memory_tracer   = nullptr;
+            pc_tracer       = obj.pc_tracer;
+            gpr_tracer      = obj.gpr_tracer;
+            hilo_tracer     = obj.hilo_tracer;
+            memory_tracer   = obj.memory_tracer;
+
+            obj.pc_tracer       = nullptr;
+            obj.gpr_tracer      = nullptr;
+            obj.hilo_tracer     = nullptr;
+            obj.memory_tracer   = nullptr;
+        }
 
         return *this;
     }

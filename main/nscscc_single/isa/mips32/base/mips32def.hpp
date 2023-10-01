@@ -155,7 +155,7 @@ namespace Jasse {
 #define SEXT32_B(expr)      ((uint32_t) ((int8_t)   (expr)))
 #define SEXT32_W(expr)      ((uint32_t) (           (expr)))
 
-#define SEXT32(expr, len)   ((uint32_t) (((int32_t) (expr)) << (32 - len)) >> (32 - len))
+#define SEXT32(expr, len)   ((uint32_t) ((((int32_t) (expr)) << (32 - len)) >> (32 - len)))
 
 #define SEXT32_IMM16(expr)  SEXT32_H(expr)
 #define SEXT32_IMM26(expr)  SEXT32(expr, 26)
