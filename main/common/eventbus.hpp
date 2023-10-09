@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <algorithm>
 #include <functional>
 #include <type_traits>
@@ -91,16 +92,16 @@ namespace BullsEye {
         static_assert(std::is_convertible_v<_TEvent, Event<_TEvent>>, CERR_EB3001);
 
     private:
-        std::vector<EventListener<_TEvent>*> list;
+        std::vector<std::shared_ptr<EventListener<_TEvent>>> list;
 
     private:
-        typename std::vector<EventListener<_TEvent>*>::const_iterator _NextPos(int priority) noexcept;
+        typename std::vector<std::shared_ptr<EventListener<_TEvent>>>::const_iterator _NextPos(int priority) noexcept;
 
     public:
         EventBus() noexcept;
         ~EventBus() noexcept;
 
-        void                        Register(EventListener<_TEvent>* listener) noexcept;
+        void                        Register(std::shared_ptr<EventListener<_TEvent>> listener) noexcept;
 
         int                         Unregister(const std::string& name) noexcept;
         bool                        UnregisterOnce(const std::string& name) noexcept;
@@ -320,11 +321,11 @@ namespace BullsEye {
 // Implementation of: template<class _TEvent> class EventBus
 namespace BullsEye {
     //
-    // std::vector<EventListener<_TEvent>>* list;
+    // std::vector<std::shared_ptr<EventListener<_TEvent>>> list;
     //
 
     template<class _TEvent>
-    inline typename std::vector<EventListener<_TEvent>*>::const_iterator EventBus<_TEvent>::_NextPos(int priority) noexcept
+    inline typename std::vector<std::shared_ptr<EventListener<_TEvent>>>::const_iterator EventBus<_TEvent>::_NextPos(int priority) noexcept
     {
         auto iter = list.begin();
         for (; iter != list.end(); iter++)
@@ -344,7 +345,7 @@ namespace BullsEye {
     { }
     
     template<class _TEvent>
-    inline void EventBus<_TEvent>::Register(EventListener<_TEvent>* listener) noexcept
+    inline void EventBus<_TEvent>::Register(std::shared_ptr<EventListener<_TEvent>> listener) noexcept
     {
         list.insert(_NextPos(listener->GetPriority()), listener);
     }
