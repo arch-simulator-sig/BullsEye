@@ -196,14 +196,14 @@ namespace BullsEye {
     //
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Chunk::Chunk(size_t size) noexcept
         : size  (size)
         , objs  (new _TObject[size])
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Chunk::~Chunk() noexcept
     {
         delete[] objs;
@@ -249,7 +249,7 @@ namespace BullsEye {
     //
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::ChunkMetadata::ChunkMetadata(size_t size) noexcept
         : size          (size)
         , valid_refset  (new std::shared_ptr<bool>*[size])
@@ -261,7 +261,7 @@ namespace BullsEye {
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::ChunkMetadata::~ChunkMetadata() noexcept
     {
         for (int i = 0; i < size; i++)
@@ -424,25 +424,25 @@ namespace BullsEye {
     //
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    const std::shared_ptr<bool> RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline const std::shared_ptr<bool> RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::CONSTANT_FALSE = std::shared_ptr<bool>(new bool(false));
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::Reference() noexcept
         : valid_ref (CONSTANT_FALSE)
         , ref       (ref)
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::Reference(std::shared_ptr<bool>& valid_ref, _TObject* ref) noexcept
         : valid_ref (valid_ref)
         , ref       (ref)
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::Reference(const Reference& obj) noexcept
         : valid_ref (obj.valid_ref)
         , ref       (obj.ref)
@@ -534,15 +534,15 @@ namespace BullsEye {
     //
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    const _TInitializer RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline const _TInitializer RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::INITIALZER = _TInitializer();
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    const _TFinalizer RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline const _TFinalizer RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::FINALIZER = _TFinalizer();
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::RoundRobinObjectPool(size_t chunk_size, size_t chunk_max_count) noexcept
         : chunk_size        (chunk_size)
         , chunk_max_count   (chunk_max_count)
@@ -551,7 +551,7 @@ namespace BullsEye {
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::~RoundRobinObjectPool() noexcept
     {
         for (ChunkMetadata* metadata : chunks_info)
@@ -583,7 +583,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline size_t RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::GetActiveCount() const noexcept
     {
         int count = 0;
@@ -638,7 +638,7 @@ namespace BullsEye {
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    typename RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>::Reference RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline typename RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>::Reference RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Acquire() noexcept
     {
         if (chunks_info.empty())
@@ -669,7 +669,7 @@ namespace BullsEye {
 
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
-    void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
+    inline void RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Clear() noexcept
     {
         for (ChunkMetadata* metadata : chunks_info)

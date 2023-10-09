@@ -270,7 +270,7 @@ namespace BullsEye {
     // bool    cancelled;
     //
 
-    CancellableEvent::CancellableEvent() noexcept
+    inline CancellableEvent::CancellableEvent() noexcept
         : cancelled (false)
     { }
 
@@ -294,13 +294,13 @@ namespace BullsEye {
     //
 
     template<class _TEvent>
-    EventListener<_TEvent>::EventListener(const std::string& name, int priority) noexcept
+    inline EventListener<_TEvent>::EventListener(const std::string& name, int priority) noexcept
         : name      (name)
         , priority  (priority)
     { }
 
     template<class _TEvent>
-    EventListener<_TEvent>::~EventListener() noexcept
+    inline EventListener<_TEvent>::~EventListener() noexcept
     { }
 
     template<class _TEvent>
@@ -324,7 +324,7 @@ namespace BullsEye {
     //
 
     template<class _TEvent>
-    typename std::vector<EventListener<_TEvent>*>::const_iterator EventBus<_TEvent>::_NextPos(int priority) noexcept
+    inline typename std::vector<EventListener<_TEvent>*>::const_iterator EventBus<_TEvent>::_NextPos(int priority) noexcept
     {
         auto iter = list.begin();
         for (; iter != list.end(); iter++)
@@ -335,12 +335,12 @@ namespace BullsEye {
     }
 
     template<class _TEvent>
-    EventBus<_TEvent>::EventBus() noexcept
+    inline EventBus<_TEvent>::EventBus() noexcept
         : list  ()
     { }
 
     template<class _TEvent>
-    EventBus<_TEvent>::~EventBus() noexcept
+    inline EventBus<_TEvent>::~EventBus() noexcept
     { }
     
     template<class _TEvent>
@@ -350,7 +350,7 @@ namespace BullsEye {
     }
 
     template<class _TEvent>
-    int EventBus<_TEvent>::Unregister(const std::string& name) noexcept
+    inline int EventBus<_TEvent>::Unregister(const std::string& name) noexcept
     {
         auto epos = std::remove_if(list.begin(), list.end(), 
             [name](EventListener<_TEvent>* obj) -> bool {
@@ -365,7 +365,7 @@ namespace BullsEye {
     }
 
     template<class _TEvent>
-    bool EventBus<_TEvent>::UnregisterOnce(const std::string& name) noexcept
+    inline bool EventBus<_TEvent>::UnregisterOnce(const std::string& name) noexcept
     {
         bool found;
 
@@ -391,7 +391,7 @@ namespace BullsEye {
     }
     
     template<class _TEvent>
-    _TEvent& EventBus<_TEvent>::FireEvent(_TEvent& event)
+    inline _TEvent& EventBus<_TEvent>::FireEvent(_TEvent& event)
     {
         for (EventListener<_TEvent>* listener : list)
             listener->OnEvent(event);
@@ -465,7 +465,7 @@ namespace BullsEye {
     //
 
     template<class _TEvent>
-    EventListenerFunctionalStub<_TEvent>::EventListenerFunctionalStub(
+    inline EventListenerFunctionalStub<_TEvent>::EventListenerFunctionalStub(
             const std::string&              name, 
             int                             priority, 
             std::function<void(_TEvent&)>   func) noexcept
@@ -474,11 +474,11 @@ namespace BullsEye {
     { }
 
     template<class _TEvent>
-    EventListenerFunctionalStub<_TEvent>::~EventListenerFunctionalStub() noexcept
+    inline EventListenerFunctionalStub<_TEvent>::~EventListenerFunctionalStub() noexcept
     { }
 
     template<class _TEvent>
-    void EventListenerFunctionalStub<_TEvent>::OnEvent(_TEvent& event)
+    inline void EventListenerFunctionalStub<_TEvent>::OnEvent(_TEvent& event)
     {
         return func(event);
     }
@@ -492,12 +492,12 @@ namespace BullsEye {
     //
 
     template<class _TEvent>
-    EventListenerReference<_TEvent>::EventListenerReference(EventListener<_TEvent>& ref) noexcept
+    inline EventListenerReference<_TEvent>::EventListenerReference(EventListener<_TEvent>& ref) noexcept
         : ref   (ref)
     { }
 
     template<class _TEvent>
-    EventListenerReference<_TEvent>::~EventListenerReference() noexcept
+    inline EventListenerReference<_TEvent>::~EventListenerReference() noexcept
     { }
 
     template<class _TEvent>
@@ -513,7 +513,7 @@ namespace BullsEye {
     }
 
     template<class _TEvent>
-    void EventListenerReference<_TEvent>::OnEvent(_TEvent& event)
+    inline void EventListenerReference<_TEvent>::OnEvent(_TEvent& event)
     {
         ref.OnEvent(event);
     }
