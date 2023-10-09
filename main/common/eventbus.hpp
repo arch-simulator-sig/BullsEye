@@ -7,7 +7,9 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <atomic>
 #include <algorithm>
+#include <optional>
 #include <functional>
 #include <type_traits>
 
@@ -31,11 +33,10 @@ namespace BullsEye {
     class Event {
     public:
         static EventBusGroup<_TEvent>&  GetEventBusGroup() noexcept;
-        static EventBus<_TEvent>&       GetEventBus(unsigned int busId = 0) noexcept;
+        static std::optional<std::reference_wrapper<EventBus<_TEvent>>>
+                                        GetEventBus(unsigned int busId = 0) noexcept;
         static bool                     HasEventBus(unsigned int busId = 0) noexcept;
-        static size_t                   GetEventBusCount() noexcept;
-        static unsigned int             NewEventBus() noexcept;
-        static unsigned int             NewEventBus(EventBus<_TEvent>*& eventbus) noexcept;
+        static EventBus<_TEvent>&       RequireEventBus(unsigned int busId = 0) noexcept;
 
         static void                     Register(const EventListener<_TEvent>& listener, unsigned int busId = 0) noexcept;
         static void                     Register(EventListener<_TEvent>&& listener, unsigned int busId = 0) noexcept;
@@ -126,14 +127,32 @@ namespace BullsEye {
         EventBusGroup(const EventBusGroup<_TEvent>&) = delete;
         EventBusGroup(EventBusGroup<_TEvent>&&) = delete;
 
-        EventBus<_TEvent>&          GetEventBus(unsigned int busId = 0) noexcept;
-        const EventBus<_TEvent>&    GetEventBus(unsigned int busId = 0) const noexcept;
+        std::optional<std::reference_wrapper<EventBus<_TEvent>>>
+                                    GetEventBus(unsigned int busId = 0) noexcept;
 
-        bool                        HasEventBus(unsigned int busId = 0) const noexcept;
+        std::optional<std::reference_wrapper<const EventBus<_TEvent>>>
+                                    GetEventBus(unsigned int busId = 0) const noexcept;
+
+        EventBus<_TEvent>&          RequireEventBus(unsigned int busId) noexcept;
+
+        bool                        HasEventBus(unsigned int busId) const noexcept;
         size_t                      GetEventBusCount() const noexcept;
+    };
 
-        unsigned int                NewEventBus() noexcept;
-        unsigned int                NewEventBus(EventBus<_TEvent>*& eventbus) noexcept;
+
+    // Event Bus Dispatchment
+    class EventBusDispatchment {
+    public:
+        static EventBusDispatchment&    Global() noexcept;
+
+    private:
+        std::atomic_uint    busIdIncrement;
+
+    public:
+        EventBusDispatchment() noexcept;
+        ~EventBusDispatchment() noexcept;
+
+        unsigned int                    NextEventBusId() noexcept;
     };
 
 
@@ -192,15 +211,9 @@ namespace BullsEye {
     }
 
     template<class _TEvent>
-    inline EventBus<_TEvent>& Event<_TEvent>::GetEventBus(unsigned int busId) noexcept
+    inline std::optional<std::reference_wrapper<EventBus<_TEvent>>> Event<_TEvent>::GetEventBus(unsigned int busId) noexcept
     {
         return GetEventBusGroup().GetEventBus(busId);
-    }
-
-    template<class _TEvent>
-    inline size_t Event<_TEvent>::GetEventBusCount() noexcept
-    {
-        return GetEventBusGroup().GetEventBusCount();
     }
 
     template<class _TEvent>
@@ -210,57 +223,61 @@ namespace BullsEye {
     }
 
     template<class _TEvent>
-    inline unsigned int Event<_TEvent>::NewEventBus() noexcept
+    inline EventBus<_TEvent>& Event<_TEvent>::RequireEventBus(unsigned int busId) noexcept
     {
-        return GetEventBusGroup().NewEventBus();
-    }
-
-    template<class _TEvent>
-    inline unsigned int Event<_TEvent>::NewEventBus(EventBus<_TEvent>*& eventbus) noexcept
-    {
-        return GetEventBusGroup().NewEventBus(eventbus);
+        return GetEventBusGroup().RequireEventBus(busId);
     }
 
     template<class _TEvent>
     inline void Event<_TEvent>::Register(const EventListener<_TEvent>& listener, unsigned int busId) noexcept
     {
-        GetEventBus(busId).Register(listener);
+        RequireEventBus(busId).Register(listener);
     }
 
     template<class _TEvent>
     inline void Event<_TEvent>::Register(EventListener<_TEvent>&& listener, unsigned int busId) noexcept
     {
-        GetEventBus(busId).Register(listener);
+        RequireEventBus(busId).Register(listener);
     }
 
     template<class _TEvent>
     inline int Event<_TEvent>::Unregister(const std::string& name, unsigned int busId) noexcept
     {
-        return GetEventBus(busId).Unregister(name);
+        if (auto bus_ref = GetEventBus(busId))
+            return bus_ref->get().Unregister(name);
+        
+        return 0;
     }
 
     template<class _TEvent>
     inline bool Event<_TEvent>::UnregisterOnce(const std::string& name, unsigned int busId) noexcept
     {
-        return GetEventBus(busId).UnregisterOnce(name);
+        if (auto bus_ref = GetEventBus(busId))
+            return bus_ref->get().UnregisterOnce(name);
     }
 
     template<class _TEvent>
     inline void Event<_TEvent>::UnregisterAll(unsigned int busId) noexcept
     {
-        GetEventBus(busId).UnregisterAll();
+        if (auto bus_ref = GetEventBus(busId))
+            bus_ref->get().UnregisterAll();
     }
 
     template<class _TEvent>
     inline _TEvent& Event<_TEvent>::Fire(unsigned int busId)
     {
-        return GetEventBus(busId).FireEvent(static_cast<_TEvent&>(*this));
+        if (auto bus_ref = GetEventBus(busId))
+            bus_ref->get().FireEvent(static_cast<_TEvent&>(*this));
+
+        return static_cast<_TEvent&>(*this);
     }
 
     template<class _TEvent>
     inline _TEvent& Event<_TEvent>::Fire(EventBus<_TEvent>& eventbus)
     {
-        return eventbus.FireEvent(static_cast<_TEvent&>(*this));
+        eventbus.FireEvent(static_cast<_TEvent&>(*this));
+
+        return static_cast<_TEvent&>(*this);
     }
 }
 
@@ -420,14 +437,29 @@ namespace BullsEye {
     { }
 
     template<class _TEvent>
-    inline EventBus<_TEvent>& EventBusGroup<_TEvent>::GetEventBus(unsigned int busId) noexcept
+    inline std::optional<std::reference_wrapper<EventBus<_TEvent>>> EventBusGroup<_TEvent>::GetEventBus(unsigned int busId) noexcept
     {
-        return buses[busId];
+        if (HasEventBus(busId))
+            return { std::ref(buses[busId]) };
+        
+        return std::nullopt;
     }
 
     template<class _TEvent>
-    inline const EventBus<_TEvent>& EventBusGroup<_TEvent>::GetEventBus(unsigned int busId) const noexcept
+    inline std::optional<std::reference_wrapper<const EventBus<_TEvent>>> EventBusGroup<_TEvent>::GetEventBus(unsigned int busId) const noexcept
     {
+        if (HasEventBus(busId))
+            return { std::cref(buses[busId]) };
+
+        return std::nullopt;
+    }
+
+    template<class _TEvent>
+    inline EventBus<_TEvent>& EventBusGroup<_TEvent>::RequireEventBus(unsigned int busId) noexcept
+    {
+        while (!HasEventBus(busId))
+            buses.emplace_back();
+
         return buses[busId];
     }
 
@@ -442,19 +474,32 @@ namespace BullsEye {
     {
         return buses.size();
     }
+}
 
-    template<class _TEvent>
-    inline unsigned int EventBusGroup<_TEvent>::NewEventBus() noexcept
+
+// Implementation of: class EventBusDispatchment
+namespace BullsEye {
+    //
+    // std::atomic_uint    busIdIncrement;
+    //
+
+    inline EventBusDispatchment& EventBusDispatchment::Global() noexcept
     {
-        buses.emplace_back();
-        return buses.size() - 1;
+        static EventBusDispatchment global_eventBusDispatchment;
+
+        return global_eventBusDispatchment;
     }
 
-    template<class _TEvent>
-    inline unsigned int EventBusGroup<_TEvent>::NewEventBus(EventBus<_TEvent>*& bus) noexcept
+    inline EventBusDispatchment::EventBusDispatchment() noexcept
+        : busIdIncrement    (0)
+    { }
+
+    inline EventBusDispatchment::~EventBusDispatchment() noexcept
+    { }
+
+    inline unsigned int EventBusDispatchment::NextEventBusId() noexcept
     {
-        bus = &(buses.emplace_back());
-        return buses.size() - 1;
+        return busIdIncrement.fetch_add(1) + 1;
     }
 }
 
