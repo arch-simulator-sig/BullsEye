@@ -394,7 +394,7 @@ namespace BullsEye {
     template<class _TEvent>
     inline _TEvent& EventBus<_TEvent>::FireEvent(_TEvent& event)
     {
-        for (EventListener<_TEvent>* listener : list)
+        for (auto& listener : list)
             listener->OnEvent(event);
 
         return event;
