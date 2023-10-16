@@ -1476,7 +1476,7 @@ namespace BullsEye::Gemini30F2::Execute {
 
         PhysicalAddress             GetLastLoadBufferQuery() const noexcept;
 
-        bool                        GetLastCommitNotReady() const noexcept;
+        bool                        GetLastMemoryCommitNotReady() const noexcept;
 
         MemoryWritebackCandidate    GetLastMemoryWritebackCandidate() const noexcept;
 
@@ -4024,7 +4024,7 @@ namespace BullsEye::Gemini30F2::Execute {
         return module_mem.GetLastLoadBufferQuery();
     }
 
-    inline bool Execute::GetLastCommitNotReady() const noexcept
+    inline bool Execute::GetLastMemoryCommitNotReady() const noexcept
     {
         return module_mem.GetLastCommitNotReady();
     }
