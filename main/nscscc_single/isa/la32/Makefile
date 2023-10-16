@@ -77,7 +77,7 @@ $(MAIN_OBJ): $(MAIN_OBJDIR)/%.o : $(MAIN_SRCDIR)/%.cpp
 
 
 $(STATICLIB): $(ARCDIR) $(MAIN_OBJ) $(BASE_OBJ) $(EXT_NSCSCC_OBJ)
-	$(AR) -rc $@ $(MAIN_OBJ) $(BASE_OBJ) $(EXT_NSCSCC_OBJ)
+	$(AR) -rcs $@ $(MAIN_OBJ) $(BASE_OBJ) $(EXT_NSCSCC_OBJ)
 
 
 $(ARCDIR) $(OBJDIR):
