@@ -18,7 +18,7 @@ Original Author: Shay Gal-on
 #include "coremark.h"
 #include "core_portme.h"
 
-#define ITERATIONS          2
+#define ITERATIONS          2000
 
 #if VALIDATION_RUN
 volatile ee_s32 seed1_volatile = 0x3415;
@@ -133,7 +133,7 @@ portable_init(core_portable *p, int *argc, char *argv[])
 {
     // nothing else to be done for BullsEye here
     //
-    ee_printf("CoreMark(R) started on BullsEye MIPS32-NSCSCC emulator.\n");
+    ee_printf("CoreMark(R) for MIPS32/LA32 NSCSCC environment.\n");
 
     (void)argc; // prevent unused warning
     (void)argv; // prevent unused warning

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <coremark.h>
+#include "coremark.h"
 #include <stdarg.h>
 
 #define ZEROPAD   (1 << 0) /* Pad with zero */

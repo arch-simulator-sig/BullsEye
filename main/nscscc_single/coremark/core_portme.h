@@ -61,19 +61,23 @@ Original Author: Shay Gal-on
 /* Definitions : COMPILER_VERSION, COMPILER_FLAGS, MEM_LOCATION
         Initialize these strings per platform
 */
+#ifdef COMPILER_LA32R_LINUX_GNUSF
+#define COMPILER_VERSION "loongarch32r-linux-gnusf-gcc"
+#endif
+
 #ifndef COMPILER_VERSION
 #ifdef __GNUC__
 #define COMPILER_VERSION "GCC"__VERSION__
 #else
-#define COMPILER_VERSION "mips32-mti-elf"
+#define COMPILER_VERSION ""
 #endif
 #endif
 #ifndef COMPILER_FLAGS
 #define COMPILER_FLAGS \
-    "-O3"
+    "-O2 -DPERFORMANCE_RUN=1"
 #endif
 #ifndef MEM_LOCATION
-#define MEM_LOCATION "STACK"
+#define MEM_LOCATION "STATIC"
 #endif
 
 /* Data Types :
