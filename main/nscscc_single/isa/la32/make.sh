@@ -1,1 +1,1 @@
-eval "make"
+eval "make -j `nproc`"
