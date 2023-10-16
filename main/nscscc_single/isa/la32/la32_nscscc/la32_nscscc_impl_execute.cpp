@@ -1,11 +1,10 @@
-#pragma once
+#include "la32_nscscc_def_execute.hpp"
 //
 // LA32R (NSCSCC) ISA Emulator (Jasse)
 //
 // LA32R-NSCSCC, bahaviour functions
 //
 
-#include "la32_nscscc_def_execute.hpp"
 #include "la32_nscscc_def_event.hpp"
 
 

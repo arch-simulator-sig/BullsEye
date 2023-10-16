@@ -5,6 +5,10 @@
 // LA32R-NSCSCC, bahaviour function declarations
 //
 
+#ifndef __HEADER_JASSE_LA32__EXT_NSCSCC_EXECUTE_DEF
+#define __HEADER_JASSE_LA32__EXT_NSCSCC_EXECUTE_DEF
+
+
 #include "la32_nscscc_def_base.hpp"
 
 
@@ -89,3 +93,6 @@ namespace Jasse::LA32R_NSCSCC {
 
 
 #undef execdecl
+
+
+#endif

@@ -1,11 +1,9 @@
-#pragma once
+#include "la32_nscscc_def_decode.hpp"
 //
 // LA32R (NSCSCC) ISA Emulator (Jasse)
 //
 // LA32R-NSCSCC, decoding infrastructure implementations
 //
-
-#include "la32_nscscc_def_decode.hpp"
 
 
 #define impldec_stub_U6L0(name, codepoint) \

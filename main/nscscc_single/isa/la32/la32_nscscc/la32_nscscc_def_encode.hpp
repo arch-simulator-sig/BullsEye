@@ -5,6 +5,10 @@
 // LA32R-NSCSCC, encoding definitions
 //
 
+#ifndef __HEADER_JASSE_LA32__DEF_NSCSCC_ENCODE_DEF
+#define __HEADER_JASSE_LA32__DEF_NSCSCC_ENCODE_DEF
+
+
 #include "la32_nscscc_def_base.hpp"
 
 
@@ -306,3 +310,6 @@ namespace Jasse::Encoder::LA32R_NSCSCC {
         return ENCODE_LA32_ST_W(rd, rj, si12);
     }
 }
+
+
+#endif

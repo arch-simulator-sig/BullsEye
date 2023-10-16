@@ -5,6 +5,10 @@
 //
 //
 
+#ifndef __HEADER_JASSE
+#define __HEADER_JASSE
+
+
 #include <cstring>
 #include <string>
 #include <sstream>
@@ -55,3 +59,6 @@
 #define ASSERTM(expr, msg)
 #endif
     
+
+
+#endif

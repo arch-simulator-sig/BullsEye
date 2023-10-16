@@ -1,11 +1,9 @@
-#pragma once
+#include "la32_nscscc_def_event.hpp"
 //
 // LA32R (NSCSCC) ISA Emulator (Jasse)
 //
 // LA32R-NSCSCC, event implementations
 //
-
-#include "la32_nscscc_def_event.hpp"
 
 
 #define implevent(name) \

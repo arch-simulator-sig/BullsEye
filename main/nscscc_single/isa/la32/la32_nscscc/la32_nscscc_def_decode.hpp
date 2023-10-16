@@ -5,6 +5,10 @@
 // LA32R-NSCSCC, decoding infrastructure declarations
 //
 
+#ifndef __HEADER_JASSE_LA32__EXT_NSCSCC_DECODE_DEF
+#define __HEADER_JASSE_LA32__EXT_NSCSCC_DECODE_DEF
+
+
 #include "la32_nscscc_def_base.hpp"
 #include "la32_nscscc_def_export.hpp"
 
@@ -137,3 +141,6 @@ namespace Jasse::LA32R_NSCSCC {
 #undef decdecl_stub_U6L6
 #undef decdecl_stub_U6L11
 #undef decdecl_stub_U6L16
+
+
+#endif

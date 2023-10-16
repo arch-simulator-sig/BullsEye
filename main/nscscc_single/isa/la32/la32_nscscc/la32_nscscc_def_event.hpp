@@ -5,6 +5,10 @@
 // LA32R-NSCSCC, event declarations
 //
 
+#ifndef __HEADER_JASSE_LA32__EXT_NSCSCC_EVENT_DEF
+#define __HEADER_JASSE_LA32__EXT_NSCSCC_EVENT_DEF
+
+
 #include "la32_nscscc_def_base.hpp"
 
 
@@ -183,3 +187,6 @@ namespace Jasse::LA32R_NSCSCC::PostExecutionEvent {
 }
 
 #undef eventdecl
+
+
+#endif

@@ -5,6 +5,10 @@
 // LA32R-NSCSCC, exporting declarations
 //
 
+#ifndef __HEADER_JASSE_LA32__EXT_NSCSCC_EXPORT_DEF
+#define __HEADER_JASSE_LA32__EXT_NSCSCC_EXPORT_DEF
+
+
 #include "la32.hpp"
 
 
@@ -73,3 +77,6 @@ namespace Jasse::CodepointSet {
 
     codesetdecl LA32R_NSCSCC;
 }
+
+
+#endif

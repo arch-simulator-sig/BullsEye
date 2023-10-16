@@ -5,6 +5,11 @@
 // Miscs and utilities
 //
 
+
+#ifndef __HEADER_JASSE_LA32_MISC
+#define __HEADER_JASSE_LA32_MISC
+
+
 #include "la32.hpp"
 
 #include <sstream>
@@ -361,3 +366,6 @@ namespace Jasse {
         return oss.str();
     }
 }
+
+
+#endif
