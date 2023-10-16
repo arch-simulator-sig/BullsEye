@@ -21,6 +21,30 @@ Original Author: Shay Gal-on
 */
 #ifndef CORE_PORTME_H
 #define CORE_PORTME_H
+
+/************************/
+/* Build setting sets */
+/************************/
+/* Setting set : LA32R NSCSCC
+*/
+#ifdef BUILD_LA32R_NSCSCC
+#define HAS_FLOAT       0
+#define HAS_TIME_H      0
+#define USE_CLOCK       0
+#define HAS_STDIO       0
+#define HAS_PRINTF      0
+#endif
+
+/* Setting set : Standard Library Full Native*/
+#ifdef BUILD_STDLIB_FULLNATIVE
+#define HAS_FLOAT       1
+#define HAS_TIME_H      1
+#define USE_CLOCK       1
+#define HAS_STDIO       1
+#define HAS_PRINTF      1
+#endif
+
+
 /************************/
 /* Data types and settings */
 /************************/
@@ -74,7 +98,7 @@ Original Author: Shay Gal-on
 #endif
 #ifndef COMPILER_FLAGS
 #define COMPILER_FLAGS \
-    "-O2 -DPERFORMANCE_RUN=1"
+    ""
 #endif
 #ifndef MEM_LOCATION
 #define MEM_LOCATION "STATIC"
@@ -210,5 +234,16 @@ void portable_fini(core_portable *p);
 #endif
 
 int ee_printf(const char *fmt, ...);
+
+/* Build set : LA32R NSCSCC
+*/
+#ifdef BUILD_LA32R_NSCSCC
+#define __BUILD_SPECIFIED
+#endif
+
+#ifndef __BUILD_SPECIFIED
+#error "Please specify a build target! (see: core_portme.h)"
+#endif
+
 
 #endif /* CORE_PORTME_H */

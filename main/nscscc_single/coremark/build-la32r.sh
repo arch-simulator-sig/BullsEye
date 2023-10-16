@@ -6,20 +6,25 @@ OBJDUMP="loongarch32r-linux-gnusf-objdump"
 
 BUILD_PATH="build-la32r"
 BUILD_FILE="coremark"
-BUILD_ARGS="-nostdlib -fno-builtin -mabi=ilp32s -g -O2 -DCOMPILER_LA32R_LINUX_GNUSF -DPERFORMANCE_RUN=1"
+BUILD_ARGS="-nostdlib -mabi=ilp32s -g -O3 \
+    -fno-builtin -fno-tree-loop-distribute-patterns \
+    -DBUILD_LA32R_NSCSCC -DCOMPILER_LA32R_LINUX_GNUSF -DPERFORMANCE_RUN=1"
+
+BUILD_ARGS_PASSTHROUGH="$BUILD_ARGS -DCOMPILER_FLAGS='\"$BUILD_ARGS\"'"
 
 #
+eval "rm -rf $BUILD_PATH"
 eval "mkdir $BUILD_PATH"
 
 # Compile objects
-eval "$COMPILER $BUILD_ARGS -c la_init.S        -o $BUILD_PATH/la_init.o"
-eval "$COMPILER $BUILD_ARGS -c core_list_join.c -o $BUILD_PATH/core_list_join.o"
-eval "$COMPILER $BUILD_ARGS -c core_main.c      -o $BUILD_PATH/core_main.o"
-eval "$COMPILER $BUILD_ARGS -c core_matrix.c    -o $BUILD_PATH/core_matrix.o"
-eval "$COMPILER $BUILD_ARGS -c core_portme.c    -o $BUILD_PATH/core_portme.o"
-eval "$COMPILER $BUILD_ARGS -c core_state.c     -o $BUILD_PATH/core_state.o"
-eval "$COMPILER $BUILD_ARGS -c core_util.c      -o $BUILD_PATH/core_util.o"
-eval "$COMPILER $BUILD_ARGS -c ee_printf.c      -o $BUILD_PATH/ee_printf.o"
+eval "$COMPILER $BUILD_ARGS_PASSTHROUGH -c la_init.S        -o $BUILD_PATH/la_init.o"
+eval "$COMPILER $BUILD_ARGS_PASSTHROUGH -c core_list_join.c -o $BUILD_PATH/core_list_join.o"
+eval "$COMPILER $BUILD_ARGS_PASSTHROUGH -c core_main.c      -o $BUILD_PATH/core_main.o"
+eval "$COMPILER $BUILD_ARGS_PASSTHROUGH -c core_matrix.c    -o $BUILD_PATH/core_matrix.o"
+eval "$COMPILER $BUILD_ARGS_PASSTHROUGH -c core_portme.c    -o $BUILD_PATH/core_portme.o"
+eval "$COMPILER $BUILD_ARGS_PASSTHROUGH -c core_state.c     -o $BUILD_PATH/core_state.o"
+eval "$COMPILER $BUILD_ARGS_PASSTHROUGH -c core_util.c      -o $BUILD_PATH/core_util.o"
+eval "$COMPILER $BUILD_ARGS_PASSTHROUGH -c ee_printf.c      -o $BUILD_PATH/ee_printf.o"
 
 # Link
 FILES_TO_LINK="$FILES_TO_LINK $BUILD_PATH/la_init.o"
