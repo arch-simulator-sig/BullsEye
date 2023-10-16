@@ -81,25 +81,25 @@ namespace BullsEye {
         };
 
         template<uint8_t _Val>
-        static inline constexpr uint8_t AXLEN = AXLEN_t<_Val>::value;
+        static constexpr uint8_t AXLEN = AXLEN_t<_Val>::value;
 
         //
         template<uint8_t _Val>
         struct AXSIZE_t {
-            static constexpr uint8_t value;
+            static constexpr uint8_t value {/*BRACE required by GCC 11 on C++20, GCC is Wrong!*/};
         };
 
         template<uint8_t _Val>
-        static inline constexpr uint8_t AXSIZE = AXSIZE_t<_Val>::value;
+        static constexpr uint8_t AXSIZE = AXSIZE_t<_Val>::value;
 
-        constexpr uint8_t AXSIZE_t<1>::value    = AXI4_AXSIZE_1B;
-        constexpr uint8_t AXSIZE_t<2>::value    = AXI4_AXSIZE_2B;
-        constexpr uint8_t AXSIZE_t<4>::value    = AXI4_AXSIZE_4B;
-        constexpr uint8_t AXSIZE_t<8>::value    = AXI4_AXSIZE_8B;
-        constexpr uint8_t AXSIZE_t<16>::value   = AXI4_AXSIZE_16B;
-        constexpr uint8_t AXSIZE_t<32>::value   = AXI4_AXSIZE_32B;
-        constexpr uint8_t AXSIZE_t<64>::value   = AXI4_AXSIZE_64B;
-        constexpr uint8_t AXSIZE_t<128>::value  = AXI4_AXSIZE_128B;
+        template<> struct AXSIZE_t<1  > { static constexpr uint8_t value    = AXI4_AXSIZE_1B;   };
+        template<> struct AXSIZE_t<2  > { static constexpr uint8_t value    = AXI4_AXSIZE_2B;   };
+        template<> struct AXSIZE_t<4  > { static constexpr uint8_t value    = AXI4_AXSIZE_4B;   };
+        template<> struct AXSIZE_t<8  > { static constexpr uint8_t value    = AXI4_AXSIZE_8B;   };
+        template<> struct AXSIZE_t<16 > { static constexpr uint8_t value    = AXI4_AXSIZE_16B;  };
+        template<> struct AXSIZE_t<32 > { static constexpr uint8_t value    = AXI4_AXSIZE_32B;  };
+        template<> struct AXSIZE_t<64 > { static constexpr uint8_t value    = AXI4_AXSIZE_64B;  };
+        template<> struct AXSIZE_t<128> { static constexpr uint8_t value    = AXI4_AXSIZE_128B; };
     };
 
 
@@ -132,18 +132,18 @@ namespace BullsEye {
             attr_size_t     arsize;
             attr_burst_t    arburst;
             aruser_t        aruser;
-            bool            arvalid;
+            uint1_t         arvalid;
         };
 
         // Read Address Channel bundle of Slave to Master
         struct ReadAddressChannelS2M {
-            bool            arready;
+            uint1_t         arready;
         };
 
 
         // Read Data Channel bundle of Master to Slave
         struct ReadDataChannelM2S {
-            bool            rready;
+            uint1_t         rready;
         };
 
         // Read Data Channel bundle of Slave to Master
@@ -152,8 +152,8 @@ namespace BullsEye {
             rid_t           rid;
             rdata_t         rdata;
             attr_rresp_t    rresp;
-            bool            rlast;
-            bool            rvalid;
+            uint1_t         rlast;
+            uint1_t         rvalid;
         };
 
 
@@ -166,12 +166,12 @@ namespace BullsEye {
             attr_size_t     awsize;
             attr_burst_t    awburst;
             awuser_t        awuser;
-            bool            awvalid;
+            uint1_t         awvalid;
         };
 
         // Write Address Channel bundle of Slave to Master
         struct WriteAddressChannelS2M {
-            bool            awready;
+            uint1_t         awready;
         };
 
 
@@ -180,27 +180,27 @@ namespace BullsEye {
         struct WriteDataChannelM2S {
             wdata_t         wdata;
             wstrb_t         wstrb;
-            bool            wlast;
-            bool            wvalid;
+            uint1_t         wlast;
+            uint1_t         wvalid;
         };
 
         // Write Data Channel bundle of Slave to Master
         struct WriteDataChannelS2M {
-            bool            wready;
+            uint1_t         wready;
         };
 
 
         // Write Response Channel bundle of Master to Slave
         struct WriteResponseChannelM2S {
-            bool            bready;
+            uint1_t         bready;
         };
 
         // Write Response Channel bundle of Slave to Master
-        template<class bid = uint8_t>
+        template<class bid_t = uint8_t>
         struct WriteResponseChannelS2M {
             bid_t           bid;
             attr_bresp_t    bresp;
-            bool            bvalid;
+            uint1_t         bvalid;
         };
     }
 
