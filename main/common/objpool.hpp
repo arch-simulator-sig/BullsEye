@@ -431,7 +431,7 @@ namespace BullsEye {
     inline RoundRobinObjectPool<_TObject, _TInitializer, _TFinalizer>
         ::Reference::Reference() noexcept
         : valid_ref (CONSTANT_FALSE)
-        , ref       (ref)
+        , ref       ()
     { }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
