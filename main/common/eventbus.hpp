@@ -38,8 +38,7 @@ namespace BullsEye {
         static bool                     HasEventBus(unsigned int busId = 0) noexcept;
         static EventBus<_TEvent>&       RequireEventBus(unsigned int busId = 0) noexcept;
 
-        static void                     Register(const EventListener<_TEvent>& listener, unsigned int busId = 0) noexcept;
-        static void                     Register(EventListener<_TEvent>&& listener, unsigned int busId = 0) noexcept;
+        static void                     Register(std::shared_ptr<EventListener<_TEvent>> listener, unsigned int busId = 0) noexcept;
 
         static int                      Unregister(const std::string& name, unsigned int busId = 0) noexcept;
         static bool                     UnregisterOnce(const std::string& name, unsigned int busId = 0) noexcept;
@@ -229,13 +228,7 @@ namespace BullsEye {
     }
 
     template<class _TEvent>
-    inline void Event<_TEvent>::Register(const EventListener<_TEvent>& listener, unsigned int busId) noexcept
-    {
-        RequireEventBus(busId).Register(listener);
-    }
-
-    template<class _TEvent>
-    inline void Event<_TEvent>::Register(EventListener<_TEvent>&& listener, unsigned int busId) noexcept
+    inline void Event<_TEvent>::Register(std::shared_ptr<EventListener<_TEvent>> listener, unsigned int busId) noexcept
     {
         RequireEventBus(busId).Register(listener);
     }
@@ -346,7 +339,7 @@ namespace BullsEye {
     {
         auto iter = list.begin();
         for (; iter != list.end(); iter++)
-            if (iter->GetPriority() > (*iter).GetPriority())
+            if (iter->get()->GetPriority() > priority)
                 break;
 
         return iter;
