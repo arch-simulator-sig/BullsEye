@@ -4,7 +4,7 @@
 //
 //
 
-
+#include <cstring>
 #include <string>
 #include <algorithm>
 
