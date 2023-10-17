@@ -1,1 +1,0 @@
-eval "make -j `nproc`"

@@ -21,25 +21,25 @@ MAIN_SRC := $(foreach sdir, $(MAIN_SRCDIR), $(wildcard $(sdir)/*.cpp))
 MAIN_OBJ := $(patsubst $(MAIN_SRCDIR)/%.cpp, $(MAIN_OBJDIR)/%.o, $(MAIN_SRC))
 
 # static library
-STATICLIB := $(ARCDIR)/libyasio.a
+STATICOBJ := $(ARCDIR)/libyasio.a
 
 
 .PHONY: clean
 
 
-all: main staticlib
+all: main staticobj
 
 
 main: $(OBJDIR) $(MAIN_INL) $(MAIN_HPP) $(MAIN_OBJ)
 
-staticlib: $(STATICLIB)
+staticobj: $(STATICOBJ)
 
 
 $(MAIN_OBJ): $(MAIN_OBJDIR)/%.o : $(MAIN_SRCDIR)/%.cpp
-	$(CC) -o $@ $< -MMD -c -I.. $(CFLAG)
+	$(CC) -o $@ $< -fPIE -c -I.. $(CFLAG)
 
 
-$(STATICLIB): $(ARCDIR) $(MAIN_OBJ)
+$(STATICOBJ): $(ARCDIR) $(MAIN_OBJ)
 	$(AR) -rcs $@ $(MAIN_OBJ)
 
 
