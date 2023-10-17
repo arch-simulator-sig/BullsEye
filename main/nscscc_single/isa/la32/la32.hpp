@@ -20,6 +20,8 @@
 #include "base/la32mem.hpp"
 #include "base/la32event.hpp"
 #include "base/la32trace.hpp"
+#include "base/la32encode.hpp"
+#include "base/la32disasm.hpp"
 
 
 namespace Jasse {

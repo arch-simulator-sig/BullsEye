@@ -143,4 +143,6 @@ namespace Jasse {
 }
 
 
+#include "la32memutil.inl"
+
 #endif

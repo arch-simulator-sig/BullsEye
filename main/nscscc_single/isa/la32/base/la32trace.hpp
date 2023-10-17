@@ -608,4 +608,6 @@ namespace Jasse {
 }
 
 
+#include "la32trace.inl"
+
 #endif

@@ -6,419 +6,10 @@
 //
 
 
-// Implementation of: class LA32GPRs
+// Implementation of: class LA32Instance::Eval
 namespace Jasse {
-    /*
-    arch32_t        gpr[SIZE];
-    */
 
-    inline LA32GPRs::LA32GPRs() noexcept
-        : gpr   ()
-    { }
-
-    inline LA32GPRs::LA32GPRs(const LA32GPRs& obj) noexcept
-        : gpr   ()
-    { 
-        std::copy(obj.gpr, obj.gpr + SIZE, this->gpr);
-    }
-
-    inline LA32GPRs::~LA32GPRs() noexcept
-    { }
-
-    inline int LA32GPRs::GetSize() const noexcept
-    {
-        return SIZE;
-    }
-
-    inline bool LA32GPRs::CheckBound(int index) const noexcept
-    {
-        return (index >= 0) && (index < GetSize());
-    }
-
-    inline arch32_t LA32GPRs::Get(int index) const noexcept
-    {
-        return index ? this->gpr[index] : 0;
-    }
-
-    inline void LA32GPRs::Set(int index, arch32_t value) noexcept
-    {
-        if (index)
-            this->gpr[index] = value;
-    }
-
-    inline bool LA32GPRs::Compare(const LA32GPRs& obj) const noexcept
-    {
-        return std::equal(this->gpr, this->gpr + SIZE, obj.gpr);
-    }
-
-    inline void LA32GPRs::operator=(const LA32GPRs& obj) noexcept
-    {
-        std::copy(obj.gpr, obj.gpr + SIZE, this->gpr);
-    }
-
-    inline bool LA32GPRs::operator==(const LA32GPRs& obj) const noexcept
-    {
-        return Compare(obj);
-    }
-
-    inline bool LA32GPRs::operator!=(const LA32GPRs& obj) const noexcept
-    {
-        return !Compare(obj);
-    }
-
-    inline arch32_t& LA32GPRs::operator[](int index) noexcept
-    {
-        return index ? this->gpr[index] : (this->gpr[0] = 0);
-    }
-
-    inline arch32_t LA32GPRs::operator[](int index) const noexcept
-    {
-        return index ? this->gpr[index] : 0;
-    }
-}
-
-
-// Implementation of: class LA32Architectural
-namespace Jasse {
-    /*
-    pc_t            pc;
-
-    LA32GPRs*       gprs;
-    */
-
-    inline LA32Architectural::LA32Architectural(pc_t startupPC) noexcept
-        : pc    (startupPC)
-        , gprs  (new LA32GPRs)
-    { }
-
-    inline LA32Architectural::LA32Architectural(const LA32Architectural& obj) noexcept
-        : pc    (obj.pc)
-        , gprs  (new LA32GPRs(*(obj.gprs)))
-    { }
-
-    inline LA32Architectural::~LA32Architectural() noexcept
-    {
-        delete this->gprs;
-    }
-
-    inline pc_t LA32Architectural::PC() const noexcept
-    {
-        return this->pc;
-    }
-
-    inline void LA32Architectural::SetPC(pc_t pc) noexcept
-    {
-        this->pc = pc;
-    }
-
-    inline LA32GPRs& LA32Architectural::GPRs() noexcept
-    {
-        return *(this->gprs);
-    }
-
-    inline const LA32GPRs& LA32Architectural::GPRs() const noexcept
-    {
-        return *(this->gprs);
-    }
-
-    inline LA32GPRs* LA32Architectural::SwapGPRs(LA32GPRs* obj) noexcept
-    {
-        std::swap(this->gprs, obj);
-        return obj;
-    }
-}
-
-
-// Implementation of: class LA32TracerContainer
-namespace Jasse {
-    /*
-    LA32PCTracer*       pcTracer;
-
-    LA32GPRTracer*      gprTracer;
-
-    LA32MemoryTracer*   memoryTracer;
-    */
-
-    inline LA32TracerContainer::LA32TracerContainer() noexcept
-        : pcTracer      (nullptr)
-        , gprTracer     (nullptr)
-        , memoryTracer  (nullptr)
-    { }
-
-    inline LA32TracerContainer::LA32TracerContainer(LA32PCTracer*       pcTracer,
-                                             LA32GPRTracer*      gprTracer,
-                                             LA32MemoryTracer*   memoryTracer) noexcept
-        : pcTracer      (pcTracer)
-        , gprTracer     (gprTracer)
-        , memoryTracer  (memoryTracer)
-    { }
-
-    inline LA32TracerContainer::LA32TracerContainer(LA32TracerContainer&& obj) noexcept
-        : pcTracer      (obj.pcTracer)
-        , gprTracer     (obj.gprTracer)
-        , memoryTracer  (obj.memoryTracer)
-    {
-        obj.pcTracer        = nullptr;
-        obj.gprTracer       = nullptr;
-        obj.memoryTracer    = nullptr;
-    }
-
-    inline LA32TracerContainer::~LA32TracerContainer() noexcept
-    {
-        DestroyPCTracer();
-        DestroyGPRTracer();
-        DestroyMemoryTracer();
-    }
-
-    inline bool LA32TracerContainer::HasPCTracer() const noexcept
-    {
-        return this->pcTracer != nullptr;
-    }
-
-    inline LA32PCTracer* LA32TracerContainer::GetPCTracer() noexcept
-    {
-        return this->pcTracer;
-    }
-
-    inline const LA32PCTracer* LA32TracerContainer::GetPCTracer() const noexcept
-    {
-        return this->pcTracer;
-    }
-
-    inline void LA32TracerContainer::DestroyPCTracer() noexcept
-    {
-        if (this->pcTracer)
-        {
-            delete this->pcTracer;
-            this->pcTracer = nullptr;
-        }
-    }
-
-    inline LA32PCTracer* LA32TracerContainer::SwapPCTracer(LA32PCTracer* obj) noexcept
-    {
-        std::swap(this->pcTracer, obj);
-        return obj;
-    }
-
-    inline bool LA32TracerContainer::HasGPRTracer() const noexcept
-    {
-        return this->gprTracer != nullptr;
-    }
-
-    inline LA32GPRTracer* LA32TracerContainer::GetGPRTracer() noexcept
-    {
-        return this->gprTracer;
-    }
-
-    inline const LA32GPRTracer* LA32TracerContainer::GetGPRTracer() const noexcept
-    {
-        return this->gprTracer;
-    }
-
-    inline void LA32TracerContainer::DestroyGPRTracer() noexcept
-    {
-        if (this->gprTracer)
-        {
-            delete this->gprTracer;
-            this->gprTracer = nullptr;
-        }
-    }
-
-    inline LA32GPRTracer* LA32TracerContainer::SwapGPRTracer(LA32GPRTracer* obj) noexcept
-    {
-        std::swap(this->gprTracer, obj);
-        return obj;
-    }
-
-    inline bool LA32TracerContainer::HasMemoryTracer() const noexcept
-    {
-        return this->memoryTracer != nullptr;
-    }
-
-    inline LA32MemoryTracer* LA32TracerContainer::GetMemoryTracer() noexcept
-    {
-        return this->memoryTracer;
-    }
-
-    inline const LA32MemoryTracer* LA32TracerContainer::GetMemoryTracer() const noexcept
-    {
-        return this->memoryTracer;
-    }
-
-    inline void LA32TracerContainer::DestroyMemoryTracer() noexcept
-    {
-        if (this->memoryTracer)
-        {
-            delete this->memoryTracer;
-            this->memoryTracer = nullptr;
-        }
-    }
-
-    inline LA32MemoryTracer* LA32TracerContainer::SwapMemoryTracer(LA32MemoryTracer* obj) noexcept
-    {
-        std::swap(this->memoryTracer, obj);
-        return obj;
-    }
-
-    inline LA32TracerContainer& LA32TracerContainer::operator=(LA32TracerContainer&& obj) noexcept
-    {
-        if (this != &obj)
-        {
-            DestroyPCTracer();
-            DestroyGPRTracer();
-            DestroyMemoryTracer();
-
-            this->pcTracer      = obj.pcTracer;
-            this->gprTracer     = obj.gprTracer;
-            this->memoryTracer  = obj.memoryTracer;
-
-            obj.pcTracer        = nullptr;
-            obj.gprTracer       = nullptr;
-            obj.memoryTracer    = nullptr;
-        }
-
-        return *this;
-    }
-}
-
-
-// Implementation of: class LA32Instance
-namespace Jasse {
-    /*
-    LA32DecoderCollection       decoders;
-
-    LA32Architectural           arch;
-
-    LA32MemoryInterface*        memory;
-
-    LA32TraceEntity::Pool*      tracePool;
-
-    LA32TracerContainer         tracers;
-
-    LA32ExecOutcome             lastOutcome;
-
-    bool                        branchTaken;
-    pc_t                        branchTarget;
-
-    LA32TraceEntity::Reference  lastFetchTrace;
-    */
-
-    inline LA32Instance::LA32Instance(const LA32DecoderCollection&   decoders,
-                               const LA32Architectural&     arch,
-                               LA32MemoryInterface*         memory,
-                               LA32TraceEntity::Pool*       tracePool,
-                               LA32TracerContainer&&        tracers) noexcept
-        : decoders          (decoders)
-        , arch              (arch)
-        , memory            (memory)
-        , tracePool         (tracePool)
-        , tracers           (std::move(tracers))
-        , lastOutcome       ({ LA32ExecStatus::EXEC_SEQUENTIAL, 0 })
-        , branchTaken       (false)
-        , branchTarget      (0)
-        , lastFetchTrace    ()
-    { }
-
-    inline LA32Instance::~LA32Instance() noexcept
-    { 
-        if (this->tracePool)
-            delete this->tracePool;
-    }
-
-    inline bool LA32Instance::IsBranchTaken() const noexcept
-    {
-        return this->branchTaken;
-    }
-
-    inline void LA32Instance::SetBranchTaken(bool taken) noexcept
-    {
-        this->branchTaken = taken;
-    }
-
-    inline pc_t LA32Instance::GetBranchTarget() const noexcept
-    {
-        return this->branchTarget;
-    }
-
-    inline void LA32Instance::SetBranchTarget(bool taken, pc_t target) noexcept
-    {
-        this->branchTaken  = taken;
-        this->branchTarget = target;
-    }
-
-    inline LA32DecoderCollection& LA32Instance::Decoders() noexcept
-    {
-        return this->decoders;
-    }
-
-    inline const LA32DecoderCollection& LA32Instance::Decoders() const noexcept
-    {
-        return this->decoders;
-    }
-
-    inline LA32Architectural& LA32Instance::Arch() noexcept
-    {
-        return this->arch;
-    }
-
-    inline const LA32Architectural& LA32Instance::Arch() const noexcept
-    {
-        return this->arch;
-    }
-
-    inline LA32MemoryInterface* LA32Instance::Memory() noexcept
-    {
-        return this->memory;
-    }
-
-    inline const LA32MemoryInterface* LA32Instance::Memory() const noexcept
-    {
-        return this->memory;
-    }
-
-    inline LA32TraceEntity::Pool& LA32Instance::TracePool() noexcept
-    {
-        return *(this->tracePool);
-    }
-
-    inline const LA32TraceEntity::Pool& LA32Instance::TracePool() const noexcept
-    {
-        return *(this->tracePool);
-    }
-
-    inline LA32TracerContainer& LA32Instance::Tracers() noexcept
-    {
-        return this->tracers;
-    }
-
-    inline const LA32TracerContainer& LA32Instance::Tracers() const noexcept
-    {
-        return this->tracers;
-    }
-
-    inline bool LA32Instance::HasTracePool() const noexcept
-    {
-        return this->tracePool != nullptr;
-    }
-
-    inline bool LA32Instance::IsTraceEnabled() const noexcept
-    {
-        return HasTracePool();
-    }
-
-    inline LA32MemoryInterface* LA32Instance::SwapMemory(LA32MemoryInterface* memory) noexcept
-    {
-        std::swap(this->memory, memory);
-        return memory;
-    }
-
-    inline LA32TraceEntity::Pool* LA32Instance::SwapTracePool(LA32TraceEntity::Pool* trace_pool) noexcept
-    {
-        std::swap(this->tracePool, trace_pool);
-        return trace_pool;
-    }
-
-    inline LA32ExecOutcome LA32Instance::Eval()
+    /*inline*/ LA32ExecOutcome LA32Instance::Eval()
     {
         // Instruction fetch
         if (LA32InstructionPreFetchEvent(*this, arch.PC()).Fire().IsCancelled())
@@ -541,13 +132,434 @@ namespace Jasse {
         //
         return (lastOutcome = outcome_exec);
     }
+}
 
-    inline LA32ExecOutcome LA32Instance::GetLastOutcome() const noexcept
+#include "la32.hpp"
+//
+// LA32 (NSCSCC) ISA Emulator (Jasse)
+//
+//
+//
+
+
+// Implementation of: class LA32GPRs
+namespace Jasse {
+    /*
+    arch32_t        gpr[SIZE];
+    */
+
+    LA32GPRs::LA32GPRs() noexcept
+        : gpr   ()
+    { }
+
+    LA32GPRs::LA32GPRs(const LA32GPRs& obj) noexcept
+        : gpr   ()
+    { 
+        std::copy(obj.gpr, obj.gpr + SIZE, this->gpr);
+    }
+
+    LA32GPRs::~LA32GPRs() noexcept
+    { }
+
+    int LA32GPRs::GetSize() const noexcept
+    {
+        return SIZE;
+    }
+
+    bool LA32GPRs::CheckBound(int index) const noexcept
+    {
+        return (index >= 0) && (index < GetSize());
+    }
+
+    arch32_t LA32GPRs::Get(int index) const noexcept
+    {
+        return index ? this->gpr[index] : 0;
+    }
+
+    void LA32GPRs::Set(int index, arch32_t value) noexcept
+    {
+        if (index)
+            this->gpr[index] = value;
+    }
+
+    bool LA32GPRs::Compare(const LA32GPRs& obj) const noexcept
+    {
+        return std::equal(this->gpr, this->gpr + SIZE, obj.gpr);
+    }
+
+    void LA32GPRs::operator=(const LA32GPRs& obj) noexcept
+    {
+        std::copy(obj.gpr, obj.gpr + SIZE, this->gpr);
+    }
+
+    bool LA32GPRs::operator==(const LA32GPRs& obj) const noexcept
+    {
+        return Compare(obj);
+    }
+
+    bool LA32GPRs::operator!=(const LA32GPRs& obj) const noexcept
+    {
+        return !Compare(obj);
+    }
+
+    arch32_t& LA32GPRs::operator[](int index) noexcept
+    {
+        return index ? this->gpr[index] : (this->gpr[0] = 0);
+    }
+
+    arch32_t LA32GPRs::operator[](int index) const noexcept
+    {
+        return index ? this->gpr[index] : 0;
+    }
+}
+
+
+// Implementation of: class LA32Architectural
+namespace Jasse {
+    /*
+    pc_t            pc;
+
+    LA32GPRs*       gprs;
+    */
+
+    LA32Architectural::LA32Architectural(pc_t startupPC) noexcept
+        : pc    (startupPC)
+        , gprs  (new LA32GPRs)
+    { }
+
+    LA32Architectural::LA32Architectural(const LA32Architectural& obj) noexcept
+        : pc    (obj.pc)
+        , gprs  (new LA32GPRs(*(obj.gprs)))
+    { }
+
+    LA32Architectural::~LA32Architectural() noexcept
+    {
+        delete this->gprs;
+    }
+
+    pc_t LA32Architectural::PC() const noexcept
+    {
+        return this->pc;
+    }
+
+    void LA32Architectural::SetPC(pc_t pc) noexcept
+    {
+        this->pc = pc;
+    }
+
+    LA32GPRs& LA32Architectural::GPRs() noexcept
+    {
+        return *(this->gprs);
+    }
+
+    const LA32GPRs& LA32Architectural::GPRs() const noexcept
+    {
+        return *(this->gprs);
+    }
+
+    LA32GPRs* LA32Architectural::SwapGPRs(LA32GPRs* obj) noexcept
+    {
+        std::swap(this->gprs, obj);
+        return obj;
+    }
+}
+
+
+// Implementation of: class LA32TracerContainer
+namespace Jasse {
+    /*
+    LA32PCTracer*       pcTracer;
+
+    LA32GPRTracer*      gprTracer;
+
+    LA32MemoryTracer*   memoryTracer;
+    */
+
+    LA32TracerContainer::LA32TracerContainer() noexcept
+        : pcTracer      (nullptr)
+        , gprTracer     (nullptr)
+        , memoryTracer  (nullptr)
+    { }
+
+    LA32TracerContainer::LA32TracerContainer(LA32PCTracer*       pcTracer,
+                                             LA32GPRTracer*      gprTracer,
+                                             LA32MemoryTracer*   memoryTracer) noexcept
+        : pcTracer      (pcTracer)
+        , gprTracer     (gprTracer)
+        , memoryTracer  (memoryTracer)
+    { }
+
+    LA32TracerContainer::LA32TracerContainer(LA32TracerContainer&& obj) noexcept
+        : pcTracer      (obj.pcTracer)
+        , gprTracer     (obj.gprTracer)
+        , memoryTracer  (obj.memoryTracer)
+    {
+        obj.pcTracer        = nullptr;
+        obj.gprTracer       = nullptr;
+        obj.memoryTracer    = nullptr;
+    }
+
+    LA32TracerContainer::~LA32TracerContainer() noexcept
+    {
+        DestroyPCTracer();
+        DestroyGPRTracer();
+        DestroyMemoryTracer();
+    }
+
+    bool LA32TracerContainer::HasPCTracer() const noexcept
+    {
+        return this->pcTracer != nullptr;
+    }
+
+    LA32PCTracer* LA32TracerContainer::GetPCTracer() noexcept
+    {
+        return this->pcTracer;
+    }
+
+    const LA32PCTracer* LA32TracerContainer::GetPCTracer() const noexcept
+    {
+        return this->pcTracer;
+    }
+
+    void LA32TracerContainer::DestroyPCTracer() noexcept
+    {
+        if (this->pcTracer)
+        {
+            delete this->pcTracer;
+            this->pcTracer = nullptr;
+        }
+    }
+
+    LA32PCTracer* LA32TracerContainer::SwapPCTracer(LA32PCTracer* obj) noexcept
+    {
+        std::swap(this->pcTracer, obj);
+        return obj;
+    }
+
+    bool LA32TracerContainer::HasGPRTracer() const noexcept
+    {
+        return this->gprTracer != nullptr;
+    }
+
+    LA32GPRTracer* LA32TracerContainer::GetGPRTracer() noexcept
+    {
+        return this->gprTracer;
+    }
+
+    const LA32GPRTracer* LA32TracerContainer::GetGPRTracer() const noexcept
+    {
+        return this->gprTracer;
+    }
+
+    void LA32TracerContainer::DestroyGPRTracer() noexcept
+    {
+        if (this->gprTracer)
+        {
+            delete this->gprTracer;
+            this->gprTracer = nullptr;
+        }
+    }
+
+    LA32GPRTracer* LA32TracerContainer::SwapGPRTracer(LA32GPRTracer* obj) noexcept
+    {
+        std::swap(this->gprTracer, obj);
+        return obj;
+    }
+
+    bool LA32TracerContainer::HasMemoryTracer() const noexcept
+    {
+        return this->memoryTracer != nullptr;
+    }
+
+    LA32MemoryTracer* LA32TracerContainer::GetMemoryTracer() noexcept
+    {
+        return this->memoryTracer;
+    }
+
+    const LA32MemoryTracer* LA32TracerContainer::GetMemoryTracer() const noexcept
+    {
+        return this->memoryTracer;
+    }
+
+    void LA32TracerContainer::DestroyMemoryTracer() noexcept
+    {
+        if (this->memoryTracer)
+        {
+            delete this->memoryTracer;
+            this->memoryTracer = nullptr;
+        }
+    }
+
+    LA32MemoryTracer* LA32TracerContainer::SwapMemoryTracer(LA32MemoryTracer* obj) noexcept
+    {
+        std::swap(this->memoryTracer, obj);
+        return obj;
+    }
+
+    LA32TracerContainer& LA32TracerContainer::operator=(LA32TracerContainer&& obj) noexcept
+    {
+        if (this != &obj)
+        {
+            DestroyPCTracer();
+            DestroyGPRTracer();
+            DestroyMemoryTracer();
+
+            this->pcTracer      = obj.pcTracer;
+            this->gprTracer     = obj.gprTracer;
+            this->memoryTracer  = obj.memoryTracer;
+
+            obj.pcTracer        = nullptr;
+            obj.gprTracer       = nullptr;
+            obj.memoryTracer    = nullptr;
+        }
+
+        return *this;
+    }
+}
+
+
+// Implementation of: class LA32Instance
+namespace Jasse {
+    /*
+    LA32DecoderCollection       decoders;
+
+    LA32Architectural           arch;
+
+    LA32MemoryInterface*        memory;
+
+    LA32TraceEntity::Pool*      tracePool;
+
+    LA32TracerContainer         tracers;
+
+    LA32ExecOutcome             lastOutcome;
+
+    bool                        branchTaken;
+    pc_t                        branchTarget;
+
+    LA32TraceEntity::Reference  lastFetchTrace;
+    */
+
+    LA32Instance::LA32Instance(const LA32DecoderCollection&   decoders,
+                               const LA32Architectural&     arch,
+                               LA32MemoryInterface*         memory,
+                               LA32TraceEntity::Pool*       tracePool,
+                               LA32TracerContainer&&        tracers) noexcept
+        : decoders          (decoders)
+        , arch              (arch)
+        , memory            (memory)
+        , tracePool         (tracePool)
+        , tracers           (std::move(tracers))
+        , lastOutcome       ({ LA32ExecStatus::EXEC_SEQUENTIAL, 0 })
+        , branchTaken       (false)
+        , branchTarget      (0)
+        , lastFetchTrace    ()
+    { }
+
+    LA32Instance::~LA32Instance() noexcept
+    { 
+        if (this->tracePool)
+            delete this->tracePool;
+    }
+
+    bool LA32Instance::IsBranchTaken() const noexcept
+    {
+        return this->branchTaken;
+    }
+
+    void LA32Instance::SetBranchTaken(bool taken) noexcept
+    {
+        this->branchTaken = taken;
+    }
+
+    pc_t LA32Instance::GetBranchTarget() const noexcept
+    {
+        return this->branchTarget;
+    }
+
+    void LA32Instance::SetBranchTarget(bool taken, pc_t target) noexcept
+    {
+        this->branchTaken  = taken;
+        this->branchTarget = target;
+    }
+
+    LA32DecoderCollection& LA32Instance::Decoders() noexcept
+    {
+        return this->decoders;
+    }
+
+    const LA32DecoderCollection& LA32Instance::Decoders() const noexcept
+    {
+        return this->decoders;
+    }
+
+    LA32Architectural& LA32Instance::Arch() noexcept
+    {
+        return this->arch;
+    }
+
+    const LA32Architectural& LA32Instance::Arch() const noexcept
+    {
+        return this->arch;
+    }
+
+    LA32MemoryInterface* LA32Instance::Memory() noexcept
+    {
+        return this->memory;
+    }
+
+    const LA32MemoryInterface* LA32Instance::Memory() const noexcept
+    {
+        return this->memory;
+    }
+
+    LA32TraceEntity::Pool& LA32Instance::TracePool() noexcept
+    {
+        return *(this->tracePool);
+    }
+
+    const LA32TraceEntity::Pool& LA32Instance::TracePool() const noexcept
+    {
+        return *(this->tracePool);
+    }
+
+    LA32TracerContainer& LA32Instance::Tracers() noexcept
+    {
+        return this->tracers;
+    }
+
+    const LA32TracerContainer& LA32Instance::Tracers() const noexcept
+    {
+        return this->tracers;
+    }
+
+    bool LA32Instance::HasTracePool() const noexcept
+    {
+        return this->tracePool != nullptr;
+    }
+
+    bool LA32Instance::IsTraceEnabled() const noexcept
+    {
+        return HasTracePool();
+    }
+
+    LA32MemoryInterface* LA32Instance::SwapMemory(LA32MemoryInterface* memory) noexcept
+    {
+        std::swap(this->memory, memory);
+        return memory;
+    }
+
+    LA32TraceEntity::Pool* LA32Instance::SwapTracePool(LA32TraceEntity::Pool* trace_pool) noexcept
+    {
+        std::swap(this->tracePool, trace_pool);
+        return trace_pool;
+    }
+
+    LA32ExecOutcome LA32Instance::GetLastOutcome() const noexcept
     {
         return this->lastOutcome;
     }
 
-    inline LA32TraceEntity::Reference LA32Instance::GetLastFetchTrace() const noexcept
+    LA32TraceEntity::Reference LA32Instance::GetLastFetchTrace() const noexcept
     {
         return this->lastFetchTrace;
     }
@@ -578,7 +590,7 @@ namespace Jasse {
     size_t                  memoryTracerSize;
     */
 
-    inline LA32Instance::Builder::Builder() noexcept
+    LA32Instance::Builder::Builder() noexcept
         : arch                  ()
         , memory                (nullptr)
         , decoders              ()
@@ -594,22 +606,22 @@ namespace Jasse {
         , memoryTracerSize      (0)
     { }
 
-    inline LA32Instance::Builder::~Builder() noexcept
+    LA32Instance::Builder::~Builder() noexcept
     { }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::StartupPC(pc_t pc) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::StartupPC(pc_t pc) noexcept
     {
         this->arch.SetPC(pc);
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::GPR(int index, arch32_t value) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::GPR(int index, arch32_t value) noexcept
     {
         this->arch.GPRs()[index] = value;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::GPRs(arch32_t value) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::GPRs(arch32_t value) noexcept
     {
         for (int i = 0; i < this->arch.GPRs().GetSize(); i++)
             this->arch.GPRs()[i] = value;
@@ -617,13 +629,13 @@ namespace Jasse {
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::Decoder(const LA32Decoder* decoder) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::Decoder(const LA32Decoder* decoder) noexcept
     {
         this->decoders.ForceAdd(decoder);
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::Decoder(std::initializer_list<const LA32Decoder*> decoders) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::Decoder(std::initializer_list<const LA32Decoder*> decoders) noexcept
     {
         for (auto decoder : decoders)
             this->decoders.ForceAdd(decoder);
@@ -631,19 +643,19 @@ namespace Jasse {
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::Decoder(const LA32DecoderCollection& decoders) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::Decoder(const LA32DecoderCollection& decoders) noexcept
     {
         this->decoders.ForceAddAll(decoders);
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::Memory(LA32MemoryInterface* memory) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::Memory(LA32MemoryInterface* memory) noexcept
     {
         this->memory = memory;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::EnableTrace(size_t unit, size_t maxFactor) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::EnableTrace(size_t unit, size_t maxFactor) noexcept
     {
         this->traceEnabled      = true;
         this->traceUnit         = unit;
@@ -651,69 +663,69 @@ namespace Jasse {
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::DisableTrace() noexcept
+    LA32Instance::Builder& LA32Instance::Builder::DisableTrace() noexcept
     {
         this->traceEnabled      = false;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::EnablePCTracer() noexcept
+    LA32Instance::Builder& LA32Instance::Builder::EnablePCTracer() noexcept
     {
         this->pcTracerEnabled   = true;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::EnablePCTracer(size_t depth) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::EnablePCTracer(size_t depth) noexcept
     {
         this->pcTracerEnabled   = true;
         this->pcTracerDepth     = depth;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::DisablePCTracer() noexcept
+    LA32Instance::Builder& LA32Instance::Builder::DisablePCTracer() noexcept
     {
         this->pcTracerEnabled   = false;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::PCTracerDepth(size_t depth) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::PCTracerDepth(size_t depth) noexcept
     {
         this->pcTracerDepth     = depth;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::EnableGPRTracer() noexcept
+    LA32Instance::Builder& LA32Instance::Builder::EnableGPRTracer() noexcept
     {
         this->gprTracerEnabled  = true;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::EnableGPRTracer(size_t depth) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::EnableGPRTracer(size_t depth) noexcept
     {
         this->gprTracerEnabled  = true;
         this->gprTracerDepth    = depth;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::DisableGPRTracer() noexcept
+    LA32Instance::Builder& LA32Instance::Builder::DisableGPRTracer() noexcept
     {
         this->gprTracerEnabled  = false;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::GPRTracerDepth(size_t depth) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::GPRTracerDepth(size_t depth) noexcept
     {
         this->gprTracerDepth    = depth;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::EnableMemoryTracer() noexcept
+    LA32Instance::Builder& LA32Instance::Builder::EnableMemoryTracer() noexcept
     {
         this->memoryTracerEnabled   = true;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::EnableMemoryTracer(size_t depth, size_t size) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::EnableMemoryTracer(size_t depth, size_t size) noexcept
     {
         this->memoryTracerEnabled   = true;
         this->memoryTracerDepth     = depth;
@@ -721,130 +733,130 @@ namespace Jasse {
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::DisableMemoryTracer() noexcept
+    LA32Instance::Builder& LA32Instance::Builder::DisableMemoryTracer() noexcept
     {
         this->memoryTracerEnabled   = false;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::MemoryTracerDepth(size_t depth) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::MemoryTracerDepth(size_t depth) noexcept
     {
         this->memoryTracerDepth     = depth;
         return *this;
     }
 
-    inline LA32Instance::Builder& LA32Instance::Builder::MemoryTracerSize(size_t size) noexcept
+    LA32Instance::Builder& LA32Instance::Builder::MemoryTracerSize(size_t size) noexcept
     {
         this->memoryTracerSize      = size;
         return *this;
     }
 
-    inline arch32_t LA32Instance::Builder::GPR(int index) const noexcept
+    arch32_t LA32Instance::Builder::GPR(int index) const noexcept
     {
         return this->arch.GPRs()[index];
     }
 
-    inline LA32DecoderCollection& LA32Instance::Builder::Decoders() noexcept
+    LA32DecoderCollection& LA32Instance::Builder::Decoders() noexcept
     {
         return this->decoders;
     }
 
-    inline const LA32DecoderCollection& LA32Instance::Builder::Decoders() const noexcept
+    const LA32DecoderCollection& LA32Instance::Builder::Decoders() const noexcept
     {
         return this->decoders;
     }
 
-    inline LA32MemoryInterface*& LA32Instance::Builder::Memory() noexcept
+    LA32MemoryInterface*& LA32Instance::Builder::Memory() noexcept
     {
         return this->memory;
     }
 
-    inline LA32MemoryInterface* LA32Instance::Builder::Memory() const noexcept
+    LA32MemoryInterface* LA32Instance::Builder::Memory() const noexcept
     {
         return this->memory;
     }
 
-    inline bool LA32Instance::Builder::IsTraceEnabled() const noexcept
+    bool LA32Instance::Builder::IsTraceEnabled() const noexcept
     {
         return this->traceEnabled;
     }
 
-    inline void LA32Instance::Builder::SetTraceEnabled(bool enabled) noexcept
+    void LA32Instance::Builder::SetTraceEnabled(bool enabled) noexcept
     {
         this->traceEnabled = enabled;
     }
 
-    inline size_t LA32Instance::Builder::GetTraceUnit() const noexcept
+    size_t LA32Instance::Builder::GetTraceUnit() const noexcept
     {
         return this->traceUnit;
     }
 
-    inline void LA32Instance::Builder::SetTraceUnit(size_t unit) noexcept
+    void LA32Instance::Builder::SetTraceUnit(size_t unit) noexcept
     {
         this->traceUnit = unit;
     }
 
-    inline size_t LA32Instance::Builder::GetTraceMaxFactor() const noexcept
+    size_t LA32Instance::Builder::GetTraceMaxFactor() const noexcept
     {
         return this->traceMaxFactor;
     }
 
-    inline void LA32Instance::Builder::SetTraceMaxFactor(size_t maxFactor) noexcept
+    void LA32Instance::Builder::SetTraceMaxFactor(size_t maxFactor) noexcept
     {
         this->traceMaxFactor = maxFactor;
     }
 
-    inline bool LA32Instance::Builder::IsPCTracerEnabled() const noexcept
+    bool LA32Instance::Builder::IsPCTracerEnabled() const noexcept
     {
         return this->pcTracerEnabled;
     }
 
-    inline void LA32Instance::Builder::SetPCTracerEnabled(bool enabled) noexcept
+    void LA32Instance::Builder::SetPCTracerEnabled(bool enabled) noexcept
     {
         this->pcTracerEnabled = enabled;
     }
 
-    inline size_t LA32Instance::Builder::GetPCTracerDepth() const noexcept
+    size_t LA32Instance::Builder::GetPCTracerDepth() const noexcept
     {
         return this->pcTracerDepth;
     }
 
-    inline void LA32Instance::Builder::SetPCTracerDepth(size_t depth) noexcept
+    void LA32Instance::Builder::SetPCTracerDepth(size_t depth) noexcept
     {
         this->pcTracerDepth = depth;
     }
 
-    inline bool LA32Instance::Builder::IsMemoryTracerEnabled() const noexcept
+    bool LA32Instance::Builder::IsMemoryTracerEnabled() const noexcept
     {
         return this->memoryTracerEnabled;
     }
 
-    inline void LA32Instance::Builder::SetMemoryTracerEnabled(bool enabled) noexcept
+    void LA32Instance::Builder::SetMemoryTracerEnabled(bool enabled) noexcept
     {
         this->memoryTracerEnabled = enabled;
     }
 
-    inline size_t LA32Instance::Builder::GetMemoryTracerDepth() const noexcept
+    size_t LA32Instance::Builder::GetMemoryTracerDepth() const noexcept
     {
         return this->memoryTracerDepth;
     }
 
-    inline void LA32Instance::Builder::SetMemoryTracerDepth(size_t depth) noexcept
+    void LA32Instance::Builder::SetMemoryTracerDepth(size_t depth) noexcept
     {
         this->memoryTracerDepth = depth;
     }
 
-    inline size_t LA32Instance::Builder::GetMemoryTracerSize() const noexcept
+    size_t LA32Instance::Builder::GetMemoryTracerSize() const noexcept
     {
         return this->memoryTracerSize;
     }
 
-    inline void LA32Instance::Builder::SetMemoryTracerSize(size_t size) noexcept
+    void LA32Instance::Builder::SetMemoryTracerSize(size_t size) noexcept
     {
         this->memoryTracerSize = size;
     }
 
-    inline LA32Instance* LA32Instance::Builder::Build() const noexcept
+    LA32Instance* LA32Instance::Builder::Build() const noexcept
     {
         // copy-on-build
         LA32Instance* instance = new LA32Instance(

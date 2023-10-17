@@ -7,28 +7,28 @@
 
 
 #define impldec_stub_U6L0(name, codepoint) \
-    inline bool LA32R_DECODER_STUB_U6L0(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
+    bool LA32R_DECODER_STUB_U6L0(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
 
 #define impldec_stub_U6L1(name, codepoint) \
-    inline bool LA32R_DECODER_STUB_U6L1(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
+    bool LA32R_DECODER_STUB_U6L1(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
 
 #define impldec_stub_U6L2(name, codepoint) \
-    inline bool LA32R_DECODER_STUB_U6L2(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
+    bool LA32R_DECODER_STUB_U6L2(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
 
 #define impldec_stub_U6L4(name, codepoint) \
-    inline bool LA32R_DECODER_STUB_U6L4(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
+    bool LA32R_DECODER_STUB_U6L4(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
 
 #define impldec_stub_U6L8(name, codepoint) \
-    inline bool LA32R_DECODER_STUB_U6L8(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
+    bool LA32R_DECODER_STUB_U6L8(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
 
 #define impldec_stub_U6L6(name, codepoint) \
-    inline bool LA32R_DECODER_STUB_U6L6(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
+    bool LA32R_DECODER_STUB_U6L6(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
 
 #define impldec_stub_U6L11(name, codepoint) \
-    inline bool LA32R_DECODER_STUB_U6L11(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
+    bool LA32R_DECODER_STUB_U6L11(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
 
 #define impldec_stub_U6L16(name, codepoint) \
-    inline bool LA32R_DECODER_STUB_U6L16(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
+    bool LA32R_DECODER_STUB_U6L16(name)(LA32Instruction& insn) noexcept { insn.SetCodepoint(&codepoint); return true; }
 
 
 namespace Jasse::LA32R_NSCSCC {
@@ -266,7 +266,7 @@ namespace Jasse::LA32R_NSCSCC {
         }
 
 
-    inline Decoder::Decoder() noexcept
+    Decoder::Decoder() noexcept
         : LA32Decoder   ("LA32R-NSCSCC", "la32r")
         , tree          (new LA32DecodeCapable*[64])
     {
@@ -341,7 +341,7 @@ namespace Jasse::LA32R_NSCSCC {
         cpmap_U6L4(   ST_W      );
     }
 
-    inline Decoder::~Decoder() noexcept
+    Decoder::~Decoder() noexcept
     { 
         for (int i = 0; i < 64; ++i)
             if (tree[i] != nullptr)
@@ -349,7 +349,7 @@ namespace Jasse::LA32R_NSCSCC {
         delete[] tree;
     }
 
-    inline bool Decoder::Decode(LA32Instruction& insn) const noexcept
+    bool Decoder::Decode(LA32Instruction& insn) const noexcept
     {
         LA32DecodeCapable* nextNode = tree[GET_LA32_STD_OPERAND(insn.GetRaw(), LA32_OPCODE_U6)];
 
