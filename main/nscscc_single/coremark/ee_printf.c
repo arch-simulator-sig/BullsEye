@@ -662,8 +662,10 @@ ee_vsprintf(char *buf, const char *fmt, va_list args)
 void
 uart_send_char(char c)
 {
-    while (!(*((char*) 0xBFD003FC) & 0x01));
-    *((char*) 0xBFD003F8) = c;
+#ifdef BUILD_LA32R_NSCSCC
+    while (!(*SerialStat & 0x01));
+    *SerialData = c;
+#endif
 }
 
 int

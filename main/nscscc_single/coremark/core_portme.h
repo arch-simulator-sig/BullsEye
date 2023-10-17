@@ -238,6 +238,9 @@ int ee_printf(const char *fmt, ...);
 /* Build set : LA32R NSCSCC
 */
 #ifdef BUILD_LA32R_NSCSCC
+extern ee_u8*  const SerialData;
+extern ee_u8*  const SerialStat;
+extern ee_u32* const CoreTicker;
 #define __BUILD_SPECIFIED
 #endif
 

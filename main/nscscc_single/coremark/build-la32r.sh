@@ -6,9 +6,11 @@ OBJDUMP="loongarch32r-linux-gnusf-objdump"
 
 BUILD_PATH="build-la32r"
 BUILD_FILE="coremark"
-BUILD_ARGS="-nostdlib -mabi=ilp32s -g -O3 \
-    -fno-builtin -fno-tree-loop-distribute-patterns \
-    -DBUILD_LA32R_NSCSCC -DCOMPILER_LA32R_LINUX_GNUSF -DPERFORMANCE_RUN=1"
+
+BUILD_ARGS=" \
+-nostdlib -mabi=ilp32s -g -O3 \
+-fno-builtin -fno-tree-loop-distribute-patterns \
+-DBUILD_LA32R_NSCSCC -DCOMPILER_LA32R_LINUX_GNUSF -DPERFORMANCE_RUN=1"
 
 BUILD_ARGS_PASSTHROUGH="$BUILD_ARGS -DCOMPILER_FLAGS='\"$BUILD_ARGS\"'"
 

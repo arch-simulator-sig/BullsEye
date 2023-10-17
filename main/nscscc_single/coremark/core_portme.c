@@ -37,6 +37,17 @@ volatile ee_s32 seed3_volatile = 0x8;
 #endif
 volatile ee_s32 seed4_volatile = ITERATIONS;
 volatile ee_s32 seed5_volatile = 0;
+
+#ifdef BUILD_LA32R_NSCSCC
+/* Porting : Build set LA32R-NSCSCC
+        Timing and serial functions are mapped to the LA32R-NSCSCC specific.
+*/
+ee_u8*  const SerialData = (ee_u8* ) 0xBFD003F8;
+ee_u8*  const SerialStat = (ee_u8* ) 0xBFD003FC;
+ee_u32* const CoreTicker = (ee_u32*) 0xBFD00400;
+#define __BUILD_SPECIFIED
+#endif
+
 /* Porting : Timing functions
         How to capture time and convert to seconds must be ported to whatever is
    supported by the platform. e.g. Read value from on board RTC, read value from
@@ -46,7 +57,9 @@ volatile ee_s32 seed5_volatile = 0;
 CORETIMETYPE
 barebones_clock()
 {
-    return *((ee_u32*) 0xBFD00400U);
+#ifdef BUILD_LA32R_NSCSCC
+    return *CoreTicker;
+#endif
 }
 /* Define : TIMER_RES_DIVIDER
         Divider to trade off timer resolution and total time that can be
