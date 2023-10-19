@@ -7,13 +7,12 @@ CC := $(GCCPREFIX)g++
 AR := $(GCCPREFIX)ar
 
 OBJDIR := .obj
-ARCDIR := .build
+ARCDIR := $(K221_BE_N1_SOC_LA32_LD_LIBRARY_PATH)
 
 CFLAG := -O3 -std=c++20 -flto -fwhole-program
 
-GLOBAL_INC += -I../../
-GLOBAL_INC += -I../../../
-GLOBAL_INC += -I../../../../ -I../../../../yasio
+GLOBAL_INC += $(K221_CFLAGS_INC_YASIO)
+GLOBAL_INC += $(K221_CFLAGS_INC_BE_MAIN)
 
 
 # main components
@@ -33,13 +32,20 @@ MAIN_OBJ := $(patsubst $(MAIN_SRCDIR)/%.cpp, $(MAIN_OBJDIR)/%.o, $(MAIN_SRC))
 
 
 # static library
-STATICOBJ := $(ARCDIR)/libnscscc2023-la32-soc.a
+STATICOBJ := $(K221_BE_N1_SOC_LA32_LD_LIBRARY)
 
 all: main staticobj
 
-main:: $(OBJDIR) $(MAIN_HPP) $(MAIN_INL) $(MAIN_OBJ)
+main:: checkconfig $(OBJDIR) $(MAIN_HPP) $(MAIN_INL) $(MAIN_OBJ)
 
-staticobj: $(ARCDIR) $(STATICOBJ)
+staticobj: checkconfig $(ARCDIR) $(STATICOBJ)
+
+
+checkconfig:
+ifneq ($(K221_BE_GLOBALCONFIG), true)
+	@echo "You need to run .globalconfig first!"
+	@exit 1
+endif
 
 
 $(MAIN_OBJ): $(MAIN_OBJDIR)/%.o : $(MAIN_SRCDIR)/%.cpp

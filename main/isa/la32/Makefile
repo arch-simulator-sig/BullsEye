@@ -7,12 +7,12 @@ CC := $(GCCPREFIX)g++
 AR := $(GCCPREFIX)ar
 
 OBJDIR := .obj
-ARCDIR := .build
+ARCDIR := $(K221_BE_JASSE2_LA32_LD_LIBRARY_PATH)
 
 CFLAG := -O3 -std=c++20 -flto -fwhole-program
 
 # BullsEye library include path
-GLOBAL_INC := ../../..
+GLOBAL_INC += $(K221_BE_MAIN_ROOT)
 
 # base components directory
 BASE_OBJDIR := $(OBJDIR)/base
@@ -46,7 +46,7 @@ MAIN_OBJ := $(patsubst $(MAIN_SRCDIR)/%.cpp, $(MAIN_OBJDIR)/%.o, $(MAIN_SRC))
 
 
 # static library
-STATICOBJ := $(ARCDIR)/libjasse2-la32.a
+STATICOBJ := $(K221_BE_JASSE2_LA32_LD_LIBRARY)
 
 
 .PHONY: clean
@@ -58,14 +58,21 @@ all: base main extension staticobj
 extension: ext_nscscc
 
 
-base:: $(BASE_OBJDIR) $(BASE_HPP) $(BASE_INL) $(BASE_OBJ)
+base:: checkconfig $(BASE_OBJDIR) $(BASE_HPP) $(BASE_INL) $(BASE_OBJ)
 
-ext_nscscc:: $(EXT_NSCSCC_OBJDIR) $(EXT_NSCSCC_HPP) $(EXT_NSCSCC_INL) $(EXT_NSCSCC_OBJ)
+ext_nscscc:: checkconfig $(EXT_NSCSCC_OBJDIR) $(EXT_NSCSCC_HPP) $(EXT_NSCSCC_INL) $(EXT_NSCSCC_OBJ)
 
-main:: $(MAIN_OBJDIR) $(MAIN_HPP) $(MAIN_INL) $(MAIN_OBJ)
+main:: checkconfig $(MAIN_OBJDIR) $(MAIN_HPP) $(MAIN_INL) $(MAIN_OBJ)
 
 
-staticobj: $(STATICOBJ)
+staticobj: checkconfig $(STATICOBJ)
+
+
+checkconfig:
+ifneq ($(K221_BE_GLOBALCONFIG), true)
+	@echo "You need to run .globalconfig first!"
+	@exit 1
+endif
 
 
 $(BASE_OBJ): $(BASE_OBJDIR)/%.o : $(BASE_SRCDIR)/%.cpp
