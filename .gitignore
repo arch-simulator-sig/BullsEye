@@ -1,0 +1,7 @@
+.share
+.vscode
+.build
+.obj
+.lib
+.local*
+*.user.sh
