@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-#include "common/nonstdint.hpp"
+#include "../nonstdint.hpp"
 
 
 #define     AXI4_AXSIZE_1B              0b000
