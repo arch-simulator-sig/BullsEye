@@ -5,6 +5,9 @@ if [[ "$K221_BE_GLOBALCONFIG" != "true" ]]; then
 fi
 
 #
+export K221_BE_JASSE2_LA32_DEPCONFIG="$K221_BE_JASSE2_LA32_ROOT/.depconfig.sh"
+
+#
 export K221_BE_JASSE2_LA32_LD_LIBRARY_PATH="$K221_BE_JASSE2_LA32_MAIN/.build"
 
 export K221_BE_JASSE2_LA32_LD_LIBRARY_NAME="jasse2-la32"

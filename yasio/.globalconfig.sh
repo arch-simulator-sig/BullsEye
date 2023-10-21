@@ -5,6 +5,9 @@ if [[ "$K221_BE_GLOBALCONFIG" != "true" ]]; then
 fi
 
 #
+export K221_YASIO_DEPCONFIG="$K221_YASIO_ROOT/.depconfig.sh"
+
+#
 export K221_YASIO_LD_LIBRARY_PATH="$K221_YASIO_MAIN/.build"
 
 export K221_YASIO_LD_LIBRARY_NAME="yasio"

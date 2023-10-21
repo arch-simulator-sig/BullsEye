@@ -30,7 +30,7 @@ Usage: link_library [-L <filename>] [-l <var>]\n\
     if [[ -n "$OPT_LDLIB_VAR" ]]; then
 
         if [[ -n "$OPT_LDLIB" ]]; then
-            eval "$OPT_LDLIB_VAR=\"\$$OPT_LDLIB_VAR $OPT_LDLIB\""
+            eval "$OPT_LDLIB_VAR=\"$OPT_LDLIB \$$OPT_LDLIB_VAR\""
         else
             echo "Please specify the library file by parameter \"-L\" while using \"-l\""
             return 1
@@ -147,20 +147,58 @@ Usage: include_library [-I <directory>] [-i <var>]\n\
 
 
 #
+link_library_yasio () {
+    link_library $* -L "$K221_YASIO_LD_LIBRARY"
+    return $?
+}
+
+#
+link_library_jasse2_la32 () {
+    link_library $* -L "$K221_BE_JASSE2_LA32_LD_LIBRARY"
+    return $?
+}
+
+#
+link_library_nscscc2023_la32_soc () {
+    link_library $* -L "$K221_BE_N1_SOC_LA32_LD_LIBRARY"
+    return $?
+}
+
+
+#
 make_library_yasio () {
     make_library $* -t "$K221_YASIO_MAIN" -L "$K221_YASIO_LD_LIBRARY"
     return $?
 }
 
 #
-make_library_jasse2_la32() {
+make_library_jasse2_la32 () {
     make_library $* -t "$K221_BE_JASSE2_LA32_MAIN" -L "$K221_BE_JASSE2_LA32_LD_LIBRARY"
     return $?
 }
 
 #
-make_library_nscscc2023_la32_soc() {
+make_library_nscscc2023_la32_soc () {
     make_library $* -t "$K221_BE_N1_SOC_LA32_MAIN" -L "$K221_BE_N1_SOC_LA32_LD_LIBRARY"
+    return $?
+}
+
+
+#
+build_library_yasio () {
+    make_library_yasio $*
+    return $?
+}
+
+#
+build_library_jasse2_la32 () {
+    make_library_jasse2_la32 $*
+    return $?
+}
+
+#
+build_library_nscscc2023_la32_soc () {
+    make_library_nscscc2023_la32_soc $*
     return $?
 }
 
