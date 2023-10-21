@@ -9,10 +9,13 @@
 #define __HEADER_BULLSEYE_NSCSCC2023_LA32_SOC__SERIAL
 
 
+#include "autoinclude.h"
+
+
 #include <iostream>
 #include <thread>
 
-#include "xxsocket.hpp"
+#include AUTOINC_YASIO(xxsocket.hpp)
 
 
 namespace BullsEye {

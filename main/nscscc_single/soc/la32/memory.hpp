@@ -6,8 +6,10 @@
 #define __HEADER_BULLSEYE_NSCSCC2023_LA32_SOC__MEMORY
 
 
-#include "isa/la32/la32.hpp"
-#include "isa/la32/la32memutil.hpp"
+#include "autoinclude.h"
+
+#include AUTOINC_BE_JASSE2_LA32(la32.hpp)
+#include AUTOINC_BE_JASSE2_LA32(la32memutil.hpp)
 
 
 using namespace Jasse;
