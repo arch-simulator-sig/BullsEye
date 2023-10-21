@@ -12,7 +12,7 @@ ARCDIR := $(K221_BE_JASSE2_LA32_LD_LIBRARY_PATH)
 CFLAG := -O3 -std=c++20 -flto -fwhole-program
 
 # BullsEye library include path
-GLOBAL_INC += $(K221_BE_MAIN_ROOT)
+GLOBAL_INC += $(K221_BE_ROOT)
 
 # base components directory
 BASE_OBJDIR := $(OBJDIR)/base

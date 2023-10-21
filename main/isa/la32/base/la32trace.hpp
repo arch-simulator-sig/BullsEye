@@ -8,6 +8,10 @@
 #ifndef __HEADER_JASSE_LA32__BASE_TRACE
 #define __HEADER_JASSE_LA32__BASE_TRACE
 
+
+#include "autoinclude.h"
+
+
 #include <string_view>
 #include <concepts>
 #include <memory>
@@ -23,8 +27,8 @@
 #include "la32def.hpp"
 #include "la32decode.hpp"
 
-#include "common/util.hpp"
-#include "common/objpool.hpp"
+#include AUTOINC_BE_COMMON(util.hpp)
+#include AUTOINC_BE_COMMON(objpool.hpp)
 
 
 #define CERR_JE3001             "JE-3001: The dedicated type _TContent is too large for LA32TraceEntity to hold"

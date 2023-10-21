@@ -9,12 +9,15 @@
 #define __HEADER_JASSE_LA32__BASE_EVENT
 
 
+#include "autoinclude.h"
+
+
 #include "la32def.hpp"
 #include "la32decode.hpp"
 #include "la32trace.hpp"
 #include "la32mem.hpp"
 
-#include "common/eventbus.hpp"
+#include AUTOINC_BE_COMMON(eventbus.hpp)
 
 
 namespace Jasse {
