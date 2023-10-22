@@ -175,12 +175,15 @@ namespace Jasse {
 
         LA32TraceEntity::Reference  lastFetchTrace;
 
+        unsigned int                eventBusId;
+
     public:
         LA32Instance(const LA32DecoderCollection&   decoders,
-                       const LA32Architectural&     arch,
-                       LA32MemoryInterface*         memory,
-                       LA32TraceEntity::Pool*       tracePool,
-                       LA32TracerContainer&&        tracers) noexcept;
+                     const LA32Architectural&       arch,
+                     LA32MemoryInterface*           memory,
+                     LA32TraceEntity::Pool*         tracePool,
+                     LA32TracerContainer&&          tracers,
+                     unsigned int                   eventBusId) noexcept;
 
         LA32Instance() = delete;
         LA32Instance(const LA32Instance&) = delete;
@@ -221,6 +224,9 @@ namespace Jasse {
         LA32ExecOutcome                 GetLastOutcome() const noexcept;
 
         LA32TraceEntity::Reference      GetLastFetchTrace() const noexcept;
+
+        unsigned int                    GetEventBusId() const noexcept;
+        void                            SetEventBusId(unsigned int id) noexcept;
         
         void                            operator=(const LA32Instance&) = delete;
     };
@@ -248,6 +254,8 @@ namespace Jasse {
         size_t                  memoryTracerDepth;
         size_t                  memoryTracerSize;
 
+        unsigned int            eventBusId;
+
     public:
         Builder() noexcept;
         ~Builder() noexcept;
@@ -262,6 +270,8 @@ namespace Jasse {
         Builder&                        Decoder(const LA32DecoderCollection& decoders) noexcept;
 
         Builder&                        Memory(LA32MemoryInterface* memory) noexcept;
+
+        Builder&                        EventBusId(unsigned int id) noexcept;
 
         //
         Builder&                        EnableTrace(size_t unit, size_t maxFactor) noexcept;
@@ -320,6 +330,9 @@ namespace Jasse {
         void                            SetMemoryTracerDepth(size_t depth) noexcept;
         size_t                          GetMemoryTracerSize() const noexcept;
         void                            SetMemoryTracerSize(size_t size) noexcept;
+
+        unsigned int                    GetEventBusId() const noexcept;
+        void                            SetEventBusId(unsigned int id) noexcept;
 
         //
         LA32Instance*                   Build() const noexcept;

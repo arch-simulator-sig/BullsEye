@@ -103,7 +103,7 @@
         /*Traced Instruction GPR Pre-Read Event*/ \
         LA32TracedInstructionGPRReadEvent preEvent \
             (INSTANCE, PC, INSTRUCTION, index, GPR_src_value(ordinal), ordinal, last); \
-        if (preEvent.Fire().IsCancelled()) \
+        if (preEvent.Fire(INSTANCE.GetEventBusId()).IsCancelled()) \
             return { LA32ExecStatus::EXEC_EMULATION_CANCELLED, ECANCELED }; \
         \
         unsigned int real_index = preEvent.GetIndex(); \
@@ -117,7 +117,7 @@
         /*Traced Instruction GPR Post-Read Event*/ \
         LA32TracedInstructionGPRPostReadEvent postEvent \
             (INSTANCE, PC, INSTRUCTION, real_index, GPR_src_value(ordinal), ordinal, last); \
-        postEvent.Fire(); \
+        postEvent.Fire(INSTANCE.GetEventBusId()); \
         \
         /*Generate GPR source trace (If GPR tracer enabled)*/ \
         if (INSTANCE.IsTraceEnabled() && INSTANCE.Tracers().HasGPRTracer()) \
@@ -135,7 +135,7 @@
         /*Traced Instruction GPR Pre-Modify Event*/ \
         LA32TracedInstructionGPRPreModifyEvent preEvent \
             (INSTANCE, PC, INSTRUCTION, index, GPR(index), GPR_dst_value); \
-        if (preEvent.Fire().IsCancelled()) \
+        if (preEvent.Fire(INSTANCE.GetEventBusId()).IsCancelled()) \
             return { LA32ExecStatus::EXEC_EMULATION_CANCELLED, ECANCELED }; \
         \
         unsigned int real_index = preEvent.GetIndex(); \
@@ -145,7 +145,7 @@
         /*Traced Instruction GPR Post-Modify Event*/ \
         LA32TracedInstructionGPRPostModifyEvent postEvent \
             (INSTANCE, PC, INSTRUCTION, real_index, preEvent.GetOldValue(), GPR_dst_value); \
-        postEvent.Fire(); \
+        postEvent.Fire(INSTANCE.GetEventBusId()); \
         \
         /*Generate GPR destination trace (If GPR tracer enabled)*/ \
         if (INSTANCE.IsTraceEnabled() && INSTANCE.Tracers().HasGPRTracer()) \
@@ -184,7 +184,7 @@
         /*LA32 Traced Memory Pre-Load Event*/ \
         LA32TracedMemoryPreLoadEvent preEvent \
             (INSTANCE, PC, INSTRUCTION, real_address, real_width); \
-        if (preEvent.Fire().IsCancelled()) \
+        if (preEvent.Fire(INSTANCE.GetEventBusId()).IsCancelled()) \
             return { LA32ExecStatus::EXEC_EMULATION_CANCELLED, ECANCELED }; \
         \
         real_address = preEvent.GetAddress(); \
@@ -208,7 +208,7 @@
         /*LA32 Traced Memory Pre-Post-Load Event Base*/ \
         LA32TracedMemoryPrePostLoadEvent prePostEvent \
             (INSTANCE, PC, INSTRUCTION, real_address, real_width, data); \
-        if (prePostEvent.Fire().IsCancelled()) \
+        if (prePostEvent.Fire(INSTANCE.GetEventBusId()).IsCancelled()) \
             return { LA32ExecStatus::EXEC_EMULATION_CANCELLED, ECANCELED }; \
         \
         data = prePostEvent.GetData(); \
@@ -217,7 +217,7 @@
         /*LA32 Traced Memory Post-Post-Load Event Base*/ \
         LA32TracedMemoryPostPostLoadEvent postPostEvent \
             (INSTANCE, PC, INSTRUCTION, real_address, real_width, GPR_dst_value); \
-        postPostEvent.Fire(); \
+        postPostEvent.Fire(INSTANCE.GetEventBusId()); \
         \
         /*Trace and redirect memory data source (Traced as second operand)*/ \
         if (INSTANCE.IsTraceEnabled()) \
@@ -245,7 +245,7 @@
         /*LA32 Traced Memory Pre-Store Event*/ \
         LA32TracedMemoryPreStoreEvent preEvent \
             (INSTANCE, PC, INSTRUCTION, real_address, real_width, real_data); \
-        if (preEvent.Fire().IsCancelled()) \
+        if (preEvent.Fire(INSTANCE.GetEventBusId()).IsCancelled()) \
             return { LA32ExecStatus::EXEC_EMULATION_CANCELLED, ECANCELED }; \
         \
         real_address = preEvent.GetAddress(); \
@@ -272,7 +272,7 @@
         /*LA32 Traced Memory Post-Store Event*/ \
         LA32TracedMemoryPostStoreEvent postEvent \
             (INSTANCE, PC, INSTRUCTION, real_address, real_width, real_data); \
-        postEvent.Fire(); \
+        postEvent.Fire(INSTANCE.GetEventBusId()); \
         \
         /*Generate memory destination trace (If memory tracer enabled)*/ \
         if (INSTANCE.IsTraceEnabled() && INSTANCE.Tracers().HasMemoryTracer()) \
@@ -443,11 +443,11 @@
     LA32ExecOutcome LA32R_EXECUTOR(name)(LA32R_EXECUTOR_PARAMS) noexcept \
     { \
         LA32Instruction __insn = insn; \
-        if (PreExecutionEvent::name(inst, PC, __insn).Fire().IsCancelled()) \
+        if (PreExecutionEvent::name(inst, PC, __insn).Fire(INSTANCE.GetEventBusId()).IsCancelled()) \
             return { LA32ExecStatus::EXEC_EMULATION_CANCELLED, ECANCELED }; \
         auto __expr = [&](LA32Instruction& insn) -> LA32ExecOutcome { expr }; \
         LA32ExecOutcome outcome = __expr(__insn); \
-        return (PostExecutionEvent::name(inst, PC, __insn, outcome).Fire().GetOutcome()); \
+        return (PostExecutionEvent::name(inst, PC, __insn, outcome).Fire(INSTANCE.GetEventBusId()).GetOutcome()); \
     }
 
 
