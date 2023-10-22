@@ -142,11 +142,6 @@
         \
         GPR_dst_value = preEvent.GetNewValue(); \
         \
-        /*Traced Instruction GPR Post-Modify Event*/ \
-        LA32TracedInstructionGPRPostModifyEvent postEvent \
-            (INSTANCE, PC, INSTRUCTION, real_index, preEvent.GetOldValue(), GPR_dst_value); \
-        postEvent.Fire(INSTANCE.GetEventBusId()); \
-        \
         /*Generate GPR destination trace (If GPR tracer enabled)*/ \
         if (INSTANCE.IsTraceEnabled() && INSTANCE.Tracers().HasGPRTracer()) \
         { \
@@ -171,6 +166,11 @@
         \
         /*Write GPR*/ \
         GPR(index) = GPR_dst_value; \
+        \
+        /*Traced Instruction GPR Post-Modify Event*/ \
+        LA32TracedInstructionGPRPostModifyEvent postEvent \
+            (INSTANCE, PC, INSTRUCTION, real_index, preEvent.GetOldValue(), GPR_dst_value); \
+        postEvent.Fire(INSTANCE.GetEventBusId()); \
     }
 
 
