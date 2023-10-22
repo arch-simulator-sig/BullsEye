@@ -12,11 +12,12 @@ namespace Jasse {
     LA32ExecOutcome LA32Instance::Eval()
     {
         //
-        
+        if (LA32InstancePreEvalEvent(*this).Fire(GetEventBusId()).IsCancelled())
+            return (this->lastOutcome = { LA32ExecStatus::EMULATION_CANCELLED, ECANCELED });
 
         // Instruction fetch
         if (LA32InstructionPreFetchEvent(*this, arch.PC()).Fire(GetEventBusId()).IsCancelled())
-            return { LA32ExecStatus::FETCH_EMULATION_CANCELLED, ECANCELED };
+            return (this->lastOutcome = { LA32ExecStatus::FETCH_EMULATION_CANCELLED, ECANCELED });
 
         memdata_t fetched;
         LA32MOPOutcome mopoutcome = memory->ReadInsn(arch.PC(), MOPW_WORD, &fetched);
@@ -79,19 +80,19 @@ namespace Jasse {
 
         // Instruction decode
         if (LA32InstructionPreDecodeEvent(*this, arch.PC(), insn).Fire(GetEventBusId()).IsCancelled())
-            return { LA32ExecStatus::DECODE_EMULATION_CANCELLED, ECANCELED };
+            return (this->lastOutcome = { LA32ExecStatus::DECODE_EMULATION_CANCELLED, ECANCELED });
 
         if (!decoders.Decode(insn))
-            return { LA32ExecStatus::EXEC_NOT_DECODED, ECANCELED };
+            return (this->lastOutcome = { LA32ExecStatus::EXEC_NOT_DECODED, ECANCELED });
 
         if (!insn.GetExecutor())
-            return { LA32ExecStatus::EXEC_NOT_IMPLEMENTED, ECANCELED };
+            return (this->lastOutcome = { LA32ExecStatus::EXEC_NOT_IMPLEMENTED, ECANCELED });
 
         LA32InstructionPostDecodeEvent(*this, arch.PC(), insn).Fire(GetEventBusId());
 
         // Instruction execution
         if (LA32InstructionPreExecutionEvent(*this, arch.PC(), insn).Fire(GetEventBusId()).IsCancelled())
-            return { LA32ExecStatus::EXEC_EMULATION_CANCELLED, ECANCELED };
+            return (this->lastOutcome = { LA32ExecStatus::EXEC_EMULATION_CANCELLED, ECANCELED });
 
         LA32ExecOutcome outcome_exec = insn.GetExecutor()(insn, *this);
 
@@ -135,19 +136,13 @@ namespace Jasse {
         lastOutcome = outcome_exec;
 
         //
-
+        LA32InstancePostEvalEvent(*this).Fire(GetEventBusId());
 
         //
         return outcome_exec;
     }
 }
 
-#include "la32.hpp"
-//
-// LA32 (NSCSCC) ISA Emulator (Jasse)
-//
-//
-//
 
 
 // Implementation of: class LA32GPRs

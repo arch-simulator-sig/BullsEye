@@ -1196,3 +1196,24 @@ namespace Jasse {
         , LA32TracedMemoryPostStoreEventBase(address, width, data)
     { }
 }
+
+
+
+// Implementation of: class LA32InstancePreEvalEvent
+namespace Jasse {
+
+    LA32InstancePreEvalEvent::LA32InstancePreEvalEvent(
+            LA32Instance&       instance) noexcept
+        : LA32InstanceEventBase (instance)
+    { }
+}
+
+
+// Implementation of: class LA32InstancePostEvalEvent
+namespace Jasse {
+
+    LA32InstancePostEvalEvent::LA32InstancePostEvalEvent(
+            LA32Instance&       instance) noexcept
+        : LA32InstanceEventBase (instance)
+    { }
+}

@@ -131,7 +131,12 @@ namespace Jasse {
         FETCH_EMULATION_CANCELLED,
 
         // Fetch Procedure Error occurred in Emulator.
-        FETCH_EMULATION_ERROR
+        FETCH_EMULATION_ERROR,
+
+
+        // Cancelled by Emulator.
+        EMULATION_CANCELLED
+        
     } LA32ExecStatus;
 
     // LA32 Instruction Execution Outcome

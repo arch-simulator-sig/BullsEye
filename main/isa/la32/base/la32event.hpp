@@ -751,6 +751,26 @@ namespace Jasse {
             LA32MOPWidth                width,
             memdata_t                   data) noexcept;
     };
+
+
+    // LA32 Instance Pre-Eval Event
+    class LA32InstancePreEvalEvent
+        : public LA32InstanceEventBase
+        , public BullsEye::Event<LA32InstancePreEvalEvent>
+        , public BullsEye::CancellableEvent {
+    public:
+        LA32InstancePreEvalEvent(
+            LA32Instance&       instance) noexcept;
+    };
+
+    // LA32 Instance Post-Eval Event
+    class LA32InstancePostEvalEvent
+        : public LA32InstanceEventBase
+        , public BullsEye::Event<LA32InstancePostEvalEvent> {
+    public:
+        LA32InstancePostEvalEvent(
+            LA32Instance&       instance) noexcept;
+    };
 }
 
 
