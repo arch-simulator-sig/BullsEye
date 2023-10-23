@@ -53,6 +53,11 @@ namespace BullsEye {
         { static_assert(std::is_base_of_v<Event<_TEvent>, _TEvent>, CERR_EB3001); }
     };
 
+    template<template<typename> typename _TListener, class _TEvent>
+    inline void RegisterListener(std::shared_ptr<_TListener<_TEvent>> listener, unsigned int busId = 0) noexcept
+    { Event<_TEvent>::Register(listener, busId); }
+
+
     // Cancellable Event
     class CancellableEvent {
     private:
@@ -82,7 +87,7 @@ namespace BullsEye {
         const std::string&          GetName() const noexcept;
         int                         GetPriority() const noexcept;
 
-        virtual void                OnEvent(_TEvent& event) = 0;
+        virtual void                OnEvent(_TEvent& event);
     };
 
 
@@ -174,6 +179,27 @@ namespace BullsEye {
     template<class _TEvent>
     using FunctionalEventListener   = EventListenerFunctionalStub<_TEvent>;
 
+    template<class _TEvent>
+    inline std::shared_ptr<FunctionalEventListener<_TEvent>>
+        MakeListener(const std::string& name, int priority, std::function<void(_TEvent&)>&& func) noexcept
+    { return std::make_shared<FunctionalEventListener<_TEvent>>(name, priority, func); }
+
+    template<class _TEvent>
+    inline std::shared_ptr<FunctionalEventListener<_TEvent>>
+        MakeListener(const std::string& name, int priority, void(*func)(_TEvent&)) noexcept
+    { return std::make_shared<FunctionalEventListener<_TEvent>>(name, priority, func); }
+    
+    template<class _TEvent, class _Tx>
+    inline std::shared_ptr<FunctionalEventListener<_TEvent>>
+        MakeListener(const std::string& name, int priority, void(_Tx::* mfunc)(_TEvent&), _Tx* mthis) noexcept
+    { return std::make_shared<FunctionalEventListener<_TEvent>>(name, priority, std::bind(mfunc, mthis, std::placeholders::_1)); }
+
+    template<class _TEvent, class _Tx>
+    inline std::shared_ptr<FunctionalEventListener<_TEvent>>
+        MakeListener(const std::string& name, int priority, void(_Tx::* mfunc)(_TEvent&) const, const _Tx* mthis) noexcept
+    { return std::make_shared<FunctionalEventListener<_TEvent>>(name, priority, std::bind(mfunc, mthis, std::placeholders::_1)); }
+
+
     // Event Handler Reference
     template<class _TEvent>
     class EventListenerReference : public EventListener<_TEvent> {
@@ -193,6 +219,35 @@ namespace BullsEye {
     template<class _TEvent>
     using RefEventListener          = EventListenerReference<_TEvent>;
 
+
+    //
+    template<class _TEvent>
+    inline void UnregisterListener(const std::string& name, unsigned int busId = 0) noexcept
+    { Event<_TEvent>::Unregister(name, busId); }
+
+    template<template<typename> typename _TListener, class _TEvent>
+    inline void UnregisterListener(const std::string& name, [[maybe_unused]] const _TListener<_TEvent>& listener, unsigned int busId = 0) noexcept
+    { Event<_TEvent>::Unregister(name, busId); }
+
+    template<template<typename> typename _TListener, class _TEvent>
+    inline void UnregisterListener(const std::string& name, [[maybe_unused]] const std::shared_ptr<_TListener<_TEvent>>& listener, unsigned int busId = 0) noexcept
+    { Event<_TEvent>::Unregister(name, busId); }
+
+    template<class _TEvent>
+    inline void UnregisterListener(const std::string& name, [[maybe_unused]] std::function<void(_TEvent&)>&& func, unsigned int busId = 0) noexcept
+    { Event<_TEvent>::Unregister(name, busId); }
+
+    template<class _TEvent>
+    inline void UnregisterListener(const std::string& name, [[maybe_unused]] void(*func)(_TEvent&), unsigned int busId = 0) noexcept
+    { Event<_TEvent>::Unregister(name, busId); }
+
+    template<class _TEvent, class _Tx>
+    inline void UnregisterListener(const std::string& name, [[maybe_unused]] void(_Tx::* mfunc)(_TEvent&), unsigned int busId = 0) noexcept
+    { Event<_TEvent>::Unregister(name, busId); }
+
+    template<class _TEvent, class _Tx>
+    inline void UnregisterListener(const std::string& name, [[maybe_unused]] void(_Tx::* mfunc)(_TEvent&) const, unsigned int busId = 0) noexcept
+    { Event<_TEvent>::Unregister(name, busId); }
 }
 
 
