@@ -419,7 +419,7 @@ namespace BullsEye {
     inline int EventBus<_TEvent>::Unregister(const std::string& name) noexcept
     {
         auto epos = std::remove_if(list.begin(), list.end(), 
-            [name](EventListener<_TEvent>* obj) -> bool {
+            [name](std::shared_ptr<EventListener<_TEvent>> obj) -> bool {
                 return obj->GetName() == name;
             });
 
