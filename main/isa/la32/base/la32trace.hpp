@@ -13,21 +13,13 @@
 
 
 #include <string_view>
-#include <concepts>
-#include <memory>
-#include <algorithm>
-#include <bitset>
 #include <optional>
 #include <functional>
-#include <utility>
-#include <limits>
-#include <stdexcept>
 #include <cstdint>
 
 #include "la32def.hpp"
 #include "la32decode.hpp"
 
-#include AUTOINC_BE_COMMON(util.hpp)
 #include AUTOINC_BE_COMMON(objpool.hpp)
 
 

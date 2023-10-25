@@ -1,9 +1,11 @@
-#include "la32trace.hpp"
+//#include "la32trace.hpp"
 //
 // LA32 (NSCSCC) ISA Emulator (Jasse)
 //
 // Trace Subsystem Infrastructures
 //
+
+#include <limits>
 
 
 // Template implementation of: class LA32TraceEntity

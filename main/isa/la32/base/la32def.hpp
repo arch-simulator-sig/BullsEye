@@ -140,10 +140,10 @@ namespace Jasse {
     } LA32ExecStatus;
 
     // LA32 Instruction Execution Outcome
-    typedef struct {
+    struct LA32ExecOutcome {
         LA32ExecStatus  status;
         errno_t         error = 0;
-    } LA32ExecOutcome;
+    };
 
 }
 

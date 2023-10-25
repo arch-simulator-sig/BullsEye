@@ -10,7 +10,6 @@
 
 
 #include <cstdint>
-#include <cerrno>
 
 #include "la32def.hpp"
 
@@ -23,27 +22,27 @@ namespace Jasse {
     typedef     addr32_t        addr_t;
 
     // LA32 Memory Operation Status
-    typedef enum class __tag_LA32MOPStatus {
+    enum class LA32MOPStatus {
         MOP_SUCCESS = 0,
         MOP_ADDRESS_MISALIGNED,
         MOP_ACCESS_FAULT,
         MOP_EMULATION_FAULT,
         MOP_SYSTEM_ERROR,
         MOP_DEVICE_ERROR
-    } LA32MOPStatus;
+    };
 
     // LA32 Memory Operation Outcome
-    typedef struct {
+    struct LA32MOPOutcome {
         LA32MOPStatus status;
         errno_t         error = 0;
-    } LA32MOPOutcome;
+    };
 
     // LA32 Memory Operation Width
-    typedef struct {
+    struct LA32MOPWidth {
         uint32_t    mask;
         uint16_t    alignment;
         uint16_t    length;
-    } LA32MOPWidth;
+    };
 
     bool operator==(const LA32MOPWidth& lhs, const LA32MOPWidth& rhs) noexcept;
     bool operator!=(const LA32MOPWidth& lhs, const LA32MOPWidth& rhs) noexcept;
@@ -54,7 +53,7 @@ namespace Jasse {
 
 
     // Type definition of LA32 Memory Data
-    typedef union {
+    union memdata_t {
         uint32_t    data32;     // word
         uint16_t    data16;     // half-word
         uint8_t     data8;      // byte
@@ -66,7 +65,7 @@ namespace Jasse {
         explicit operator int32_t() const noexcept;
         explicit operator int16_t() const noexcept;
         explicit operator int8_t() const noexcept;
-    } memdata_t;
+    };
 
     // LA32 Memory Interface
     class LA32MemoryInterface {

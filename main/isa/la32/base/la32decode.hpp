@@ -9,7 +9,6 @@
 #define __HEADER_JASSE_LA32__BASE_DECODE
 
 
-#include <list>
 #include <string>
 #include <initializer_list>
 #include <optional>

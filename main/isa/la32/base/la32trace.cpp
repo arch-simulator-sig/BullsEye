@@ -5,6 +5,8 @@
 // Trace Subsystem Infrastructures
 //
 
+#include AUTOINC_BE_COMMON(util.hpp)
+
 
 // explicit instantiation
 namespace Jasse {
