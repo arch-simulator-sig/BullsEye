@@ -6,7 +6,6 @@
 
 #include <cstring>
 #include <string>
-#include <algorithm>
 
 
 namespace BullsEye {

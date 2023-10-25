@@ -5,7 +5,6 @@
 //
 
 #include <list>
-#include <bitset>
 #include <memory>
 
 
