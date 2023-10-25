@@ -8,7 +8,7 @@
 #define __HEADER_JASSE_LA32__ADDON__DIFFTEST
 
 
-#include "la32.hpp"
+#include "../la32.hpp"
 
 
 namespace Jasse {

@@ -9,7 +9,7 @@
 #define __HEADER_JASSE_LA32__EXT_NSCSCC_EXPORT_DEF
 
 
-#include "la32.hpp"
+#include "la32_nscscc_def_base.hpp"
 
 
 // LA32-NSCSCC codepoint exporting declarations
