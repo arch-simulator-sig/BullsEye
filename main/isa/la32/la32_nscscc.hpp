@@ -9,7 +9,7 @@
 #define __HEADER_JASSE_LA32_NSCSCC
 
 
-#include "la32_nscscc/la32_nscscc_export.hpp"
+#include "la32_nscscc/la32_nscscc_export.hpp"   // IWYU pragma: export
 
 
 #endif

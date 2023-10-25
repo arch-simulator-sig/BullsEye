@@ -4,10 +4,8 @@
 //
 //
 
-#include <memory>
 #include <sstream>
 #include <iomanip>
-#include <functional>
 
 
 // Implementation of: class LA32Increment

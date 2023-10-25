@@ -9,10 +9,8 @@
 #define __HEADER_JASSE
 
 
-#include <cstring>
-#include <string>
-#include <sstream>
-#include <stdexcept>
+#include <sstream>              // IWYU pragma: export
+#include <stdexcept>            // IWYU pragma: export
 
 
 #define __JASSE_ASSERTION

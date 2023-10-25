@@ -10,8 +10,6 @@
 #define __HEADER_JASSE_LA32_MEMUTIL
 
 
-#include <algorithm>
-
 #include "base/la32mem.hpp"
 
 

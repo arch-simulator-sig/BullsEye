@@ -8,20 +8,18 @@
 #ifndef __HEADER_JASSE_LA32
 #define __HEADER_JASSE_LA32
 
-
-#include <algorithm>
 #include <initializer_list>
 
-#include "jasse.hpp"
+#include "jasse.hpp"                // IWYU pragma: export
 
-#include "base/la32def.hpp"
-#include "base/la32code.hpp"
-#include "base/la32decode.hpp"
-#include "base/la32mem.hpp"
-#include "base/la32event.hpp"
-#include "base/la32trace.hpp"
-#include "base/la32encode.hpp"
-#include "base/la32disasm.hpp"
+#include "base/la32def.hpp"         // IWYU pragma: export
+#include "base/la32code.hpp"        // IWYU pragma: export
+#include "base/la32decode.hpp"      // IWYU pragma: export
+#include "base/la32mem.hpp"         // IWYU pragma: export
+#include "base/la32event.hpp"       // IWYU pragma: export
+#include "base/la32trace.hpp"       // IWYU pragma: export
+#include "base/la32encode.hpp"      // IWYU pragma: export
+#include "base/la32disasm.hpp"      // IWYU pragma: export
 
 
 namespace Jasse {

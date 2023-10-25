@@ -1,4 +1,4 @@
-#include "la32memutil.hpp"
+//#include "la32memutil.hpp"
 //
 // LA32 (NSCSCC) ISA Emulator (Jasse)
 //
@@ -6,6 +6,9 @@
 //
 
 #include <cstring>
+#include <cerrno>
+
+#include <algorithm>
 
 
 // Implementation of: class HarvardMemoryInterface
