@@ -44,6 +44,15 @@ MAIN_HPP := $(wildcard $(MAIN_SRCDIR)/*.hpp)
 MAIN_SRC := $(wildcard $(MAIN_SRCDIR)/*.cpp)
 MAIN_OBJ := $(patsubst $(MAIN_SRCDIR)/%.cpp, $(MAIN_OBJDIR)/%.o, $(MAIN_SRC))
 
+# addon components
+ADDON_OBJDIR := $(OBJDIR)/addon
+ADDON_SRCDIR := addon
+
+ADDON_INL := $(foreach sdir, $(ADDON_SRCDIR), $(wildcard $(sdir)/*.inl))
+ADDON_HPP := $(foreach sdir, $(ADDON_SRCDIR), $(wildcard $(sdir)/*.hpp))
+ADDON_SRC := $(foreach sdir, $(ADDON_SRCDIR), $(wildcard $(sdir)/*.cpp))
+ADDON_OBJ := $(patsubst $(ADDON_SRCDIR)/%.cpp, $(ADDON_OBJDIR)/%.o, $(ADDON_SRC))
+
 
 # static library
 STATICOBJ := $(K221_BE_JASSE2_LA32_LD_LIBRARY)
@@ -52,7 +61,7 @@ STATICOBJ := $(K221_BE_JASSE2_LA32_LD_LIBRARY)
 .PHONY: clean
 
 
-all: base main extension staticobj
+all: base main extension addon staticobj
 
 
 extension: ext_nscscc
@@ -63,6 +72,8 @@ base:: checkconfig $(BASE_OBJDIR) $(BASE_HPP) $(BASE_INL) $(BASE_OBJ)
 ext_nscscc:: checkconfig $(EXT_NSCSCC_OBJDIR) $(EXT_NSCSCC_HPP) $(EXT_NSCSCC_INL) $(EXT_NSCSCC_OBJ)
 
 main:: checkconfig $(MAIN_OBJDIR) $(MAIN_HPP) $(MAIN_INL) $(MAIN_OBJ)
+
+addon:: checkconfig $(ADDON_OBJDIR) $(ADDON_HPP) $(ADDON_INL) $(ADDON_OBJ)
 
 
 staticobj: checkconfig $(STATICOBJ)
@@ -87,8 +98,12 @@ $(MAIN_OBJ): $(MAIN_OBJDIR)/%.o : $(MAIN_SRCDIR)/%.cpp
 	$(CC) -o $@ $< -fPIE -c -I$(GLOBAL_INC) -I. $(CFLAG)
 
 
-$(STATICOBJ): $(ARCDIR) $(MAIN_OBJ) $(BASE_OBJ) $(EXT_NSCSCC_OBJ)
-	$(AR) -rcs $(STATICOBJ) $(MAIN_OBJ) $(BASE_OBJ) $(EXT_NSCSCC_OBJ)
+$(ADDON_OBJ): $(ADDON_OBJDIR)/%.o : $(ADDON_SRCDIR)/%.cpp
+	$(CC) -o $@ $< -fPIE -c -I$(GLOBAL_INC) -I. $(CFLAG)
+
+
+$(STATICOBJ): $(ARCDIR) $(MAIN_OBJ) $(BASE_OBJ) $(EXT_NSCSCC_OBJ) $(ADDON_OBJ)
+	$(AR) -rcs $(STATICOBJ) $(MAIN_OBJ) $(BASE_OBJ) $(EXT_NSCSCC_OBJ) $(ADDON_OBJ)
 
 
 $(ARCDIR) $(OBJDIR):
@@ -98,6 +113,9 @@ $(BASE_OBJDIR):
 	test -d $@ || mkdir -p $@
 
 $(EXT_NSCSCC_OBJDIR):
+	test -d $@ || mkdir -p $@
+
+$(ADDON_OBJDIR):
 	test -d $@ || mkdir -p $@
 
 clean:
