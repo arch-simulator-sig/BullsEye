@@ -7,8 +7,6 @@
 
 #include <cstdint>
 
-#include "mips32r5def.hpp"
-
 
 #ifndef __HEADER_MIPS32_DEFINITIONS
 

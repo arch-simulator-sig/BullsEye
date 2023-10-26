@@ -18,14 +18,14 @@ namespace BullsEye {
     };
 
     // 
-    using DFFResetZero      = decltype([] (auto& obj) { dst = 0; });
+    using DFFResetZero      = decltype([] (auto& dst) { dst = 0; });
 
     //
     template<auto _Val>
-    using DFFResetValue     = decltype([] (auto& obj) { dst = _Val; });
+    using DFFResetValue     = decltype([] (auto& dst) { dst = _Val; });
 
     //
-    using DFFNoReset        = decltype([] (auto& obj) {});
+    using DFFNoReset        = decltype([] (auto& dst) {});
 
 
     // Normal DFF
