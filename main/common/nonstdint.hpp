@@ -208,6 +208,9 @@ namespace BullsEye {
         _Tuv    val;
 
     public:
+        using value_type = _Tuv;
+
+    public:
         constexpr _truncated_uint_base() noexcept;
         constexpr _truncated_uint_base(const _truncated_uint_base<_Tsv, _Tuv, _L>&) noexcept;
         constexpr _truncated_uint_base(const _truncated_int_base<_Tsv, _Tuv, _L>&) noexcept;
@@ -314,6 +317,9 @@ namespace BullsEye {
 
     private:
         _Tsv    val;
+
+    public:
+        using value_type = _Tsv;
 
     public:
         constexpr _truncated_int_base() noexcept;
