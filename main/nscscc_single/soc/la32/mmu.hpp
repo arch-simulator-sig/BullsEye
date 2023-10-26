@@ -6,14 +6,10 @@
 #define __HEADER_BULLSEYE_NSCSCC2023_LA32_SOC__MMU
 
 
-#include <algorithm>
-
 #include "memory.hpp"
 #include "serial.hpp"
 #include "counter.hpp"
 
-
-using namespace Jasse;
 
 namespace BullsEye::NSCSCCSingle {
 

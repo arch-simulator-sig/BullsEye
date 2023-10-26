@@ -11,10 +11,6 @@
 
 #include "autoinclude.h"
 
-
-#include <iostream>
-#include <thread>
-
 #include AUTOINC_YASIO(xxsocket.hpp)
 
 

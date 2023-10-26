@@ -12,8 +12,6 @@
 #include AUTOINC_BE_JASSE2_LA32(la32memutil.hpp)
 
 
-using namespace Jasse;
-
 namespace BullsEye::NSCSCCSingle {
     
     // 32b Aligned 4MB On-board Memory

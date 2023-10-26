@@ -5,10 +5,7 @@
 #ifndef __HEADER_BULLSEYE_NSCSCC2023_LA32_SOC__COUNTER
 #define __HEADER_BULLSEYE_NSCSCC2023_LA32_SOC__COUNTER
 
-
-#include "autoinclude.h"
-
-#include AUTOINC_BE_JASSE2_LA32(la32.hpp)
+#include <cstdint>
 
 
 namespace BullsEye::NSCSCCSingle {
