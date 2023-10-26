@@ -20,6 +20,10 @@ namespace BullsEye::Draconids3014::uop40 {
         : value (value)
     { }
 
+    imm26_t::imm26_t(uint26_t::value_type value) noexcept
+        : value (value)
+    { }
+
     uint26_t imm26_t::Get() const noexcept
     {
         return value;

@@ -31,6 +31,7 @@ namespace BullsEye::Draconids3014 {
         public:
             imm26_t() noexcept;
             imm26_t(uint26_t value) noexcept;
+            imm26_t(uint26_t::value_type value) noexcept;
 
             uint26_t    Get() const noexcept;
             void        Set(uint26_t value) noexcept;

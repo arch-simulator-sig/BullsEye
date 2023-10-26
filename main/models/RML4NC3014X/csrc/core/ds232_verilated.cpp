@@ -1,9 +1,14 @@
 #include "ds232_verilated.hpp"
 
 
+#include "ds232_event.hpp"
+
+
 // Implementation of: class Thinpad
 namespace BullsEye::Draconids3014 {
     /*
+    unsigned int                    eventBusId;
+
     VerilatedVcdC*                  fp; // to form *.vcd file
 
     DS232*                          core;
@@ -11,11 +16,14 @@ namespace BullsEye::Draconids3014 {
 
     bool                            next_reset;
 
+    FetchIDTracker                  fid_tracker;
+
     vluint64_t                      eval_time;
     */
 
-    Thinpad::Thinpad(VerilatedVcdC* fp, NSCSCCSingle::NSCSCC2023SoC* soc) noexcept
-        : fp            (fp)
+    Thinpad::Thinpad(unsigned int eventBusId, VerilatedVcdC* fp, NSCSCCSingle::NSCSCC2023SoC* soc) noexcept
+        : eventBusId    (eventBusId)
+        , fp            (fp)
         , core          (new DS232)
         , soc_axi       (new SoCAXIBridgeDualChannel(soc))
         , next_reset    (false)
@@ -26,7 +34,8 @@ namespace BullsEye::Draconids3014 {
     }
 
     Thinpad::Thinpad(Thinpad&& obj) noexcept
-        : fp            (obj.fp)
+        : eventBusId    (obj.eventBusId)
+        , fp            (obj.fp)
         , core          (obj.core)
         , soc_axi       (obj.soc_axi)
         , next_reset    (obj.next_reset)
@@ -41,6 +50,11 @@ namespace BullsEye::Draconids3014 {
     {
         delete this->core;
         delete this->soc_axi;
+    }
+
+    unsigned int Thinpad::GetEventBusId() const noexcept
+    {
+        return this->eventBusId;
     }
 
     VerilatedVcdC* Thinpad::GetVCD() noexcept
@@ -71,6 +85,16 @@ namespace BullsEye::Draconids3014 {
     const SoCAXIBridgeDualChannel* Thinpad::GetSoCAXI() const noexcept
     {
         return this->soc_axi;
+    }
+
+    FetchIDTracker& Thinpad::GetFetchIDTracker() noexcept
+    {
+        return this->fid_tracker;
+    }
+
+    const FetchIDTracker& Thinpad::GetFetchIDTracker() const noexcept
+    {
+        return this->fid_tracker;
     }
 
     vluint64_t Thinpad::GetEvalTime() const noexcept
@@ -238,6 +262,95 @@ namespace BullsEye::Draconids3014 {
                 this->core->mem_axi_m_rvalid    = bundle.rvalid;
             }
 
+
+            // update fetch id tracker & event
+            if (this->core->predispatch0_valid)
+            {
+                FetchIDTrack& track = this->fid_tracker.At(this->core->predispatch0_fid);
+
+                track.SetPC(this->core->predispatch0_pc);
+                track.SetUOP({
+                    .imm26      = this->core->predispatch0_uop_imm26,
+                    .regctrl_w  = this->core->predispatch0_uop_regctrl_w,
+                    .regctrl_r  = this->core->predispatch0_uop_regctrl_r,
+                    .waystone   = this->core->predispatch0_uop_waystone,
+                    .imm2       = this->core->predispatch0_uop_imm2,
+                    .cmd        = this->core->predispatch0_uop_cmd
+                });
+
+                DS232PreDispatchEvent(this->core, track).Fire(eventBusId);
+            }
+
+            if (this->core->predispatch1_valid)
+            {
+                FetchIDTrack& track = this->fid_tracker.At(this->core->predispatch1_fid);
+
+                track.SetPC(this->core->predispatch1_pc);
+                track.SetUOP({
+                    .imm26      = this->core->predispatch1_uop_imm26,
+                    .regctrl_w  = this->core->predispatch1_uop_regctrl_w,
+                    .regctrl_r  = this->core->predispatch1_uop_regctrl_r,
+                    .waystone   = this->core->predispatch1_uop_waystone,
+                    .imm2       = this->core->predispatch1_uop_imm2,
+                    .cmd        = this->core->predispatch1_uop_cmd
+                });
+
+                DS232PreDispatchEvent(this->core, track).Fire(eventBusId);
+            }
+
+
+            // main commit event
+            if (this->core->commit0_en)
+            {
+                DS232MainCommitEvent(
+                    this->core,
+                    this->core->commit0_fid,
+                    this->core->commit0_reg_addr,
+                    this->core->commit0_reg_data
+                ).Fire(eventBusId);
+            }
+
+            if (this->core->commit1_en)
+            {
+                DS232MainCommitEvent(
+                    this->core,
+                    this->core->commit1_fid,
+                    this->core->commit1_reg_addr,
+                    this->core->commit1_reg_data
+                ).Fire(eventBusId);
+            }
+
+
+            // rob commit event
+            if (this->core->commit0_rob_en)
+            {
+                DS232ROBCommitEvent(
+                    this->core,
+                    this->core->commit0_rob_fid,
+                    this->core->commit0_rob_reg_dst,
+                    this->core->commit0_rob_reg_value,
+                    this->core->commit0_rob_store,
+                    this->core->commit0_rob_uload,
+                    this->core->commit0_rob_uload_addr,
+                    this->core->commit0_rob_uload_cmd
+                ).Fire(eventBusId);
+            }
+
+            if (this->core->commit1_rob_en)
+            {
+                DS232ROBCommitEvent(
+                    this->core,
+                    this->core->commit1_rob_fid,
+                    this->core->commit1_rob_reg_dst,
+                    this->core->commit1_rob_reg_value,
+                    this->core->commit1_rob_store,
+                    this->core->commit1_rob_uload,
+                    this->core->commit1_rob_uload_addr,
+                    this->core->commit1_rob_uload_cmd
+                ).Fire(eventBusId);
+            }
+
+
             // core eval
             _EvalCoreClockNegative();
             _EvalCoreClockPositive();
@@ -252,17 +365,26 @@ namespace BullsEye::Draconids3014 {
 // Implementation of: class Thinpad::Builder
 namespace BullsEye::Draconids3014 {
     /*
+    unsigned int                    eventBusId;
+
     VerilatedVcdC*                  fp; // to form *.vcd file
     NSCSCCSingle::NSCSCC2023SoC*    soc;
     */
 
-    Thinpad::Builder::Builder() noexcept:
-        fp(nullptr),
-        soc(nullptr)
+    Thinpad::Builder::Builder() noexcept
+        : eventBusId    (0)
+        , fp            (nullptr)
+        , soc           (nullptr)
     {}
 
     Thinpad::Builder::~Builder() noexcept
     {}
+
+    Thinpad::Builder& Thinpad::Builder::EventBusId(unsigned int eventBusId) noexcept
+    {
+        this->eventBusId = eventBusId;
+        return *this;
+    }
 
     Thinpad::Builder& Thinpad::Builder::VCD(VerilatedVcdC* fp) noexcept
     {
@@ -274,6 +396,16 @@ namespace BullsEye::Draconids3014 {
     {
         this->soc = soc;
         return *this;
+    }
+
+    unsigned int Thinpad::Builder::GetEventBusId() const noexcept
+    {
+        return this->eventBusId;
+    }
+
+    void Thinpad::Builder::SetEventBusId(unsigned int eventBusId) noexcept
+    {
+        this->eventBusId = eventBusId;
     }
 
     VerilatedVcdC* Thinpad::Builder::GetVCD() noexcept
@@ -308,6 +440,6 @@ namespace BullsEye::Draconids3014 {
 
     Thinpad* Thinpad::Builder::Build() noexcept
     {
-        return new Thinpad(this->fp, this->soc);
+        return new Thinpad(this->eventBusId, this->fp, this->soc);
     }
 }

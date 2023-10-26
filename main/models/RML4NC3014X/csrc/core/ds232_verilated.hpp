@@ -11,7 +11,7 @@
 
 #include "../soc/soc_axi.hpp"
 
-#include "ds232_event.hpp"
+#include "ds232_fetch.hpp"
 
 
 namespace BullsEye::Draconids3014 {
@@ -25,10 +25,15 @@ namespace BullsEye::Draconids3014 {
         class Builder;
 
     private:
+        unsigned int                    eventBusId;
+
+    private:
         VerilatedVcdC*                  fp; // to form *.vcd file
 
         DS232*                          core;
         SoCAXIBridgeDualChannel*        soc_axi;
+
+        FetchIDTracker                  fid_tracker;
 
         bool                            next_reset;
 
@@ -37,7 +42,7 @@ namespace BullsEye::Draconids3014 {
     protected:
         friend class Builder;
 
-        Thinpad(VerilatedVcdC* fp, NSCSCCSingle::NSCSCC2023SoC* soc) noexcept;
+        Thinpad(unsigned int eventBusId, VerilatedVcdC* fp, NSCSCCSingle::NSCSCC2023SoC* soc) noexcept;
 
     private:
         void                            _EvalCoreClockPositive() noexcept;
@@ -49,6 +54,8 @@ namespace BullsEye::Draconids3014 {
 
         Thinpad(const Thinpad&) = delete;
 
+        unsigned int                    GetEventBusId() const noexcept;
+
         VerilatedVcdC*                  GetVCD() noexcept;
         const VerilatedVcdC*            GetVCD() const noexcept;
 
@@ -57,6 +64,9 @@ namespace BullsEye::Draconids3014 {
 
         SoCAXIBridgeDualChannel*        GetSoCAXI() noexcept;
         const SoCAXIBridgeDualChannel*  GetSoCAXI() const noexcept;
+
+        FetchIDTracker&                 GetFetchIDTracker() noexcept;
+        const FetchIDTracker&           GetFetchIDTracker() const noexcept;
 
         vluint64_t                      GetEvalTime() const noexcept;
 
@@ -68,6 +78,8 @@ namespace BullsEye::Draconids3014 {
     // Draconids 3014 Thinpad Builder
     class Thinpad::Builder {
     private:
+        unsigned int                    eventBusId;
+
         VerilatedVcdC*                  fp; // to form *.vcd file
         NSCSCCSingle::NSCSCC2023SoC*    soc;
 
@@ -75,8 +87,12 @@ namespace BullsEye::Draconids3014 {
         Builder() noexcept;
         ~Builder() noexcept;
 
+        Builder&                            EventBusId(unsigned int eventBusId) noexcept;
         Builder&                            VCD(VerilatedVcdC* fp) noexcept;
         Builder&                            SoC(NSCSCCSingle::NSCSCC2023SoC* soc) noexcept;
+
+        unsigned int                        GetEventBusId() const noexcept;
+        void                                SetEventBusId(unsigned int eventBusId) noexcept;
 
         VerilatedVcdC*                      GetVCD() noexcept;
         const VerilatedVcdC*                GetVCD() const noexcept;
