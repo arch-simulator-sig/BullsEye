@@ -4,11 +4,15 @@
 //
 //
 
+#include "soc_axi_event.hpp"
+
 
 // Implementation of: class SoCAXIBridgeDualChannel
 namespace BullsEye::Draconids3014 {
 
     /*
+    unsigned int                            eventBusId;
+
     NSCSCCSingle::NSCSCC2023SoC*            soc;
 
     //
@@ -94,8 +98,9 @@ namespace BullsEye::Draconids3014 {
     bool                                    next_reset;
     */
 
-    SoCAXIBridgeDualChannel::SoCAXIBridgeDualChannel(NSCSCCSingle::NSCSCC2023SoC* soc) noexcept
-        : soc                   (soc)
+    SoCAXIBridgeDualChannel::SoCAXIBridgeDualChannel(NSCSCCSingle::NSCSCC2023SoC* soc, unsigned int eventBusId) noexcept
+        : eventBusId            (eventBusId)
+        , soc                   (soc)
         , bus_clock_divider     (0)
         , fetch_i_axi4ar        ()
         , fetch_i_axi4r         ()
@@ -118,7 +123,8 @@ namespace BullsEye::Draconids3014 {
     { }
 
     SoCAXIBridgeDualChannel::SoCAXIBridgeDualChannel(const SoCAXIBridgeDualChannel& obj) noexcept
-        : soc                   (obj.soc)
+        : eventBusId            (obj.eventBusId)
+        , soc                   (obj.soc)
         , bus_clock_divider     (obj.bus_clock_divider)
         , fetch_i_axi4ar        (obj.fetch_i_axi4ar)
         , fetch_i_axi4r         (obj.fetch_i_axi4r)
@@ -141,7 +147,8 @@ namespace BullsEye::Draconids3014 {
     { }
 
     SoCAXIBridgeDualChannel::SoCAXIBridgeDualChannel(SoCAXIBridgeDualChannel&& obj) noexcept
-        : soc                   (obj.soc)
+        : eventBusId            (obj.eventBusId)
+        , soc                   (obj.soc)
         , bus_clock_divider     (obj.bus_clock_divider)
         , fetch_i_axi4ar        (obj.fetch_i_axi4ar)
         , fetch_i_axi4r         (obj.fetch_i_axi4r)
@@ -165,6 +172,16 @@ namespace BullsEye::Draconids3014 {
 
     SoCAXIBridgeDualChannel::~SoCAXIBridgeDualChannel() noexcept
     { }
+
+    unsigned int SoCAXIBridgeDualChannel::GetEventBusId() const noexcept
+    {
+        return this->eventBusId;
+    }
+
+    NSCSCCSingle::NSCSCC2023SoC* SoCAXIBridgeDualChannel::GetSoC() const noexcept
+    {
+        return this->soc;
+    }
 
     unsigned int SoCAXIBridgeDualChannel::GetBusClockDivider() const noexcept
     {
@@ -485,6 +502,14 @@ namespace BullsEye::Draconids3014 {
 
     void SoCAXIBridgeDualChannel::_EvalFetchChannel() noexcept
     {
+        //
+        SoCAXIBridgeFetchReadAddressChannelM2SPreEvent  (this, fetch_i_axi4ar).Fire(eventBusId);
+        SoCAXIBridgeFetchReadAddressChannelM2SPostEvent (this, fetch_i_axi4ar).Fire(eventBusId);
+
+        //
+        SoCAXIBridgeFetchReadDataChannelM2SPreEvent     (this, fetch_i_axi4r).Fire(eventBusId);
+        SoCAXIBridgeFetchReadDataChannelM2SPostEvent    (this, fetch_i_axi4r).Fire(eventBusId);
+
         // Fetch Channel logic
         ReadState fetch_read_state_next = fetch_read_state;
 
@@ -543,6 +568,9 @@ namespace BullsEye::Draconids3014 {
 
                 if (fetch_read_state_next == ReadState::AXI_READ_DATA)
                 {
+                    SoCAXIBridgeFetchReadAddressAcceptedPreEvent (this, fetch_i_axi4ar).Fire(eventBusId);
+                    SoCAXIBridgeFetchReadAddressAcceptedPostEvent(this, fetch_i_axi4ar).Fire(eventBusId);
+
                     fetch_read_id       = fetch_i_axi4ar.arid;
                     fetch_read_addr     = fetch_i_axi4ar.araddr;
                     fetch_read_mode     = fetch_i_axi4ar.arburst;
@@ -596,6 +624,8 @@ namespace BullsEye::Draconids3014 {
                     {
                         if (fetch_o_axi4r.rvalid && fetch_i_axi4r.rready)
                         {
+                            SoCAXIBridgeFetchReadDataAcceptedPostEvent(this, fetch_o_axi4r).Fire(eventBusId);
+
                             fetch_read_trans_accepted++;
 
                             if (fetch_read_trans_accepted == fetch_read_trans_readed)
@@ -681,10 +711,38 @@ namespace BullsEye::Draconids3014 {
 
         //
         fetch_read_state = fetch_read_state_next;
+
+        //
+        SoCAXIBridgeFetchReadAddressChannelS2MPreEvent  (this, fetch_o_axi4ar).Fire(eventBusId);
+        SoCAXIBridgeFetchReadAddressChannelS2MPostEvent (this, fetch_o_axi4ar).Fire(eventBusId);
+
+        //
+        SoCAXIBridgeFetchReadDataChannelS2MPreEvent     (this, fetch_o_axi4r).Fire(eventBusId);
+        SoCAXIBridgeFetchReadDataChannelS2MPostEvent    (this, fetch_o_axi4r).Fire(eventBusId);
     }
 
     void SoCAXIBridgeDualChannel::_EvalDataChannel() noexcept
     {
+        //
+        SoCAXIBridgeDataReadAddressChannelM2SPreEvent   (this, data_i_axi4ar).Fire(eventBusId);
+        SoCAXIBridgeDataReadAddressChannelM2SPostEvent  (this, data_i_axi4ar).Fire(eventBusId);
+
+        //
+        SoCAXIBridgeDataReadDataChannelM2SPreEvent      (this, data_i_axi4r).Fire(eventBusId);
+        SoCAXIBridgeDataReadDataChannelM2SPostEvent     (this, data_i_axi4r).Fire(eventBusId);
+
+        //
+        SoCAXIBridgeDataWriteAddressChannelM2SPreEvent  (this, data_i_axi4aw).Fire(eventBusId);
+        SoCAXIBridgeDataWriteAddressChannelM2SPostEvent (this, data_i_axi4aw).Fire(eventBusId);
+
+        //
+        SoCAXIBridgeDataWriteDataChannelM2SPreEvent     (this, data_i_axi4w).Fire(eventBusId);
+        SoCAXIBridgeDataWriteDataChannelM2SPostEvent    (this, data_i_axi4w).Fire(eventBusId);
+
+        //
+        SoCAXIBridgeDataWriteResponseChannelM2SPreEvent (this, data_i_axi4b).Fire(eventBusId);
+        SoCAXIBridgeDataWriteResponseChannelM2SPostEvent(this, data_i_axi4b).Fire(eventBusId);
+
         // Data Write Channel logic
         WriteState data_write_state_next = data_write_state;
 
@@ -754,6 +812,9 @@ namespace BullsEye::Draconids3014 {
 
                 if (data_write_state_next == WriteState::AXI_WRITE_DATA)
                 {
+                    SoCAXIBridgeDataWriteAddressAcceptedPreEvent (this, data_i_axi4aw).Fire(eventBusId);
+                    SoCAXIBridgeDataWriteAddressAcceptedPostEvent(this, data_i_axi4aw).Fire(eventBusId);
+
                     data_write_id       = data_i_axi4aw.awid;
                     data_write_addr     = data_i_axi4aw.awaddr;
                     data_write_mode     = data_i_axi4aw.awburst;
@@ -814,11 +875,15 @@ namespace BullsEye::Draconids3014 {
                             // TODO
                         }
 
+                        SoCAXIBridgeDataWriteDataAcceptedPreEvent (this, data_i_axi4w).Fire(eventBusId);
+
                         if (data_i_axi4w.wlast && data_write_trans_received < data_write_length) [[unlikely]]
                         {
                             // bus write transaction underflow
                             // TODO
                         }
+
+                        SoCAXIBridgeDataWriteDataAcceptedPostEvent(this, data_i_axi4w).Fire(eventBusId);
 
                         data_write_trans_last = data_i_axi4w.wlast;
                         data_write_trans_buffer[data_write_trans_received++] 
@@ -859,7 +924,11 @@ namespace BullsEye::Draconids3014 {
             case WriteState::AXI_WRITE_RESP:
 
                 if (data_write_state_next == WriteState::AXI_WRITE_IDLE)
+                {
+                    SoCAXIBridgeDataWriteResponseAcceptedPostEvent(this, data_o_axi4b).Fire(eventBusId);
+
                     data_o_axi4b.bvalid = false;
+                }
 
                 break;
 
@@ -999,6 +1068,9 @@ namespace BullsEye::Draconids3014 {
 
                 if (data_read_state_next == ReadState::AXI_READ_DATA)
                 {
+                    SoCAXIBridgeDataReadAddressAcceptedPreEvent (this, data_i_axi4ar).Fire(eventBusId);
+                    SoCAXIBridgeDataReadAddressAcceptedPostEvent(this, data_i_axi4ar).Fire(eventBusId);
+
                     data_read_id       = data_i_axi4ar.arid;
                     data_read_addr     = data_i_axi4ar.araddr;
                     data_read_mode     = data_i_axi4ar.arburst;
@@ -1044,6 +1116,8 @@ namespace BullsEye::Draconids3014 {
                     {
                         if (data_o_axi4r.rvalid && data_i_axi4r.rready)
                         {
+                            SoCAXIBridgeDataReadDataAcceptedPostEvent(this, data_o_axi4r).Fire(eventBusId);
+
                             data_read_trans_accepted++;
 
                             if (data_read_trans_accepted == data_read_trans_readed)
@@ -1124,6 +1198,26 @@ namespace BullsEye::Draconids3014 {
         //
         data_write_state    = data_write_state_next; 
         data_read_state     = data_read_state_next;
+
+        //
+        SoCAXIBridgeDataReadAddressChannelS2MPreEvent   (this, data_o_axi4ar).Fire(eventBusId);
+        SoCAXIBridgeDataReadAddressChannelS2MPostEvent  (this, data_o_axi4ar).Fire(eventBusId);
+
+        //
+        SoCAXIBridgeDataReadDataChannelS2MPreEvent      (this, data_o_axi4r).Fire(eventBusId);
+        SoCAXIBridgeDataReadDataChannelS2MPostEvent     (this, data_o_axi4r).Fire(eventBusId);
+
+        //
+        SoCAXIBridgeDataWriteAddressChannelS2MPreEvent  (this, data_o_axi4aw).Fire(eventBusId);
+        SoCAXIBridgeDataWriteAddressChannelS2MPostEvent (this, data_o_axi4aw).Fire(eventBusId);
+
+        //
+        SoCAXIBridgeDataWriteDataChannelS2MPreEvent     (this, data_o_axi4w).Fire(eventBusId);
+        SoCAXIBridgeDataWriteDataChannelS2MPostEvent    (this, data_o_axi4w).Fire(eventBusId);
+
+        //
+        SoCAXIBridgeDataWriteResponseChannelS2MPreEvent (this, data_o_axi4b).Fire(eventBusId);
+        SoCAXIBridgeDataWriteResponseChannelS2MPostEvent(this, data_o_axi4b).Fire(eventBusId);
     }
 
     void SoCAXIBridgeDualChannel::Eval(bool enable) noexcept

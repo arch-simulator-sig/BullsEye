@@ -50,9 +50,62 @@ namespace BullsEye::Draconids3014 {
 
     using DataAXI4WriteResponseChannelS2M   = AXI4::WriteResponseChannelS2M<uint4_t>;
 
+
+    // SoC AXI Bridge interface
+    class SoCAXIBridge {
+    public:
+        //
+        virtual unsigned int                            GetEventBusId() const noexcept = 0;
+        virtual NSCSCCSingle::NSCSCC2023SoC*            GetSoC() const noexcept = 0;
+
+        //
+        virtual unsigned int                            GetBusClockDivider() const noexcept = 0;
+        virtual void                                    SetBusClockDivider(unsigned int divider) noexcept = 0;
+
+        //
+        virtual void                                    NextFetchReadAddressM2S(const FetchAXI4ReadAddressChannelM2S& bundle) noexcept = 0;
+        virtual void                                    NextFetchReadDataM2S(const FetchAXI4ReadDataChannelM2S& bundle) noexcept = 0;
+
+        virtual void                                    NextDataReadAddressM2S(const DataAXI4ReadAddressChannelM2S& bundle) noexcept = 0;
+        virtual void                                    NextDataReadDataM2S(const DataAXI4ReadDataChannelM2S& bundle) noexcept = 0;
+
+        virtual void                                    NextDataWriteAddressM2S(const DataAXI4WriteAddressChannelM2S& bundle) noexcept = 0;
+        virtual void                                    NextDataWriteDataM2S(const DataAXI4WriteDataChannelM2S& bundle) noexcept = 0;
+        virtual void                                    NextDataWriteResponseM2S(const DataAXI4WriteResponseChannelM2S& bundle) noexcept = 0;
+
+        //
+        virtual const FetchAXI4ReadAddressChannelM2S&   GetNextFetchReadAddressM2S() const noexcept = 0;
+        virtual const FetchAXI4ReadDataChannelM2S&      GetNextFetchReadDataM2S() const noexcept = 0;
+
+        virtual const DataAXI4ReadAddressChannelM2S&    GetNextDataReadAddressM2S() const noexcept = 0;
+        virtual const DataAXI4ReadDataChannelM2S&       GetNextDataReadDataM2S() const noexcept = 0;
+
+        virtual const DataAXI4WriteAddressChannelM2S&   GetNextDataWriteAddressM2S() const noexcept = 0;
+        virtual const DataAXI4WriteDataChannelM2S&      GetNextDataWriteDataM2S() const noexcept = 0;
+        virtual const DataAXI4WriteResponseChannelM2S&  GetNextDataWriteResponseM2S() const noexcept = 0;
+
+        //
+        virtual const FetchAXI4ReadAddressChannelS2M&   GetFetchReadAddressS2M() const noexcept = 0;
+        virtual const FetchAXI4ReadDataChannelS2M&      GetFetchReadDataS2M() const noexcept = 0;
+
+        virtual const DataAXI4ReadAddressChannelS2M&    GetDataReadAddressS2M() const noexcept = 0;
+        virtual const DataAXI4ReadDataChannelS2M&       GetDataReadDataS2M() const noexcept = 0;
+
+        virtual const DataAXI4WriteAddressChannelS2M&   GetDataWriteAddressS2M() const noexcept = 0;
+        virtual const DataAXI4WriteDataChannelS2M&      GetDataWriteDataS2M() const noexcept = 0;
+        virtual const DataAXI4WriteResponseChannelS2M&  GetDataWriteResponseS2M() const noexcept = 0;
+
+        //
+        virtual void                                    NextReset(bool reset = true) noexcept = 0;
+
+        //
+        virtual void                                    Reset() noexcept = 0;
+        virtual void                                    Eval(bool enable = true) noexcept = 0;
+    };
+
     
     //
-    class SoCAXIBridgeDualChannel {
+    class SoCAXIBridgeDualChannel : public SoCAXIBridge {
     private:
         enum class ReadState {
             AXI_READ_IDLE = 0,
@@ -70,6 +123,8 @@ namespace BullsEye::Draconids3014 {
         };
 
     private:
+        unsigned int                            eventBusId;
+
         NSCSCCSingle::NSCSCC2023SoC*            soc;
 
         //
@@ -166,56 +221,60 @@ namespace BullsEye::Draconids3014 {
         void                                    _EvalDataChannel() noexcept;
 
     public:
-        SoCAXIBridgeDualChannel(NSCSCCSingle::NSCSCC2023SoC* soc) noexcept;
+        SoCAXIBridgeDualChannel(NSCSCCSingle::NSCSCC2023SoC* soc, unsigned int eventBusId = 0) noexcept;
 
         SoCAXIBridgeDualChannel(const SoCAXIBridgeDualChannel& obj) noexcept;
         SoCAXIBridgeDualChannel(SoCAXIBridgeDualChannel&& obj) noexcept;
 
-        ~SoCAXIBridgeDualChannel() noexcept;
+        virtual ~SoCAXIBridgeDualChannel() noexcept;
 
         //
-        unsigned int                            GetBusClockDivider() const noexcept;
-        void                                    SetBusClockDivider(unsigned int divider) noexcept;
+        virtual unsigned int                            GetEventBusId() const noexcept override;
+        virtual NSCSCCSingle::NSCSCC2023SoC*            GetSoC() const noexcept override;
 
         //
-        void                                    NextFetchReadAddressM2S(const FetchAXI4ReadAddressChannelM2S& bundle) noexcept;
-        void                                    NextFetchReadDataM2S(const FetchAXI4ReadDataChannelM2S& bundle) noexcept;
-
-        void                                    NextDataReadAddressM2S(const DataAXI4ReadAddressChannelM2S& bundle) noexcept;
-        void                                    NextDataReadDataM2S(const DataAXI4ReadDataChannelM2S& bundle) noexcept;
-
-        void                                    NextDataWriteAddressM2S(const DataAXI4WriteAddressChannelM2S& bundle) noexcept;
-        void                                    NextDataWriteDataM2S(const DataAXI4WriteDataChannelM2S& bundle) noexcept;
-        void                                    NextDataWriteResponseM2S(const DataAXI4WriteResponseChannelM2S& bundle) noexcept;
+        virtual unsigned int                            GetBusClockDivider() const noexcept override;
+        virtual void                                    SetBusClockDivider(unsigned int divider) noexcept override;
 
         //
-        const FetchAXI4ReadAddressChannelM2S&   GetNextFetchReadAddressM2S() const noexcept;
-        const FetchAXI4ReadDataChannelM2S&      GetNextFetchReadDataM2S() const noexcept;
+        virtual void                                    NextFetchReadAddressM2S(const FetchAXI4ReadAddressChannelM2S& bundle) noexcept override;
+        virtual void                                    NextFetchReadDataM2S(const FetchAXI4ReadDataChannelM2S& bundle) noexcept override;
 
-        const DataAXI4ReadAddressChannelM2S&    GetNextDataReadAddressM2S() const noexcept;
-        const DataAXI4ReadDataChannelM2S&       GetNextDataReadDataM2S() const noexcept;
+        virtual void                                    NextDataReadAddressM2S(const DataAXI4ReadAddressChannelM2S& bundle) noexcept override;
+        virtual void                                    NextDataReadDataM2S(const DataAXI4ReadDataChannelM2S& bundle) noexcept override;
 
-        const DataAXI4WriteAddressChannelM2S&   GetNextDataWriteAddressM2S() const noexcept;
-        const DataAXI4WriteDataChannelM2S&      GetNextDataWriteDataM2S() const noexcept;
-        const DataAXI4WriteResponseChannelM2S&  GetNextDataWriteResponseM2S() const noexcept;
-
-        //
-        const FetchAXI4ReadAddressChannelS2M&   GetFetchReadAddressS2M() const noexcept;
-        const FetchAXI4ReadDataChannelS2M&      GetFetchReadDataS2M() const noexcept;
-
-        const DataAXI4ReadAddressChannelS2M&    GetDataReadAddressS2M() const noexcept;
-        const DataAXI4ReadDataChannelS2M&       GetDataReadDataS2M() const noexcept;
-
-        const DataAXI4WriteAddressChannelS2M&   GetDataWriteAddressS2M() const noexcept;
-        const DataAXI4WriteDataChannelS2M&      GetDataWriteDataS2M() const noexcept;
-        const DataAXI4WriteResponseChannelS2M&  GetDataWriteResponseS2M() const noexcept;
+        virtual void                                    NextDataWriteAddressM2S(const DataAXI4WriteAddressChannelM2S& bundle) noexcept override;
+        virtual void                                    NextDataWriteDataM2S(const DataAXI4WriteDataChannelM2S& bundle) noexcept override;
+        virtual void                                    NextDataWriteResponseM2S(const DataAXI4WriteResponseChannelM2S& bundle) noexcept override;
 
         //
-        void                                    NextReset(bool reset = true) noexcept;
+        virtual const FetchAXI4ReadAddressChannelM2S&   GetNextFetchReadAddressM2S() const noexcept override;
+        virtual const FetchAXI4ReadDataChannelM2S&      GetNextFetchReadDataM2S() const noexcept override;
+
+        virtual const DataAXI4ReadAddressChannelM2S&    GetNextDataReadAddressM2S() const noexcept override;
+        virtual const DataAXI4ReadDataChannelM2S&       GetNextDataReadDataM2S() const noexcept override;
+
+        virtual const DataAXI4WriteAddressChannelM2S&   GetNextDataWriteAddressM2S() const noexcept override;
+        virtual const DataAXI4WriteDataChannelM2S&      GetNextDataWriteDataM2S() const noexcept override;
+        virtual const DataAXI4WriteResponseChannelM2S&  GetNextDataWriteResponseM2S() const noexcept override;
 
         //
-        void                                    Reset() noexcept;
-        void                                    Eval(bool enable = true) noexcept;
+        virtual const FetchAXI4ReadAddressChannelS2M&   GetFetchReadAddressS2M() const noexcept override;
+        virtual const FetchAXI4ReadDataChannelS2M&      GetFetchReadDataS2M() const noexcept override;
+
+        virtual const DataAXI4ReadAddressChannelS2M&    GetDataReadAddressS2M() const noexcept override;
+        virtual const DataAXI4ReadDataChannelS2M&       GetDataReadDataS2M() const noexcept override;
+
+        virtual const DataAXI4WriteAddressChannelS2M&   GetDataWriteAddressS2M() const noexcept override;
+        virtual const DataAXI4WriteDataChannelS2M&      GetDataWriteDataS2M() const noexcept override;
+        virtual const DataAXI4WriteResponseChannelS2M&  GetDataWriteResponseS2M() const noexcept override;
+
+        //
+        virtual void                                    NextReset(bool reset = true) noexcept override;
+
+        //
+        virtual void                                    Reset() noexcept override;
+        virtual void                                    Eval(bool enable = true) noexcept override;
     };
 
 
@@ -230,7 +289,7 @@ namespace BullsEye::Draconids3014 {
         SoCAXIBridgeSingleChannel(const SoCAXIBridgeSingleChannel& obj) noexcept;
         SoCAXIBridgeSingleChannel(SoCAXIBridgeSingleChannel&& obj) noexcept;
 
-        ~SoCAXIBridgeSingleChannel() noexcept;
+        virtual ~SoCAXIBridgeSingleChannel() noexcept;
     };
 }
 
