@@ -1,5 +1,6 @@
 .share
 .vscode
+.vs
 .build
 .obj
 .lib
