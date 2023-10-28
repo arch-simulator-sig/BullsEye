@@ -148,6 +148,12 @@ namespace Jasse {
 }
 
 
+namespace BullsEye {
+    // to export Jasse namespace to the BullsEye global namespace
+    using namespace Jasse;
+}
+
+
 // Integral extension
 #define SEXT32_H(expr)      ((uint32_t) ((int16_t)  (expr)))
 #define SEXT32_B(expr)      ((uint32_t) ((int8_t)   (expr)))

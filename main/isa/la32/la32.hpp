@@ -22,12 +22,6 @@
 #include "base/la32disasm.hpp"      // IWYU pragma: export
 
 
-namespace BullsEye {
-    // to export Jasse namespace to the BullsEye global namespace
-    using namespace Jasse;
-}
-
-
 namespace Jasse {
 
     // LA32 General Purpose Registers container
