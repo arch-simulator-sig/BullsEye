@@ -21,6 +21,12 @@ namespace Jasse {
 
     typedef     addr32_t        addr_t;
 
+    // LA32 Memory Operation Path
+    enum class LA32MOPPath {
+        MOP_INSN = 0,
+        MOP_DATA
+    };
+
     // LA32 Memory Operation Status
     enum class LA32MOPStatus {
         MOP_SUCCESS = 0,
@@ -28,7 +34,9 @@ namespace Jasse {
         MOP_ACCESS_FAULT,
         MOP_EMULATION_FAULT,
         MOP_SYSTEM_ERROR,
-        MOP_DEVICE_ERROR
+        MOP_DEVICE_ERROR,
+
+        MOP_INVALID_PATH
     };
 
     // LA32 Memory Operation Outcome
@@ -71,6 +79,9 @@ namespace Jasse {
     class LA32MemoryInterface {
     public:
         virtual ~LA32MemoryInterface() noexcept {};
+
+        LA32MOPOutcome            Read(LA32MOPPath path, addr_t address, LA32MOPWidth width, memdata_t* dst) noexcept;
+        LA32MOPOutcome            Write(LA32MOPPath path, addr_t address, LA32MOPWidth width, memdata_t src) noexcept;
 
         virtual LA32MOPOutcome    ReadInsn(addr_t address, LA32MOPWidth width, memdata_t* dst) noexcept = 0;
         virtual LA32MOPOutcome    ReadData(addr_t address, LA32MOPWidth width, memdata_t* dst) noexcept = 0;

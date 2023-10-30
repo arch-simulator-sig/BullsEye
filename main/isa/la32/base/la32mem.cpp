@@ -6,6 +6,9 @@
 //
 
 
+#include <cerrno>
+
+
 // Implementation of: struct LA32MOPWidth
 namespace Jasse {
 
@@ -52,5 +55,40 @@ namespace Jasse {
     memdata_t::operator int8_t() const noexcept
     {
         return data8;
+    }
+}
+
+
+// Implementation of: class LA32MemoryInterface
+namespace Jasse {
+
+    LA32MOPOutcome LA32MemoryInterface::Read(LA32MOPPath path, addr_t address, LA32MOPWidth width, memdata_t* dst) noexcept
+    {
+        switch (path) 
+        {
+            case LA32MOPPath::MOP_INSN:
+                return ReadInsn(address, width, dst);
+
+            case LA32MOPPath::MOP_DATA:
+                return ReadData(address, width, dst);
+
+            [[unlikely]] default:
+                return { LA32MOPStatus::MOP_INVALID_PATH, ENOSYS };
+        }
+    }
+
+    LA32MOPOutcome LA32MemoryInterface::Write(LA32MOPPath path, addr_t address, LA32MOPWidth width, memdata_t src) noexcept
+    {
+        switch (path) 
+        {
+            case LA32MOPPath::MOP_INSN:
+                return WriteInsn(address, width, src);
+
+            case LA32MOPPath::MOP_DATA:
+                return WriteData(address, width, src);
+
+            [[unlikely]] default:
+                return { LA32MOPStatus::MOP_INVALID_PATH, ENOSYS };
+        }
     }
 }
