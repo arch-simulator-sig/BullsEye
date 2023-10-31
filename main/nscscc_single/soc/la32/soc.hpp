@@ -17,6 +17,8 @@ namespace BullsEye::NSCSCCSingle {
     // NSCSCC 2023 SoC Instance
     class NSCSCC2023SoC {
     private:
+        unsigned int        eventBusId;
+
         BaseRAM*            baseRAM;
         ExtRAM*             extRAM;
 
@@ -31,13 +33,16 @@ namespace BullsEye::NSCSCCSingle {
 
     private:
         friend class Builder;
-        NSCSCC2023SoC(BaseRAM*              baseRAM, 
+        NSCSCC2023SoC(unsigned int          eventBusId,
+                      BaseRAM*              baseRAM, 
                       ExtRAM*               extRAM, 
                       SerialInterface*      serial, 
                       const ClockCounter&   clk_counter) noexcept;
 
     public:
         ~NSCSCC2023SoC() noexcept;
+
+        unsigned int            GetEventBusId();
 
         BaseRAM*                BaseDOGGIES() noexcept;
         const BaseRAM*          BaseDOGGIES() const noexcept;
@@ -58,6 +63,8 @@ namespace BullsEye::NSCSCCSingle {
     // NSCSCC 2023 SoC Instance Builder
     class NSCSCC2023SoC::Builder {
     private:
+        unsigned int        eventBusId;
+
         BaseRAM*            baseRAM;
         ExtRAM*             extRAM;
 
@@ -67,9 +74,13 @@ namespace BullsEye::NSCSCCSingle {
         Builder() noexcept;
         ~Builder() noexcept;
 
+        Builder&                EventBusId(unsigned int eventBusId) noexcept;
         Builder&                BaseDOGGIES(BaseRAM* baseRAM) noexcept;
         Builder&                ExtDOGGIES(ExtRAM* extRAM) noexcept;
         Builder&                Serial(SerialInterface* serial) noexcept;
+
+        unsigned int&           EventBusId() noexcept;
+        unsigned int            EventBusId() const noexcept;
 
         BaseRAM*&               BaseDOGGIES() noexcept;
         const BaseRAM*          BaseDOGGIES() const noexcept;

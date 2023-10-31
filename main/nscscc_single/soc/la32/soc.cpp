@@ -6,6 +6,8 @@
 // Implementation of: class NSCSCC2023SoC
 namespace BullsEye::NSCSCCSingle {
     //
+    // unsigned int        eventBusId;
+    //
     // BaseRAM*            baseRAM;
     // ExtRAM*             extRAM;
     //
@@ -16,19 +18,26 @@ namespace BullsEye::NSCSCCSingle {
     // NSCSCC2023MMU       mmu;
     //
 
-    NSCSCC2023SoC::NSCSCC2023SoC(BaseRAM*               baseRAM, 
+    NSCSCC2023SoC::NSCSCC2023SoC(unsigned int           eventBusId,
+                                 BaseRAM*               baseRAM, 
                                  ExtRAM*                extRAM, 
                                  SerialInterface*       serial,
                                  const ClockCounter&    clk_counter) noexcept
-        : baseRAM       (baseRAM)
+        : eventBusId    (eventBusId)
+        , baseRAM       (baseRAM)
         , extRAM        (extRAM)
         , serial        (serial)
         , clk_counter   (clk_counter)
-        , mmu           (baseRAM, extRAM, serial, &(this->clk_counter))
+        , mmu           (eventBusId, baseRAM, extRAM, serial, &(this->clk_counter))
     { }
 
     NSCSCC2023SoC::~NSCSCC2023SoC() noexcept
     { }
+
+    unsigned int NSCSCC2023SoC::GetEventBusId()
+    {
+        return eventBusId;
+    }
 
     BaseRAM* NSCSCC2023SoC::BaseDOGGIES() noexcept
     {
@@ -85,6 +94,8 @@ namespace BullsEye::NSCSCCSingle {
 // Implementation of: class NSCSCC2023SoC::Builder
 namespace BullsEye::NSCSCCSingle {
     //
+    // unsigned int        eventBusId;
+    //
     // BaseRAM*            baseRAM;
     // ExtRAM*             extRAM;
     //
@@ -92,13 +103,20 @@ namespace BullsEye::NSCSCCSingle {
     //
 
     NSCSCC2023SoC::Builder::Builder() noexcept
-        : baseRAM       (nullptr)
+        : eventBusId    (0)
+        , baseRAM       (nullptr)
         , extRAM        (nullptr)
         , serial        (nullptr)
     { }
 
     NSCSCC2023SoC::Builder::~Builder() noexcept
     { }
+
+    NSCSCC2023SoC::Builder& NSCSCC2023SoC::Builder::EventBusId(unsigned int eventBusId) noexcept
+    {
+        this->eventBusId = eventBusId;
+        return *this;
+    }
 
     NSCSCC2023SoC::Builder& NSCSCC2023SoC::Builder::BaseDOGGIES(BaseRAM* baseRAM) noexcept
     {
@@ -116,6 +134,16 @@ namespace BullsEye::NSCSCCSingle {
     {
         this->serial = serial;
         return *this;
+    }
+
+    unsigned int& NSCSCC2023SoC::Builder::EventBusId() noexcept
+    {
+        return eventBusId;
+    }
+
+    unsigned int NSCSCC2023SoC::Builder::EventBusId() const noexcept
+    {
+        return eventBusId;
     }
 
     BaseRAM*& NSCSCC2023SoC::Builder::BaseDOGGIES() noexcept
@@ -150,6 +178,6 @@ namespace BullsEye::NSCSCCSingle {
 
     NSCSCC2023SoC* NSCSCC2023SoC::Builder::Build() noexcept
     {
-        return new NSCSCC2023SoC(baseRAM, extRAM, serial, ClockCounter());
+        return new NSCSCC2023SoC(eventBusId, baseRAM, extRAM, serial, ClockCounter());
     }
 }
