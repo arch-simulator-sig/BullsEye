@@ -15,6 +15,8 @@ namespace BullsEye::NSCSCCSingle {
 
     class NSCSCC2023MMU : public LA32MemoryInterface {
     private:
+        unsigned int        eventBusId;
+
         BaseRAM*            baseRAM;
         ExtRAM*             extRAM;
 
@@ -23,14 +25,37 @@ namespace BullsEye::NSCSCCSingle {
         ClockCounter*       clk_counter;
 
     private:
-        LA32MOPOutcome            _MMIO_ReadSerial(addr_t address, LA32MOPWidth width, memdata_t* dst) noexcept;
-        LA32MOPOutcome            _MMIO_WriteSerial(addr_t address, LA32MOPWidth width, memdata_t src) noexcept;
+        //
+        LA32MOPOutcome              _BaseRAM_Read(LA32MOPPath path, addr_t phyaddress, LA32MOPWidth width, memdata_t* dst) noexcept;
+        LA32MOPOutcome              _BaseRAM_Write(LA32MOPPath path, addr_t phyaddress, LA32MOPWidth width, memdata_t src) noexcept;
 
-        LA32MOPOutcome            _MMIO_ReadClockCounter(addr_t address, LA32MOPWidth width, memdata_t* dst) noexcept;
-        LA32MOPOutcome            _MMIO_WriteClockCounter(addr_t address, LA32MOPWidth width, memdata_t src) noexcept;
+        LA32MOPOutcome              _BaseRAM_ReadInsn(addr_t phyaddress, LA32MOPWidth width, memdata_t* dst) noexcept;
+        LA32MOPOutcome              _BaseRAM_ReadData(addr_t phyaddress, LA32MOPWidth width, memdata_t* dst) noexcept;
+
+        LA32MOPOutcome              _BaseRAM_WriteInsn(addr_t phyaddress, LA32MOPWidth width, memdata_t src) noexcept;
+        LA32MOPOutcome              _BaseRAM_WriteData(addr_t phyaddress, LA32MOPWidth width, memdata_t src) noexcept;
+
+        //
+        LA32MOPOutcome              _ExtRAM_Read(LA32MOPPath path, addr_t phyaddress, LA32MOPWidth width, memdata_t* dst) noexcept;
+        LA32MOPOutcome              _ExtRAM_Write(LA32MOPPath path, addr_t phyaddress, LA32MOPWidth width, memdata_t src) noexcept;
+
+        LA32MOPOutcome              _ExtRAM_ReadInsn(addr_t phyaddress, LA32MOPWidth width, memdata_t* dst) noexcept;
+        LA32MOPOutcome              _ExtRAM_ReadData(addr_t phyaddress, LA32MOPWidth width, memdata_t* dst) noexcept;
+
+        LA32MOPOutcome              _ExtRAM_WriteInsn(addr_t phyaddress, LA32MOPWidth width, memdata_t src) noexcept;
+        LA32MOPOutcome              _ExtRAM_WriteData(addr_t phyaddress, LA32MOPWidth width, memdata_t src) noexcept;
+
+        //
+        LA32MOPOutcome              _MMIO_ReadSerial(addr_t address, LA32MOPWidth width, memdata_t* dst) noexcept;
+        LA32MOPOutcome              _MMIO_WriteSerial(addr_t address, LA32MOPWidth width, memdata_t src) noexcept;
+
+        //
+        LA32MOPOutcome              _MMIO_ReadClockCounter(addr_t address, LA32MOPWidth width, memdata_t* dst) noexcept;
+        LA32MOPOutcome              _MMIO_WriteClockCounter(addr_t address, LA32MOPWidth width, memdata_t src) noexcept;
 
     public:
-        NSCSCC2023MMU(BaseRAM*          baseRAM,
+        NSCSCC2023MMU(unsigned int      eventBusId,
+                      BaseRAM*          baseRAM,
                       ExtRAM*           extRAM, 
                       SerialInterface*  serial, 
                       ClockCounter*     clk_counter) noexcept;
@@ -42,6 +67,8 @@ namespace BullsEye::NSCSCCSingle {
 
         virtual LA32MOPOutcome      WriteInsn(addr_t address, LA32MOPWidth width, memdata_t src) noexcept override;
         virtual LA32MOPOutcome      WriteData(addr_t address, LA32MOPWidth width, memdata_t src) noexcept override;
+
+        unsigned int                GetEventBusId() const noexcept;
 
         BaseRAM*                    GetBaseRAM() noexcept;
         const BaseRAM*              GetBaseRAM() const noexcept;
