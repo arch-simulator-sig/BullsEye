@@ -70,6 +70,22 @@ namespace BullsEye {
         bool                        IsCancelled() const noexcept;
     };
 
+    // Execptionable Event
+    template<class _TException>
+    class ExceptionableEvent {
+    private:
+        bool        exceptioned;
+        _TException exception;
+
+    public:
+        ExceptionableEvent() noexcept;
+
+        bool                        HasException() const noexcept;
+        const _TException&          GetException() const noexcept;
+
+        void                        SetException(_TException exception, bool exceptioned = true) noexcept;
+    };
+
 
     // Event Handler
     template<class _TEvent>
@@ -350,6 +366,41 @@ namespace BullsEye {
         return this->cancelled;
     }
 }
+
+
+// Implementation of: template<class _TException> class ExceptionableEvent
+namespace BullsEye {
+    //
+    // bool        exceptioned;
+    // _TException exception;
+    //
+
+    template<class _TException>
+    inline ExceptionableEvent<_TException>::ExceptionableEvent() noexcept
+        : exceptioned   (false)
+        , exception     ()
+    { }
+
+    template<class _TException>
+    inline bool ExceptionableEvent<_TException>::HasException() const noexcept
+    {
+        return this->exceptioned;
+    }
+
+    template<class _TException>
+    inline void ExceptionableEvent<_TException>::SetException(_TException exception, bool exceptioned) noexcept
+    {
+        this->exception     = exception;
+        this->exceptioned   = exceptioned;
+    }
+
+    template<class _TException>
+    inline const _TException& ExceptionableEvent<_TException>::GetException() const noexcept
+    {
+        return this->exception;
+    }
+}
+
 
 
 // Implementation of: template<class _TEvent> class EventListener
