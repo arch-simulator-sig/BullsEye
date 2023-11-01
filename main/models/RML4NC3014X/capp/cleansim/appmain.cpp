@@ -11,7 +11,7 @@
 #include <verilated.h>
 #include <verilated_vcd_c.h>
 
-#include "core/ds232.hpp"
+#include "../../csrc/core/ds232_verilated.hpp"
 
 #include AUTOINC_BE_N1_SOC_LA32(soc.hpp)
 #include AUTOINC_BE_N1_SOC_LA32(serial.hpp)
@@ -64,6 +64,7 @@ void finalize_vcd()
 #ifdef VM_TRACE
     fp->close();
     delete fp;
+    fp = nullptr;
 #endif
 }
 
