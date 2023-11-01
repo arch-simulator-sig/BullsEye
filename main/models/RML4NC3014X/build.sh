@@ -11,7 +11,7 @@ LD="ld"
 CC="g++"
 AR="ar"
 
-CFLAG="-O3 -std=c++20 -flto -fwhole-program -pthread -lpthread -latomic"
+CFLAG="$K221_GLOBAL_CFLAGS -pthread -lpthread -latomic"
 
 BUILD_PATH=".build"
 BUILD_TARGET="$BUILD_PATH/app"
@@ -240,7 +240,7 @@ build_peripherals () {
         fi
     fi
 
-    eval "make -C csrc"
+    eval "make -C csrc $BUILD_ARG_J"
     if [ $? -ne 0 ]; then
         echo -e "%Error: \033[1;31mFailed at core peripherals make task.\033[0m"
         exit 1
