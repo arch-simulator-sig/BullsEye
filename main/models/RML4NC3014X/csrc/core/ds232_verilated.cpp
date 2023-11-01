@@ -25,7 +25,7 @@ namespace BullsEye::Draconids3014 {
         : eventBusId    (eventBusId)
         , fp            (fp)
         , core          (new DS232)
-        , soc_axi       (new SoCAXIBridgeDualChannel(soc))
+        , soc_axi       (new SoCAXIBridgeDualChannel(soc, eventBusId))
         , next_reset    (false)
         , eval_time     (0)
     { 
