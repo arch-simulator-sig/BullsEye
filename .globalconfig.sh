@@ -162,4 +162,8 @@ export K221_CFLAGS_INC_VERILATOR="-I/usr/local/share/verilator/include -I/usr/lo
 
 
 #
+export K221_GLOBAL_CFLAGS="-O3 -std=c++20 -flto -fwhole-program"
+
+
+#
 postgen_autoinclude

@@ -9,7 +9,7 @@ AR := $(GCCPREFIX)ar
 OBJDIR := .obj
 ARCDIR := .build
 
-CFLAG := -O3 -std=c++20 -flto -fwhole-program
+CFLAG := $(K221_GLOBAL_CFLAGS)
 
 MODEL_ROOT 	:= ../..
 

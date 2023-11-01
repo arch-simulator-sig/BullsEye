@@ -9,7 +9,7 @@ AR := $(GCCPREFIX)ar
 OBJDIR := .obj
 ARCDIR := $(K221_YASIO_LD_LIBRARY_PATH)
 
-CFLAG := -O3 -std=c++20
+CFLAG := $(K221_GLOBAL_CFLAGS)
 
 # main components
 MAIN_OBJDIR := $(OBJDIR)

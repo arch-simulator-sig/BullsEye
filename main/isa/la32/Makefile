@@ -9,7 +9,7 @@ AR := $(GCCPREFIX)ar
 OBJDIR := .obj
 ARCDIR := $(K221_BE_JASSE2_LA32_LD_LIBRARY_PATH)
 
-CFLAG := -O3 -std=c++20 -flto -fwhole-program
+CFLAG := $(K221_GLOBAL_CFLAGS)
 
 # BullsEye library include path
 GLOBAL_INC += $(K221_BE_ROOT)
