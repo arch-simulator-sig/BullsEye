@@ -51,7 +51,7 @@ namespace BullsEye::Draconids3014 {
     FetchIDTracker::FetchIDTracker() noexcept
         : tracks    ()
     {
-        for (fid_t fid = 0; fid < 256; fid++) 
+        for (size_t fid = 0; fid < 256; fid++) 
             this->tracks[fid].SetFetchID(fid);
     }
 

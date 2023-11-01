@@ -26,6 +26,7 @@ namespace BullsEye::Draconids3014 {
         , fp            (fp)
         , core          (new DS232)
         , soc_axi       (new SoCAXIBridgeDualChannel(soc, eventBusId))
+        , fid_tracker   ()
         , next_reset    (false)
         , eval_time     (0)
     { 
@@ -38,6 +39,7 @@ namespace BullsEye::Draconids3014 {
         , fp            (obj.fp)
         , core          (obj.core)
         , soc_axi       (obj.soc_axi)
+        , fid_tracker   (obj.fid_tracker)
         , next_reset    (obj.next_reset)
         , eval_time     (obj.eval_time)
     { 
