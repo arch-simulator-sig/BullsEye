@@ -232,6 +232,14 @@ build_peripherals () {
 
     echo -e "\033[33m[dependency build] Core peripherals\033[0m"
 
+    if [[ -n "$BUILD_ARG_C" ]]; then
+        eval "make -C csrc clean"
+        if [ $? -ne 0 ]; then
+            echo -e "%Error: \033[1;31mFailed at core peripherals clean task.\033[0m"
+            exit 1
+        fi
+    fi
+
     eval "make -C csrc"
     if [ $? -ne 0 ]; then
         echo -e "%Error: \033[1;31mFailed at core peripherals make task.\033[0m"
