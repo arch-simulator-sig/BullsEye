@@ -201,27 +201,27 @@ namespace BullsEye::NSCSCCSingle {
 
 
 
-    // NSCSCC2023 MMU Serial Pre Read Pre Event
-    class NSCSCC2023MMUSerialPreReadPreEvent 
+    // NSCSCC2023 MMU MMIO Serial Pre Read Pre Event
+    class NSCSCC2023MMUMappedIOSerialPreReadPreEvent 
         : public NSCSCC2023MMUEventBase
         , public NSCSCC2023MMUPreReadPreEventBase
-        , public Event<NSCSCC2023MMUSerialPreReadPreEvent>
+        , public Event<NSCSCC2023MMUMappedIOSerialPreReadPreEvent>
         , public ExceptionableEvent<LA32MOPOutcome> {
     public:
-        NSCSCC2023MMUSerialPreReadPreEvent(
+        NSCSCC2023MMUMappedIOSerialPreReadPreEvent(
             NSCSCC2023MMU*      mmu, 
             LA32MOPPath         path,
             addr_t&             address, 
             LA32MOPWidth&       width) noexcept;
     };
 
-    // NSCSCC2023 MMU Serial Pre Read Post Event
-    class NSCSCC2023MMUSerialPreReadPostEvent
+    // NSCSCC2023 MMU MMIO Serial Pre Read Post Event
+    class NSCSCC2023MMUMappedIOSerialPreReadPostEvent
         : public NSCSCC2023MMUEventBase
         , public NSCSCC2023MMUPreReadPostEventBase
-        , public Event<NSCSCC2023MMUSerialPreReadPostEvent> {
+        , public Event<NSCSCC2023MMUMappedIOSerialPreReadPostEvent> {
     public:
-        NSCSCC2023MMUSerialPreReadPostEvent(
+        NSCSCC2023MMUMappedIOSerialPreReadPostEvent(
             NSCSCC2023MMU*      mmu, 
             LA32MOPPath         path,
             addr_t              address, 
@@ -229,14 +229,14 @@ namespace BullsEye::NSCSCCSingle {
             bool                proxy) noexcept;
     };
 
-    // NSCSCC2023 MMU Serial Post Read Pre Event
-    class NSCSCC2023MMUSerialPostReadPreEvent
+    // NSCSCC2023 MMU MMIO Serial Post Read Pre Event
+    class NSCSCC2023MMUMappedIOSerialPostReadPreEvent
         : public NSCSCC2023MMUEventBase
         , public NSCSCC2023MMUPostReadPreEventBase
-        , public Event<NSCSCC2023MMUSerialPostReadPreEvent> 
+        , public Event<NSCSCC2023MMUMappedIOSerialPostReadPreEvent> 
         , public ExceptionableEvent<LA32MOPOutcome> {
     public:
-        NSCSCC2023MMUSerialPostReadPreEvent(
+        NSCSCC2023MMUMappedIOSerialPostReadPreEvent(
             NSCSCC2023MMU*      mmu, 
             LA32MOPPath         path,
             addr_t              address, 
@@ -244,13 +244,13 @@ namespace BullsEye::NSCSCCSingle {
             memdata_t&          data) noexcept;
     };
 
-    // NSCSCC2023 MMU Serial Post Read Post Event
-    class NSCSCC2023MMUSerialPostReadPostEvent
+    // NSCSCC2023 MMU MMIO Serial Post Read Post Event
+    class NSCSCC2023MMUMappedIOSerialPostReadPostEvent
         : public NSCSCC2023MMUEventBase
         , public NSCSCC2023MMUPostReadPostEventBase
-        , public Event<NSCSCC2023MMUSerialPostReadPostEvent> {
+        , public Event<NSCSCC2023MMUMappedIOSerialPostReadPostEvent> {
     public:
-        NSCSCC2023MMUSerialPostReadPostEvent(
+        NSCSCC2023MMUMappedIOSerialPostReadPostEvent(
             NSCSCC2023MMU*      mmu, 
             LA32MOPPath         path,
             addr_t              address, 
@@ -259,14 +259,14 @@ namespace BullsEye::NSCSCCSingle {
     };
 
     
-    // NSCSCC2023 MMU Serial Pre Write Pre Event
-    class NSCSCC2023MMUSerialPreWritePreEvent
+    // NSCSCC2023 MMU MMIO Serial Pre Write Pre Event
+    class NSCSCC2023MMUMappedIOSerialPreWritePreEvent
         : public NSCSCC2023MMUEventBase
         , public NSCSCC2023MMUPreWritePreEventBase
-        , public Event<NSCSCC2023MMUSerialPreWritePreEvent>
+        , public Event<NSCSCC2023MMUMappedIOSerialPreWritePreEvent>
         , public ExceptionableEvent<LA32MOPOutcome> {
     public:
-        NSCSCC2023MMUSerialPreWritePreEvent(
+        NSCSCC2023MMUMappedIOSerialPreWritePreEvent(
             NSCSCC2023MMU*      mmu, 
             LA32MOPPath         path,
             addr_t&             address, 
@@ -274,13 +274,13 @@ namespace BullsEye::NSCSCCSingle {
             memdata_t&          data) noexcept;
     };
 
-    // NSCSCC2023 MMU Serial Pre Write Post Event
-    class NSCSCC2023MMUSerialPreWritePostEvent
+    // NSCSCC2023 MMU MMIO Serial Pre Write Post Event
+    class NSCSCC2023MMUMappedIOSerialPreWritePostEvent
         : public NSCSCC2023MMUEventBase
         , public NSCSCC2023MMUPreWritePostEventBase
-        , public Event<NSCSCC2023MMUSerialPreWritePostEvent> {
+        , public Event<NSCSCC2023MMUMappedIOSerialPreWritePostEvent> {
     public:
-        NSCSCC2023MMUSerialPreWritePostEvent(
+        NSCSCC2023MMUMappedIOSerialPreWritePostEvent(
             NSCSCC2023MMU*      mmu, 
             LA32MOPPath         path,
             addr_t              address, 
@@ -289,14 +289,14 @@ namespace BullsEye::NSCSCCSingle {
             bool                proxy) noexcept;
     };
 
-    // NSCSCC2023 MMU Serial Post Write Pre Event
-    class NSCSCC2023MMUSerialPostWritePreEvent
+    // NSCSCC2023 MMU MMIO Serial Post Write Pre Event
+    class NSCSCC2023MMUMappedIOSerialPostWritePreEvent
         : public NSCSCC2023MMUEventBase
         , public NSCSCC2023MMUPostWriteEventBase
-        , public Event<NSCSCC2023MMUSerialPostWritePreEvent>
+        , public Event<NSCSCC2023MMUMappedIOSerialPostWritePreEvent>
         , public ExceptionableEvent<LA32MOPOutcome> {
     public:
-        NSCSCC2023MMUSerialPostWritePreEvent(
+        NSCSCC2023MMUMappedIOSerialPostWritePreEvent(
             NSCSCC2023MMU*      mmu, 
             LA32MOPPath         path,
             addr_t              address, 
@@ -304,13 +304,72 @@ namespace BullsEye::NSCSCCSingle {
             memdata_t           data) noexcept;
     };
 
-    // NSCSCC2023 MMU Serial Post Write Post Event
-    class NSCSCC2023MMUSerialPostWritePostEvent
+    // NSCSCC2023 MMU MMIO Serial Post Write Post Event
+    class NSCSCC2023MMUMappedIOSerialPostWritePostEvent
         : public NSCSCC2023MMUEventBase
         , public NSCSCC2023MMUPostWriteEventBase
-        , public Event<NSCSCC2023MMUSerialPostWritePostEvent> {
+        , public Event<NSCSCC2023MMUMappedIOSerialPostWritePostEvent> {
     public:
-        NSCSCC2023MMUSerialPostWritePostEvent(
+        NSCSCC2023MMUMappedIOSerialPostWritePostEvent(
+            NSCSCC2023MMU*      mmu, 
+            LA32MOPPath         path,
+            addr_t              address, 
+            LA32MOPWidth        width, 
+            memdata_t           data) noexcept;
+    };
+
+
+
+    // NSCSCC2023 MMU MMIO ClockCounter Pre Read Pre Event
+    class NSCSCC2023MMUMappedIOClockCounterPreReadPreEvent
+        : public NSCSCC2023MMUEventBase
+        , public NSCSCC2023MMUPreReadPreEventBase
+        , public Event<NSCSCC2023MMUMappedIOClockCounterPreReadPreEvent>
+        , public ExceptionableEvent<LA32MOPOutcome> {
+    public:
+        NSCSCC2023MMUMappedIOClockCounterPreReadPreEvent(
+            NSCSCC2023MMU*      mmu, 
+            LA32MOPPath         path,
+            addr_t&             address, 
+            LA32MOPWidth&       width) noexcept;
+    };
+
+    // NSCSCC2023 MMU MMIO ClockCounter Pre Read Post Event
+    class NSCSCC2023MMUMappedIOClockCounterPreReadPostEvent
+        : public NSCSCC2023MMUEventBase
+        , public NSCSCC2023MMUPreReadPostEventBase
+        , public Event<NSCSCC2023MMUMappedIOClockCounterPreReadPostEvent> {
+    public:
+        NSCSCC2023MMUMappedIOClockCounterPreReadPostEvent(
+            NSCSCC2023MMU*      mmu, 
+            LA32MOPPath         path,
+            addr_t              address, 
+            LA32MOPWidth        width,
+            bool                proxy) noexcept;
+    };
+
+    // NSCSCC2023 MMU MMIO ClockCounter Post Read Pre Event
+    class NSCSCC2023MMUMappedIOClockCounterPostReadPreEvent
+        : public NSCSCC2023MMUEventBase
+        , public NSCSCC2023MMUPostReadPreEventBase
+        , public Event<NSCSCC2023MMUMappedIOClockCounterPostReadPreEvent>
+        , public ExceptionableEvent<LA32MOPOutcome> {
+    public:
+        NSCSCC2023MMUMappedIOClockCounterPostReadPreEvent(
+            NSCSCC2023MMU*      mmu, 
+            LA32MOPPath         path,
+            addr_t              address, 
+            LA32MOPWidth        width, 
+            memdata_t&          data) noexcept;
+    };
+
+    // NSCSCC2023 MMU MMIO ClockCounter Post Read Post Event
+    class NSCSCC2023MMUMappedIOClockCounterPostReadPostEvent
+        : public NSCSCC2023MMUEventBase
+        , public NSCSCC2023MMUPostReadPostEventBase
+        , public Event<NSCSCC2023MMUMappedIOClockCounterPostReadPostEvent> {
+    public:
+        NSCSCC2023MMUMappedIOClockCounterPostReadPostEvent(
             NSCSCC2023MMU*      mmu, 
             LA32MOPPath         path,
             addr_t              address, 

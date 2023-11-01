@@ -210,11 +210,11 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath path = LA32MOPPath::MOP_DATA;
 
         // Pre-Read Event
-        NSCSCC2023MMUSerialPreReadPreEvent preReadPreEvent(this, path, address, width);
+        NSCSCC2023MMUMappedIOSerialPreReadPreEvent preReadPreEvent(this, path, address, width);
         if (preReadPreEvent.Fire(eventBusId).HasException())
             return preReadPreEvent.GetException();
         
-        NSCSCC2023MMUSerialPreReadPostEvent(this, path, address, width, preReadPreEvent.HasProxy())
+        NSCSCC2023MMUMappedIOSerialPreReadPostEvent(this, path, address, width, preReadPreEvent.HasProxy())
             .Fire(eventBusId);
 
         // Serial device read
@@ -243,11 +243,11 @@ namespace BullsEye::NSCSCCSingle {
         }
 
         // Post-Read Event
-        NSCSCC2023MMUSerialPostReadPreEvent postReadPreEvent(this, path, address, width, *dst);
+        NSCSCC2023MMUMappedIOSerialPostReadPreEvent postReadPreEvent(this, path, address, width, *dst);
         if (postReadPreEvent.Fire(eventBusId).HasException())
             return preReadPreEvent.GetException();
 
-        NSCSCC2023MMUSerialPostReadPostEvent(this, path, address, width, *dst)
+        NSCSCC2023MMUMappedIOSerialPostReadPostEvent(this, path, address, width, *dst)
             .Fire(eventBusId);
 
         //
@@ -260,11 +260,11 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath path = LA32MOPPath::MOP_DATA;
 
         // Pre-Write Event
-        NSCSCC2023MMUSerialPreWritePreEvent preWritePreEvent(this, path, address, width, src);
+        NSCSCC2023MMUMappedIOSerialPreWritePreEvent preWritePreEvent(this, path, address, width, src);
         if (preWritePreEvent.Fire(eventBusId).HasException())
             return preWritePreEvent.GetException();
 
-        NSCSCC2023MMUSerialPreWritePostEvent(this, path, address, width, src, preWritePreEvent.HasProxy())
+        NSCSCC2023MMUMappedIOSerialPreWritePostEvent(this, path, address, width, src, preWritePreEvent.HasProxy())
             .Fire(eventBusId);
 
         // Serial device write
@@ -291,11 +291,11 @@ namespace BullsEye::NSCSCCSingle {
         }
 
         // Post-Write Event
-        NSCSCC2023MMUSerialPostWritePreEvent postWritePreEvent(this, path, address, width, src);
+        NSCSCC2023MMUMappedIOSerialPostWritePreEvent postWritePreEvent(this, path, address, width, src);
         if (postWritePreEvent.Fire(eventBusId).HasException())
             return postWritePreEvent.GetException();
 
-        NSCSCC2023MMUSerialPostWritePostEvent(this, path, address, width, src)
+        NSCSCC2023MMUMappedIOSerialPostWritePostEvent(this, path, address, width, src)
             .Fire(eventBusId);
         
         //
@@ -304,20 +304,51 @@ namespace BullsEye::NSCSCCSingle {
 
     LA32MOPOutcome NSCSCC2023MMU::_MMIO_ReadClockCounter(addr_t address, LA32MOPWidth width, memdata_t* dst) noexcept
     {
-        if (!clk_counter)
-            return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
+        //
+        LA32MOPPath path = LA32MOPPath::MOP_DATA;
 
-        if (width != MOPW_WORD)
-            return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
+        // Pre-Read Event
+        NSCSCC2023MMUMappedIOClockCounterPreReadPreEvent preReadPreEvent(this, path, address, width);
+        if (preReadPreEvent.Fire(eventBusId).HasException())
+            return preReadPreEvent.GetException();
 
-        if (address == 0xBFD00400)
-            dst->data32 = clk_counter->GetCounterLo();
-        else if (address == 0xBFD00404)
-            dst->data32 = clk_counter->GetCounterHi();
+        NSCSCC2023MMUMappedIOClockCounterPreReadPostEvent(this, path, address, width, preReadPreEvent.HasProxy())
+            .Fire(eventBusId);
+
+        // device read
+        LA32MOPOutcome mopoutcome;
+        if (!preReadPreEvent.HasProxy())
+        {
+            if (!clk_counter)
+                return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
+
+            if (width != MOPW_WORD)
+                return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
+
+            if (address == 0xBFD00400)
+                dst->data32 = clk_counter->GetCounterLo();
+            else if (address == 0xBFD00404)
+                dst->data32 = clk_counter->GetCounterHi();
+            else
+                return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
+
+            mopoutcome = { LA32MOPStatus::MOP_SUCCESS };
+        }
         else
-            return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
+        {
+            mopoutcome = preReadPreEvent.GetProxyRoutine()(path, address, width, dst);
+        }
 
-        return { LA32MOPStatus::MOP_SUCCESS };
+        // Post-Read Event
+        NSCSCC2023MMUMappedIOClockCounterPostReadPreEvent postReadPreEvent(this, path, address, width, *dst);
+        if (postReadPreEvent.Fire(eventBusId).HasException())
+            return postReadPreEvent.GetException();
+
+        NSCSCC2023MMUMappedIOClockCounterPostReadPostEvent(this, path, address, width, *dst)
+            .Fire(eventBusId);
+
+        //
+        return mopoutcome;
     }
 
     LA32MOPOutcome NSCSCC2023MMU::_MMIO_WriteClockCounter(addr_t address, LA32MOPWidth width, memdata_t src) noexcept

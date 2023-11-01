@@ -417,7 +417,7 @@ namespace BullsEye::NSCSCCSingle {
 // Implementation of: class NSCSCC2023MMUSerialPreReadPreEvent
 namespace BullsEye::NSCSCCSingle {
 
-    NSCSCC2023MMUSerialPreReadPreEvent::NSCSCC2023MMUSerialPreReadPreEvent(
+    NSCSCC2023MMUMappedIOSerialPreReadPreEvent::NSCSCC2023MMUMappedIOSerialPreReadPreEvent(
         NSCSCC2023MMU*  mmu, 
         LA32MOPPath     path,
         addr_t&         address, 
@@ -430,7 +430,7 @@ namespace BullsEye::NSCSCCSingle {
 // Implementation of: class NSCSCC2023MMUSerialPreReadPostEvent
 namespace BullsEye::NSCSCCSingle {
 
-    NSCSCC2023MMUSerialPreReadPostEvent::NSCSCC2023MMUSerialPreReadPostEvent(
+    NSCSCC2023MMUMappedIOSerialPreReadPostEvent::NSCSCC2023MMUMappedIOSerialPreReadPostEvent(
         NSCSCC2023MMU*  mmu, 
         LA32MOPPath     path,
         addr_t          address, 
@@ -444,7 +444,7 @@ namespace BullsEye::NSCSCCSingle {
 // Implementation of: class NSCSCC2023MMUSerialPostReadPreEvent
 namespace BullsEye::NSCSCCSingle {
 
-    NSCSCC2023MMUSerialPostReadPreEvent::NSCSCC2023MMUSerialPostReadPreEvent(
+    NSCSCC2023MMUMappedIOSerialPostReadPreEvent::NSCSCC2023MMUMappedIOSerialPostReadPreEvent(
         NSCSCC2023MMU*  mmu, 
         LA32MOPPath     path,
         addr_t          address, 
@@ -458,7 +458,7 @@ namespace BullsEye::NSCSCCSingle {
 // Implementation of: class NSCSCC2023MMUSerialPostReadPostEvent
 namespace BullsEye::NSCSCCSingle {
 
-    NSCSCC2023MMUSerialPostReadPostEvent::NSCSCC2023MMUSerialPostReadPostEvent(
+    NSCSCC2023MMUMappedIOSerialPostReadPostEvent::NSCSCC2023MMUMappedIOSerialPostReadPostEvent(
         NSCSCC2023MMU*  mmu, 
         LA32MOPPath     path,
         addr_t          address, 
@@ -473,7 +473,7 @@ namespace BullsEye::NSCSCCSingle {
 // Implementation of: class NSCSCC2023MMUSerialPreWritePreEvent
 namespace BullsEye::NSCSCCSingle {
 
-    NSCSCC2023MMUSerialPreWritePreEvent::NSCSCC2023MMUSerialPreWritePreEvent(
+    NSCSCC2023MMUMappedIOSerialPreWritePreEvent::NSCSCC2023MMUMappedIOSerialPreWritePreEvent(
         NSCSCC2023MMU*  mmu, 
         LA32MOPPath     path,
         addr_t&         address, 
@@ -487,7 +487,7 @@ namespace BullsEye::NSCSCCSingle {
 // Implementation of: class NSCSCC2023MMUSerialPreWritePostEvent
 namespace BullsEye::NSCSCCSingle {
 
-    NSCSCC2023MMUSerialPreWritePostEvent::NSCSCC2023MMUSerialPreWritePostEvent(
+    NSCSCC2023MMUMappedIOSerialPreWritePostEvent::NSCSCC2023MMUMappedIOSerialPreWritePostEvent(
         NSCSCC2023MMU*  mmu, 
         LA32MOPPath     path,
         addr_t          address, 
@@ -502,7 +502,7 @@ namespace BullsEye::NSCSCCSingle {
 // Implementation of: class NSCSCC2023MMUSerialPostWritePreEvent
 namespace BullsEye::NSCSCCSingle {
 
-    NSCSCC2023MMUSerialPostWritePreEvent::NSCSCC2023MMUSerialPostWritePreEvent(
+    NSCSCC2023MMUMappedIOSerialPostWritePreEvent::NSCSCC2023MMUMappedIOSerialPostWritePreEvent(
         NSCSCC2023MMU*  mmu, 
         LA32MOPPath     path,
         addr_t          address, 
@@ -516,7 +516,7 @@ namespace BullsEye::NSCSCCSingle {
 // Implementation of: class NSCSCC2023MMUSerialPostWritePostEvent
 namespace BullsEye::NSCSCCSingle {
 
-    NSCSCC2023MMUSerialPostWritePostEvent::NSCSCC2023MMUSerialPostWritePostEvent(
+    NSCSCC2023MMUMappedIOSerialPostWritePostEvent::NSCSCC2023MMUMappedIOSerialPostWritePostEvent(
         NSCSCC2023MMU*  mmu, 
         LA32MOPPath     path,
         addr_t          address, 
