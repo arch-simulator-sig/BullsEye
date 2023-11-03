@@ -27,6 +27,17 @@ namespace BullsEye::Draconids3014 {
         const DS232*        GetCore() const noexcept;
     };
 
+    // DS232 Multi Ported Event Base
+    class DS232MultiPortedEventBase {
+    private:
+        unsigned int    port_id;
+
+    public:
+        DS232MultiPortedEventBase(unsigned int port_id) noexcept;
+
+        unsigned int        GetPortID() const noexcept;
+    };
+
     // DS232 FID Event Base
     class DS232FIDEventBase {
     private:
@@ -64,31 +75,56 @@ namespace BullsEye::Draconids3014 {
     };
 
 
+
+    // DS232 Pre-Eval Event
+    class DS232PreEvalEvent 
+        : public DS232EventBase 
+        , public Event<DS232PreEvalEvent> {
+    public: 
+        DS232PreEvalEvent(DS232* core) noexcept;
+    };
+
+    // DS232 Post-Eval Event
+    class DS232PostEvalEvent 
+        : public DS232EventBase 
+        , public Event<DS232PostEvalEvent> {
+    public:
+        DS232PostEvalEvent(DS232* core) noexcept;
+    };
+
+
+
     // DS232 Pre-Dispatch Event
     class DS232PreDispatchEvent
         : public DS232EventBase
+        , public DS232MultiPortedEventBase
         , public DS232FIDTrackEventBase
         , public Event<DS232PreDispatchEvent> {
     public:
-        DS232PreDispatchEvent(DS232* core, const FetchIDTrack& fid_track) noexcept;
+        DS232PreDispatchEvent(DS232* core, unsigned int port_id, const FetchIDTrack& fid_track) noexcept;
     };
+
 
     // DS232 Main Commit Event
     class DS232MainCommitEvent
         : public DS232EventBase
+        , public DS232MultiPortedEventBase
         , public DS232FIDEventBase
         , public DS232GPRCommitEventBase
         , public Event<DS232MainCommitEvent> {
     public:
         DS232MainCommitEvent(DS232*         core, 
+                             unsigned int   port_id,
                              fid_t          fid, 
                              unsigned int   gpr_index, 
                              arch32_t       gpr_value) noexcept;
     };
 
+
     // DS232 ROB Commit Event
     class DS232ROBCommitEvent 
         : public DS232EventBase 
+        , public DS232MultiPortedEventBase
         , public DS232FIDEventBase
         , public DS232GPRCommitEventBase
         , public Event<DS232ROBCommitEvent> {
@@ -100,6 +136,7 @@ namespace BullsEye::Draconids3014 {
 
     public:
         DS232ROBCommitEvent(DS232*          core, 
+                            unsigned int    port_id,
                             fid_t           fid, 
                             unsigned int    gpr_index, 
                             arch32_t        gpr_value, 
@@ -113,6 +150,35 @@ namespace BullsEye::Draconids3014 {
         bool            IsUncachedLoad() const noexcept;
         addr_t          GetUncachedLoadAddress() const noexcept;
         uop40::cmd_t    GetUncachedLoadCommand() const noexcept;
+    };
+
+
+    // DS232 Store Commit Event
+    class DS232StoreCommitEvent
+        : public DS232EventBase
+        , public DS232MultiPortedEventBase
+        , public Event<DS232StoreCommitEvent> {
+    private:
+        lswidth_t       width;
+        lsstrb_t        strb;
+        addr_t          addr;
+        uint32_t        data;
+        bool            uncached;
+
+    public:
+        DS232StoreCommitEvent(DS232*        core, 
+                              unsigned int  port_id,
+                              lswidth_t     width, 
+                              lsstrb_t      strb, 
+                              addr_t        addr, 
+                              uint32_t      data, 
+                              bool          uncached) noexcept;
+
+        lswidth_t       GetWidth() const noexcept;
+        lsstrb_t        GetStrobe() const noexcept;
+        addr_t          GetAddress() const noexcept;
+        uint32_t        GetData() const noexcept;
+        bool            IsUncached() const noexcept;
     };
 }
 

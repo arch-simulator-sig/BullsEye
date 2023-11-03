@@ -154,6 +154,10 @@ namespace BullsEye::Draconids3014 {
         }
         else // normal cycle
         {
+            //
+            DS232PreEvalEvent(this->core).Fire(eventBusId);
+
+
             // core -> soc_axi
             this->soc_axi->NextFetchReadAddressM2S({
                 .arid       = this->core->if_axi_m_arid,
@@ -280,7 +284,7 @@ namespace BullsEye::Draconids3014 {
                     .cmd        = this->core->predispatch0_uop_cmd
                 });
 
-                DS232PreDispatchEvent(this->core, track).Fire(eventBusId);
+                DS232PreDispatchEvent(this->core, 0, track).Fire(eventBusId);
             }
 
             if (this->core->predispatch1_valid)
@@ -297,29 +301,7 @@ namespace BullsEye::Draconids3014 {
                     .cmd        = this->core->predispatch1_uop_cmd
                 });
 
-                DS232PreDispatchEvent(this->core, track).Fire(eventBusId);
-            }
-
-
-            // main commit event
-            if (this->core->commit0_en)
-            {
-                DS232MainCommitEvent(
-                    this->core,
-                    this->core->commit0_fid,
-                    this->core->commit0_reg_addr,
-                    this->core->commit0_reg_data
-                ).Fire(eventBusId);
-            }
-
-            if (this->core->commit1_en)
-            {
-                DS232MainCommitEvent(
-                    this->core,
-                    this->core->commit1_fid,
-                    this->core->commit1_reg_addr,
-                    this->core->commit1_reg_data
-                ).Fire(eventBusId);
+                DS232PreDispatchEvent(this->core, 1, track).Fire(eventBusId);
             }
 
 
@@ -328,6 +310,7 @@ namespace BullsEye::Draconids3014 {
             {
                 DS232ROBCommitEvent(
                     this->core,
+                    0,
                     this->core->commit0_rob_fid,
                     this->core->commit0_rob_reg_dst,
                     this->core->commit0_rob_reg_value,
@@ -342,6 +325,7 @@ namespace BullsEye::Draconids3014 {
             {
                 DS232ROBCommitEvent(
                     this->core,
+                    1,
                     this->core->commit1_rob_fid,
                     this->core->commit1_rob_reg_dst,
                     this->core->commit1_rob_reg_value,
@@ -353,12 +337,55 @@ namespace BullsEye::Draconids3014 {
             }
 
 
+            // store commit event
+            if (this->core->commit_store_en)
+            {
+                DS232StoreCommitEvent(
+                    this->core,
+                    0,
+                    this->core->commit_store_lswidth,
+                    this->core->commit_store_strb,
+                    this->core->commit_store_addr,
+                    this->core->commit_store_data,
+                    this->core->commit_store_uncached
+                ).Fire(eventBusId);
+            }
+
+
+            // main commit event
+            if (this->core->commit0_en)
+            {
+                DS232MainCommitEvent(
+                    this->core,
+                    0,
+                    this->core->commit0_fid,
+                    this->core->commit0_reg_addr,
+                    this->core->commit0_reg_data
+                ).Fire(eventBusId);
+            }
+
+            if (this->core->commit1_en)
+            {
+                DS232MainCommitEvent(
+                    this->core,
+                    1,
+                    this->core->commit1_fid,
+                    this->core->commit1_reg_addr,
+                    this->core->commit1_reg_data
+                ).Fire(eventBusId);
+            }
+
+
             // core eval
             _EvalCoreClockNegative();
             _EvalCoreClockPositive();
 
             // soc eval
             this->soc_axi->Eval();
+
+
+            //
+            DS232PostEvalEvent(this->core).Fire(eventBusId);
         }
     }
 }
