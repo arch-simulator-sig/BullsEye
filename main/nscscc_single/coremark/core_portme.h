@@ -85,10 +85,6 @@ Original Author: Shay Gal-on
 /* Definitions : COMPILER_VERSION, COMPILER_FLAGS, MEM_LOCATION
         Initialize these strings per platform
 */
-#ifdef COMPILER_LA32R_LINUX_GNUSF
-#define COMPILER_VERSION "loongarch32r-linux-gnusf-gcc"
-#endif
-
 #ifndef COMPILER_VERSION
 #ifdef __GNUC__
 #define COMPILER_VERSION "GCC"__VERSION__
