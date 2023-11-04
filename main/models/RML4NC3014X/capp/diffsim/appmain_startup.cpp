@@ -15,6 +15,9 @@
 #include <verilated.h>
 
 
+#include "../../csrc/core/ds232_diff.hpp"
+
+
 #include "autoinclude.h"
 
 #include AUTOINC_BE_COMMON(eventbus.hpp)
@@ -222,12 +225,55 @@ int startup()
 
     std::cout << "Initialized verilated DUT and VCD waveform." << std::endl;
 
+
+    // Instantiate differential base for reference emulator
+    glbl.ctx.ref.diff = LA32Differential::Builder()
+        .EnablePC           ()
+        .EnableInstruction  ()
+        .EnableGPR          ()
+        .EnableMemoryStore  ()
+        .EventBusId         (glbl.ctx.ref.eventBusId)
+        .Build();
+    std::cout << "Instantiated reference model differential base." << std::endl;
+
+
+    // Instantiate differential base for DUT
+    glbl.ctx.dut.diff = Draconids3014::DS232Differential::Builder()
+        .EnablePC           ()
+        .EnableInstruction  ()
+        .EnableGPR          ()
+        .EnableMemoryStore  ()
+        .FIDTracker         (&glbl.ctx.dut.dut->GetFetchIDTracker())
+        .EventBusId         (glbl.ctx.dut.eventBusId)
+        .Build();
+    std::cout << "Instantiated DUT differential base." << std::endl;
+
+
+    
+
+
+    //
+
+
     return 0;
 }
 
 
 int shutdown()
 {
+    if (glbl.ctx.ref.diff)
+    {
+        delete glbl.ctx.ref.diff;
+        glbl.ctx.ref.diff = nullptr;
+    }
+
+    if (glbl.ctx.dut.diff)
+    {
+        delete glbl.ctx.dut.diff;
+        glbl.ctx.dut.diff = nullptr;
+    }
+
+
     if (glbl.ctx.ref.emu)
     {
         delete glbl.ctx.ref.emu;
