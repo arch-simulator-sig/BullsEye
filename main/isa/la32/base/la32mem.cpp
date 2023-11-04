@@ -56,6 +56,24 @@ namespace Jasse {
     {
         return data8;
     }
+
+    uint32_t memdata_t::As(LA32MOPWidth width) const noexcept
+    {
+        switch (width.length) 
+        {
+            case 1:
+                return data8;
+
+            case 2:
+                return data16;
+
+            case 4:
+                return data32;
+
+            [[unlikely]] default:
+                return data32;
+        }
+    }
 }
 
 

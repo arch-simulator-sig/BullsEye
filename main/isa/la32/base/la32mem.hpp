@@ -73,6 +73,8 @@ namespace Jasse {
         explicit operator int32_t() const noexcept;
         explicit operator int16_t() const noexcept;
         explicit operator int8_t() const noexcept;
+
+        uint32_t As(LA32MOPWidth width) const noexcept;
     };
 
     // LA32 Memory Interface
