@@ -40,6 +40,11 @@ namespace BullsEye::Draconids3014 {
         _T&         Get(size_t index) noexcept;
         const _T&   Get(size_t index) const noexcept;
 
+        _T&         GetLast() noexcept;
+        const _T&   GetLast() const noexcept;
+
+        bool        IsEmpty() const noexcept;
+
         void        Clear() noexcept;
     };
 
@@ -130,17 +135,19 @@ namespace BullsEye::Draconids3014 {
         void            SetMemoryStore(lswidth_t width, lsstrb_t strb, addr_t address, uint32_t data, bool uncached) noexcept;
     };
 
+    //
+    using DS232IncrementVectorPC            = DS232IncrementVector<DS232IncrementPC>;
+    using DS232IncrementVectorInstruction   = DS232IncrementVector<DS232IncrementInstruction>;
+    using DS232IncrementVectorGPR           = DS232IncrementVector<DS232IncrementGPR>;
+    using DS232IncrementVectorMemoryStore   = DS232IncrementVector<DS232IncrementMemoryStore>;
+
+
 
     // DS232 Differential Instance
     class DS232Differential {
     public:
         class Builder;
-
-        using DS232IncrementVectorPC            = DS232IncrementVector<DS232IncrementPC>;
-        using DS232IncrementVectorInstruction   = DS232IncrementVector<DS232IncrementInstruction>;
-        using DS232IncrementVectorGPR           = DS232IncrementVector<DS232IncrementGPR>;
-        using DS232IncrementVectorMemoryStore   = DS232IncrementVector<DS232IncrementMemoryStore>;
-
+        
     private:
         FetchIDTracker*                 fidTracker;
 
@@ -305,6 +312,24 @@ namespace BullsEye::Draconids3014 {
     inline const _T& DS232IncrementVector<_T>::Get(size_t index) const noexcept
     {
         return vector[index];
+    }
+
+    template<class _T>
+    inline _T& DS232IncrementVector<_T>::GetLast() noexcept
+    {
+        return vector.back();
+    }
+
+    template<class _T>
+    inline const _T& DS232IncrementVector<_T>::GetLast() const noexcept
+    {
+        return vector.back();
+    }
+
+    template<class _T>
+    inline bool DS232IncrementVector<_T>::IsEmpty() const noexcept
+    {
+        return vector.empty();
     }
 
     template<class _T>
