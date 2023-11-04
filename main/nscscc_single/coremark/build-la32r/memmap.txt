@@ -81,74 +81,74 @@ OUTPUT(build-la32r/coremark.elf elf32-loongarch)
  .text.startup  0x0000000000004a74      0x830 build-la32r/core_main.o
                 0x0000000000004a74                main
 
-.rodata         0x00000000000052a4      0x860
- .rodata        0x00000000000052a4      0x4a6 build-la32r/core_main.o
- *fill*         0x000000000000574a        0x2 
- .rodata        0x000000000000574c       0x40 build-la32r/core_portme.o
-                0x0000000000005780                CoreTicker
-                0x0000000000005784                SerialStat
-                0x0000000000005788                SerialData
- .rodata        0x000000000000578c      0x104 build-la32r/core_state.o
- .rodata        0x0000000000005890       0x18 build-la32r/core_util.o
- .rodata        0x00000000000058a8      0x25c build-la32r/ee_printf.o
+.rodata         0x00000000000052a4      0x82c
+ .rodata        0x00000000000052a4      0x472 build-la32r/core_main.o
+ *fill*         0x0000000000005716        0x2 
+ .rodata        0x0000000000005718       0x40 build-la32r/core_portme.o
+                0x000000000000574c                CoreTicker
+                0x0000000000005750                SerialStat
+                0x0000000000005754                SerialData
+ .rodata        0x0000000000005758      0x104 build-la32r/core_state.o
+ .rodata        0x000000000000585c       0x18 build-la32r/core_util.o
+ .rodata        0x0000000000005874      0x25c build-la32r/ee_printf.o
 
-.rela.dyn       0x0000000000005b04        0x0
- .rela.got      0x0000000000005b04        0x0 build-la32r/la_init.o
- .rela.data     0x0000000000005b04        0x0 build-la32r/la_init.o
+.rela.dyn       0x0000000000005ad0        0x0
+ .rela.got      0x0000000000005ad0        0x0 build-la32r/la_init.o
+ .rela.data     0x0000000000005ad0        0x0 build-la32r/la_init.o
  .rela.eh_frame
-                0x0000000000005b04        0x0 build-la32r/la_init.o
- .rela.rodata   0x0000000000005b04        0x0 build-la32r/la_init.o
+                0x0000000000005ad0        0x0 build-la32r/la_init.o
+ .rela.rodata   0x0000000000005ad0        0x0 build-la32r/la_init.o
 
-.data           0x0000000000005b04       0x18
- .data          0x0000000000005b04        0x0 build-la32r/la_init.o
- .data          0x0000000000005b04        0xc build-la32r/core_main.o
-                0x0000000000005b04                mem_name
- .data          0x0000000000005b10        0x0 build-la32r/core_list_join.o
- .data          0x0000000000005b10        0x0 build-la32r/core_matrix.o
- .data          0x0000000000005b10        0xc build-la32r/core_portme.o
-                0x0000000000005b10                default_num_contexts
-                0x0000000000005b14                seed4_volatile
-                0x0000000000005b18                seed3_volatile
- .data          0x0000000000005b1c        0x0 build-la32r/core_state.o
- .data          0x0000000000005b1c        0x0 build-la32r/core_util.o
- .data          0x0000000000005b1c        0x0 build-la32r/ee_printf.o
+.data           0x0000000000005ad0       0x18
+ .data          0x0000000000005ad0        0x0 build-la32r/la_init.o
+ .data          0x0000000000005ad0        0xc build-la32r/core_main.o
+                0x0000000000005ad0                mem_name
+ .data          0x0000000000005adc        0x0 build-la32r/core_list_join.o
+ .data          0x0000000000005adc        0x0 build-la32r/core_matrix.o
+ .data          0x0000000000005adc        0xc build-la32r/core_portme.o
+                0x0000000000005adc                default_num_contexts
+                0x0000000000005ae0                seed4_volatile
+                0x0000000000005ae4                seed3_volatile
+ .data          0x0000000000005ae8        0x0 build-la32r/core_state.o
+ .data          0x0000000000005ae8        0x0 build-la32r/core_util.o
+ .data          0x0000000000005ae8        0x0 build-la32r/ee_printf.o
 
-.got            0x0000000000005b1c       0x2c
- .got           0x0000000000005b1c       0x2c build-la32r/la_init.o
-                0x0000000000005b1c                _GLOBAL_OFFSET_TABLE_
+.got            0x0000000000005ae8       0x2c
+ .got           0x0000000000005ae8       0x2c build-la32r/la_init.o
+                0x0000000000005ae8                _GLOBAL_OFFSET_TABLE_
 
-.got.plt        0x0000000000005b48        0x0
- .got.plt       0x0000000000005b48        0x0 build-la32r/la_init.o
+.got.plt        0x0000000000005b14        0x0
+ .got.plt       0x0000000000005b14        0x0 build-la32r/la_init.o
 
-.eh_frame       0x0000000000005b48      0x81c
- .eh_frame      0x0000000000005b48       0xe4 build-la32r/core_main.o
- .eh_frame      0x0000000000005c2c      0x260 build-la32r/core_list_join.o
+.eh_frame       0x0000000000005b14      0x81c
+ .eh_frame      0x0000000000005b14       0xe4 build-la32r/core_main.o
+ .eh_frame      0x0000000000005bf8      0x260 build-la32r/core_list_join.o
                                         0x270 (size before relaxing)
- .eh_frame      0x0000000000005e8c      0x1b4 build-la32r/core_matrix.o
+ .eh_frame      0x0000000000005e58      0x1b4 build-la32r/core_matrix.o
                                         0x1c4 (size before relaxing)
- .eh_frame      0x0000000000006040       0x98 build-la32r/core_portme.o
+ .eh_frame      0x000000000000600c       0x98 build-la32r/core_portme.o
                                          0xa8 (size before relaxing)
- .eh_frame      0x00000000000060d8       0xf4 build-la32r/core_state.o
+ .eh_frame      0x00000000000060a4       0xf4 build-la32r/core_state.o
                                         0x104 (size before relaxing)
- .eh_frame      0x00000000000061cc       0xa0 build-la32r/core_util.o
+ .eh_frame      0x0000000000006198       0xa0 build-la32r/core_util.o
                                          0xb0 (size before relaxing)
- .eh_frame      0x000000000000626c       0xf8 build-la32r/ee_printf.o
+ .eh_frame      0x0000000000006238       0xf8 build-la32r/ee_printf.o
                                         0x108 (size before relaxing)
 
-.bss            0x0000000000006364      0x7e4
- .bss           0x0000000000006364        0x0 build-la32r/la_init.o
- .bss           0x0000000000006364        0x0 build-la32r/core_main.o
- COMMON         0x0000000000006364      0x7d0 build-la32r/core_main.o
-                0x0000000000006364                static_memblk
- .bss           0x0000000000006b34        0x0 build-la32r/core_list_join.o
- .bss           0x0000000000006b34        0x0 build-la32r/core_matrix.o
- .bss           0x0000000000006b34       0x14 build-la32r/core_portme.o
-                0x0000000000006b34                seed5_volatile
-                0x0000000000006b38                seed2_volatile
-                0x0000000000006b3c                seed1_volatile
- .bss           0x0000000000006b48        0x0 build-la32r/core_state.o
- .bss           0x0000000000006b48        0x0 build-la32r/core_util.o
- .bss           0x0000000000006b48        0x0 build-la32r/ee_printf.o
+.bss            0x0000000000006330      0x7e4
+ .bss           0x0000000000006330        0x0 build-la32r/la_init.o
+ .bss           0x0000000000006330        0x0 build-la32r/core_main.o
+ COMMON         0x0000000000006330      0x7d0 build-la32r/core_main.o
+                0x0000000000006330                static_memblk
+ .bss           0x0000000000006b00        0x0 build-la32r/core_list_join.o
+ .bss           0x0000000000006b00        0x0 build-la32r/core_matrix.o
+ .bss           0x0000000000006b00       0x14 build-la32r/core_portme.o
+                0x0000000000006b00                seed5_volatile
+                0x0000000000006b04                seed2_volatile
+                0x0000000000006b08                seed1_volatile
+ .bss           0x0000000000006b14        0x0 build-la32r/core_state.o
+ .bss           0x0000000000006b14        0x0 build-la32r/core_util.o
+ .bss           0x0000000000006b14        0x0 build-la32r/ee_printf.o
 
 .debug_frame    0x0000000000000000      0x87c
  .debug_frame   0x0000000000000000       0xe4 build-la32r/core_main.o
