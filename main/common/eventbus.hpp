@@ -103,7 +103,7 @@ namespace BullsEye {
         const std::string&          GetName() const noexcept;
         int                         GetPriority() const noexcept;
 
-        virtual void                OnEvent(_TEvent& event);
+        virtual void                OnEvent(_TEvent& event) = 0;
     };
 
 
