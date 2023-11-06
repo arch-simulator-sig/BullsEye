@@ -4,6 +4,8 @@
 .build
 .obj
 .lib
+.bin
+.binary
 .local*
 *.user.sh
 *.vcd
