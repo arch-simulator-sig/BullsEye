@@ -249,18 +249,50 @@ int startup()
     std::cout << "Instantiated DUT differential base." << std::endl;
 
 
-    
+    // Enable Peripheral Injector
+    glbl.ctx.peripheralInjector = PeripheralInjector::Builder()
+        .RefEventBusId  (glbl.ctx.ref.eventBusId)
+        .DUTEventBusId  (glbl.ctx.dut.eventBusId)
+        .Build();
+    std::cout << "Enabled peripheral I/O injector." << std::endl;
 
 
     //
 
 
+    // Enable Error Capture
+    glbl.errcapt.peripheral = PeripheralErrorCapture::Builder()
+        .CapturedTo     (&glbl.err.captured)
+        .Build();
+    std::cout << "Enabled error capture of peripheral I/O." << std::endl;
+
+
+
+    //
+
+
+
+    //
     return 0;
 }
 
 
 int shutdown()
 {
+    if (glbl.errcapt.peripheral)
+    {
+        delete glbl.errcapt.peripheral;
+        glbl.errcapt.peripheral = nullptr;
+    }
+
+
+    if (glbl.ctx.peripheralInjector)
+    {
+        delete glbl.ctx.peripheralInjector;
+        glbl.ctx.peripheralInjector = nullptr;
+    }
+
+
     if (glbl.ctx.ref.diff)
     {
         delete glbl.ctx.ref.diff;

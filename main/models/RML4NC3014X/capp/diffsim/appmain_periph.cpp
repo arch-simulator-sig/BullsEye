@@ -19,6 +19,8 @@ unsigned int            dutEventBusId;
 int                     dutEventPriority;
 
 std::deque<Element>     injections;
+
+std::deque<Element>     injectionsAfter;
 */
 
 PeripheralInjector::PeripheralInjector(unsigned int thisEventBusId,
@@ -32,6 +34,7 @@ PeripheralInjector::PeripheralInjector(unsigned int thisEventBusId,
     , dutEventBusId     (dutEventBusId)
     , dutEventPriority  (dutEventPriority)
     , injections        ()
+    , injectionsAfter   ()
 { 
     RegisterListeners();
 }
@@ -93,6 +96,17 @@ void PeripheralInjector::RegisterListeners() noexcept
         ),
         dutEventBusId
     );
+
+    //
+    BullsEye::RegisterListener(
+        BullsEye::MakeListener(
+            GetListenerName("OnDUTMemoryStore"),
+            dutEventPriority,
+            &PeripheralInjector::OnDUTMemoryStore,
+            this
+        ),
+        dutEventBusId
+    );
 }
 
 void PeripheralInjector::UnregisterListeners() noexcept
@@ -122,11 +136,19 @@ void PeripheralInjector::UnregisterListeners() noexcept
         &PeripheralInjector::OnDUTSerialWrite,
         dutEventBusId
     );
+
+    //
+    BullsEye::UnregisterListener(
+        GetListenerName("OnDUTMemoryStore"),
+        &PeripheralInjector::OnDUTMemoryStore,
+        dutEventBusId
+    );
 }
 
 void PeripheralInjector::OnRefSerialRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOSerialPreReadPreEvent& event) noexcept
 {
     Element target(
+        Element::Source::REF,
         Element::Type::LOAD,
         event.GetAddress(),
         event.GetWidth(),
@@ -166,6 +188,7 @@ void PeripheralInjector::OnRefSerialRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMa
 void PeripheralInjector::OnRefSerialWrite(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOSerialPreWritePreEvent& event) noexcept
 {
     Element target(
+        Element::Source::REF,
         Element::Type::STORE,
         event.GetAddress(),
         event.GetWidth(),
@@ -181,9 +204,7 @@ void PeripheralInjector::OnRefSerialWrite(BullsEye::NSCSCCSingle::NSCSCC2023MMUM
     Element& inject = injections.front();
 
     if (inject.GetType()    != Element::Type::STORE
-    ||  inject.GetAddress() != target.GetAddress()
-    ||  inject.GetWidth()   != target.GetWidth()
-    ||  inject.GetData().As(inject.GetWidth()) != target.GetData().As(inject.GetWidth()))
+    ||  inject.GetAddress() != target.GetAddress())
     {
         RejectedEvent(inject, target).Fire(thisEventBusId);
         return;
@@ -191,7 +212,8 @@ void PeripheralInjector::OnRefSerialWrite(BullsEye::NSCSCCSingle::NSCSCC2023MMUM
 
     // inject
     event.SetProxy(true, [&](
-            Jasse::LA32MOPPath, Jasse::addr_t, Jasse::LA32MOPWidth, Jasse::memdata_t) -> Jasse::LA32MOPOutcome {
+            Jasse::LA32MOPPath, Jasse::addr_t, Jasse::LA32MOPWidth, 
+            Jasse::memdata_t) -> Jasse::LA32MOPOutcome {
         return { Jasse::LA32MOPStatus::MOP_SUCCESS };
     });
 
@@ -199,11 +221,14 @@ void PeripheralInjector::OnRefSerialWrite(BullsEye::NSCSCCSingle::NSCSCC2023MMUM
 
     //
     injections.pop_front();
+
+    injectionsAfter.push_back(target);
 }
 
 void PeripheralInjector::OnDUTSerialRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOSerialPostReadPostEvent& event) noexcept
 {
     injections.emplace_back(
+        Element::Source::DUT,
         Element::Type::LOAD,
         event.GetAddress(),
         event.GetWidth(),
@@ -212,12 +237,60 @@ void PeripheralInjector::OnDUTSerialRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMa
 
 void PeripheralInjector::OnDUTSerialWrite(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOSerialPostWritePostEvent& event) noexcept
 {
-    injections.emplace_back(
+    Element target(
+        Element::Source::DUT,
         Element::Type::STORE,
         event.GetAddress(),
         event.GetWidth(),
-        event.GetData()
-    );
+        event.GetData());
+
+    // check injection
+    if (injectionsAfter.empty())
+    {
+        NojectedEvent(target).Fire(thisEventBusId);
+        return;
+    }
+
+    Element& inject = injectionsAfter.front();
+
+    if (inject.GetType()    != Element::Type::STORE
+    ||  inject.GetAddress() != target.GetAddress()
+    ||  inject.GetWidth()   != target.GetWidth()
+    ||  inject.GetData().As(inject.GetWidth()) != target.GetData().As(target.GetWidth()))
+    {
+        RejectedEvent(inject, target).Fire(thisEventBusId);
+        return;
+    }
+
+    // inject
+    // Phantom Injection : nothing need to be done here
+
+    InjectedEvent(inject).Fire(thisEventBusId);
+
+    //
+    injectionsAfter.pop_front();
+}
+
+void PeripheralInjector::OnDUTMemoryStore(BullsEye::Draconids3014::DS232StoreCommitEvent& event) noexcept
+{
+    // *NOTICE: Only check address for this injection.
+    //          This procedure is designed to ensure that peripheral store access is in-order
+    //          and compensating the access delay caused by AXI bridge to MMU.
+    //          Address is converted on AXI to MMU path, so we need to convert it back here.
+
+    Jasse::addr_t address = event.GetAddress();
+
+    if (event.IsUncached())
+        address = (address & 0x1FFFFFFF) | 0xA0000000;
+
+
+    if (BullsEye::NSCSCCSingle::NSCSCC2023MMU::IsSerial(address))
+        injections.emplace_back(
+            Element::Source::DUT,
+            Element::Type::STORE,
+            address,
+            Jasse::LA32MOPWidth {},
+            Jasse::memdata_t {});
 }
 
 unsigned int PeripheralInjector::GetThisEventBusId() const noexcept
@@ -357,6 +430,7 @@ PeripheralInjector* PeripheralInjector::Builder::Build() noexcept
 
 // Implementation of: class PeripheralInjector::Element
 /*
+Source              source;
 Type                type;
     
 Jasse::addr_t       address;
@@ -371,15 +445,27 @@ PeripheralInjector::Element::Element() noexcept
     , data      ()
 { }
 
-PeripheralInjector::Element::Element(Type                type, 
+PeripheralInjector::Element::Element(Source              source,
+                                     Type                type, 
                                      Jasse::addr_t       address, 
                                      Jasse::LA32MOPWidth width, 
                                      Jasse::memdata_t    data) noexcept
-    : type      (type)
+    : source    (source)
+    , type      (type)
     , address   (address)
     , width     (width)
     , data      (data)
 { }
+
+PeripheralInjector::Element::Source PeripheralInjector::Element::GetSource() const noexcept
+{
+    return source;
+}
+
+void PeripheralInjector::Element::SetSource(Source source) noexcept
+{
+    this->source = source;
+}
 
 PeripheralInjector::Element::Type PeripheralInjector::Element::GetType() const noexcept
 {

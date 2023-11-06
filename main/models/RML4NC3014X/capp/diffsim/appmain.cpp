@@ -44,50 +44,123 @@ int main(int argc, char* argv[])
 
     int counter_progressbar = 0;
 
+    bool coninfo_first_time = true;
+
     auto last_time = std::chrono::system_clock::now();
     unsigned long long cps = 0;
 
     pc_t last_pc;
+
+    uint64_t    counter_cycle       = 0;
+    uint64_t    counter_commit      = 0;
+
+    uint64_t    counter_dualcommit  = 0;
+
+    uint64_t    counter_interval_commit = 0;
 
     int counter_interval = 0;
     while (1)
     {
         glbl.ctx.dut.dut->Eval();
 
-        // update pc
-        {
-            Draconids3014::DS232IncrementVectorPC& incr = glbl.ctx.dut.diff->GetIncrementPC();
-
-            if (!incr.IsEmpty())
-                last_pc = incr.GetLast().GetPC();
-        }
-
+        counter_cycle++;
 
         // update reference
         {
             Draconids3014::DS232IncrementVectorPC& incr = glbl.ctx.dut.diff->GetIncrementPC();
 
-            for (int i = 0; i < incr.GetCount(); i++)
+            // commit watchdog
+            if (incr.IsEmpty())
+                counter_interval_commit++;
+            else
+                counter_interval_commit = 0;
+
+            // commit counter
+            counter_commit += incr.GetCount();
+
+            // dual commit counter
+            if (incr.GetCount() == 2)
+                counter_dualcommit++;
+
+            // reference
+            for (size_t i = 0; i < incr.GetCount(); i++)
             {
                 glbl.ctx.ref.emu->Eval();
+
+                if (!incr.IsEmpty())
+                    last_pc = incr.Get(i).GetPC();
+
+                // check error
+                if (!glbl.err.captured.empty())
+                {
+                    std::ostringstream oss;
+
+                    std::cout << "--------------------------------" << std::endl;
+                    std::cout << "\033[1;31mEmulation stopped\033[0m due to error(s)." << std::endl;
+                    std::cout << "Captured " << glbl.err.captured.size() << " error(s) in total." << std::endl;
+                    std::cout << "Error reported in detail in follow-up." << std::endl;
+
+                    oss << "\nLast commit PC: \033[1;33m0x" << std::hex << std::setw(8) << std::setfill(' ') << last_pc << "\033[0m" << std::endl;
+                    std::cout << oss.str();
+
+                    std::cout << "--------------------------------" << std::endl;
+                    for (size_t j = 0; j < glbl.err.captured.size(); j++)
+                    {
+                        std::cout << "(Error #" << j << ")" << std::endl;
+                        std::cout << "Source                : \033[1;33m" << glbl.err.captured[j].GetSource() << "\033[0m" << std::endl;
+                        std::cout << "Type                  : \033[1;33m" << glbl.err.captured[j].GetType() << "\033[0m" << std::endl; 
+                        std::cout << "Further information   :" << std::endl;
+                        for (const std::string& info : glbl.err.captured[j].GetMessages())
+                            std::cout << "  " << info << std::endl;
+                        std::cout << "--------------------------------" << std::endl;
+                    }
+
+                    shutdown();
+
+                    return 1;
+                }
             }
         }
 
 
+        if (counter_interval_commit == 10000) // commit watchdog
+        {
+            std::ostringstream oss;
+
+            std::cout << "--------------------------------" << std::endl;
+            std::cout << "\033[1;31mEmulation stopped\033[0m due to WATCH DOG." << std::endl;
+            std::cout << "Nothing commited in past 10000 clocks." << std::endl;
+
+            oss << "\nLast commit PC: \033[1;33m0x" << std::hex << std::setw(8) << std::setfill(' ') << last_pc << "\033[0m" << std::endl;
+            std::cout << oss.str();
+
+            shutdown();
+
+            return 1;
+        }
+
+
         // update console
+
         if (counter_interval == 6000 
         ||  counter_interval == 12000 
         ||  counter_interval == 18000)
         {
             std::ostringstream oss;
-            oss << "\033[K";
-            oss << "Emulation speed: \033[1;33m";
+
+            if (coninfo_first_time)
+                coninfo_first_time = false;
+            else
+                oss << "\033[1A\033[K\033[1A\033[K\033[1A\033[K\033[1A\033[K";
+
+            oss << "Emulation speed   : \033[1;33m";
             oss << std::setw(12) << std::setfill(' ') << cps;
             oss << "\033[0m cycles/second";
             oss << "  ";
-            oss << ANIMATE_INF_PROGRESS_BAR[counter_progressbar];
-            oss << "\nLast commit PC: \033[1;33m0x" << std::hex << std::setw(8) << std::setfill(' ') << last_pc << "\033[0m" << std::endl;
-            oss << "\033[1A\033[1A";
+            oss << ANIMATE_INF_PROGRESS_BAR[counter_progressbar] << std::endl;
+            oss << "Dual-commit ratio : \033[1;33m" << (double(counter_dualcommit) / counter_commit) << "\033[0m" << std::endl;
+            oss << "Overall IPC       : \033[1;33m" << (double(counter_commit) / counter_cycle) << "\033[0m" << std::endl;
+            oss << "Last commit PC    : \033[1;33m0x" << std::hex << std::setw(8) << std::setfill(' ') << last_pc << "\033[0m" << std::endl;
 
             counter_progressbar = ++counter_progressbar % ANIMATE_INF_PROGRESS_BAR_SIZE;
 

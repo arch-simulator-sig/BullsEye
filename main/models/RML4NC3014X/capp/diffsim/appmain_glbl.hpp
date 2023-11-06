@@ -4,6 +4,13 @@
 //
 //
 
+#include <string>
+
+
+#include "appmain_periph.hpp"
+#include "appmain_err.hpp"
+#include "appmain_errcapt.hpp"
+
 
 #include "../../csrc/core/ds232_verilated.hpp"
 #include "../../csrc/core/ds232_diff.hpp"
@@ -58,6 +65,8 @@ struct GlobalContext {
     // global shared
     BullsEye::EventBusDispatchment          eventBusDispatchment;
 
+    PeripheralInjector*                     peripheralInjector;
+
     //
     GlobalContextRM                         ref;
     GlobalContextDUT                        dut;
@@ -71,11 +80,29 @@ struct GlobalConfig {
 };
 
 
+struct GlobalError {
+
+    //
+    CapturedErrors                          captured;
+};
+
+
+struct GlobalErrorCapture {
+
+    //
+    PeripheralErrorCapture*                 peripheral;
+};
+
+
 struct Global {
 
-    GlobalContext ctx;
+    GlobalContext       ctx;
 
-    GlobalConfig cfg;
+    GlobalConfig        cfg;
+
+    GlobalError         err;
+
+    GlobalErrorCapture  errcapt;
 };
 
 extern Global glbl;

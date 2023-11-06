@@ -8,6 +8,9 @@
 #include <deque>
 
 
+#include "../../csrc/core/ds232_event.hpp"
+
+
 #include "autoinclude.h"
 
 #include AUTOINC_BE_COMMON(eventbus.hpp)
@@ -22,12 +25,18 @@ public:
 public:
     class Element {
     public:
+        enum class Source {
+            REF = 0,
+            DUT
+        };
+
         enum class Type {
             LOAD = 0,
             STORE
         };
 
     private:
+        Source              source;
         Type                type;
     
         Jasse::addr_t       address;
@@ -36,10 +45,14 @@ public:
 
     public:
         Element() noexcept;
-        Element(Type                type, 
+        Element(Source              source, 
+                Type                type, 
                 Jasse::addr_t       address, 
                 Jasse::LA32MOPWidth width, 
                 Jasse::memdata_t    data) noexcept;
+
+        Source              GetSource() const noexcept;
+        void                SetSource(Source source) noexcept;
 
         Type                GetType() const noexcept;
         void                SetType(Type type) noexcept;
@@ -74,6 +87,8 @@ private:
 
     std::deque<Element>     injections;
 
+    std::deque<Element>     injectionsAfter;
+
 protected:
     friend class Builder;
     friend class Element;
@@ -94,6 +109,8 @@ protected:
 
     void            OnDUTSerialRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOSerialPostReadPostEvent& event) noexcept;
     void            OnDUTSerialWrite(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOSerialPostWritePostEvent& event) noexcept;
+
+    void            OnDUTMemoryStore(BullsEye::Draconids3014::DS232StoreCommitEvent& event) noexcept;
 
 public:
     ~PeripheralInjector() noexcept;
