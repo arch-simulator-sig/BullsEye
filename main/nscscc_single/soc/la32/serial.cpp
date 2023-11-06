@@ -20,7 +20,7 @@ namespace BullsEye {
 
     void SerialWriteOnlyConsole::Write(uint8_t data) noexcept
     {
-        std::cout << (char) data << std::flush;
+        std::cout << "\033[K" << (char) data << std::flush;
     }
 
     bool SerialWriteOnlyConsole::IsWriteAvailable() const noexcept
