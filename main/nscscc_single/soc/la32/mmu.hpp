@@ -54,6 +54,9 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPOutcome              _MMIO_WriteClockCounter(addr_t address, LA32MOPWidth width, memdata_t src) noexcept;
 
     public:
+        static bool                 IsSerial(addr_t address) noexcept;
+
+    public:
         NSCSCC2023MMU(unsigned int      eventBusId,
                       BaseRAM*          baseRAM,
                       ExtRAM*           extRAM, 

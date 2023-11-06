@@ -36,6 +36,11 @@ namespace BullsEye::NSCSCCSingle {
     NSCSCC2023MMU::~NSCSCC2023MMU() noexcept
     { }
 
+    bool NSCSCC2023MMU::IsSerial(addr_t address) noexcept
+    {
+        return (address == 0xBFD003F8 || address == 0xBFD003FC);
+    }
+
     LA32MOPOutcome NSCSCC2023MMU::_BaseRAM_Read(LA32MOPPath path, addr_t phyaddress, LA32MOPWidth width, memdata_t* dst) noexcept
     {
         // Pre-Read Event
@@ -419,7 +424,7 @@ namespace BullsEye::NSCSCCSingle {
                 mopoutcome = _BaseRAM_ReadData(phyaddress, width, dst);
             else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
                 mopoutcome = _ExtRAM_ReadData(phyaddress - 0x00400000, width, dst);
-            else if (address == 0xBFD003F8 || address == 0xBFD003FC)
+            else if (IsSerial(address))
                 mopoutcome = _MMIO_ReadSerial(address, width, dst);
             else if (address == 0xBFD00400 || address == 0xBFD00404)
                 mopoutcome = _MMIO_ReadClockCounter(address, width, dst);
@@ -512,7 +517,7 @@ namespace BullsEye::NSCSCCSingle {
                 mopoutcome = _BaseRAM_WriteData(phyaddress, width, src);
             else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
                 mopoutcome = _ExtRAM_WriteData(phyaddress - 0x00400000, width, src);
-            else if (address == 0xBFD003F8 || address == 0xBFD003FC)
+            else if (IsSerial(address))
                 mopoutcome = _MMIO_WriteSerial(address, width, src);
             else if (address == 0xBFD00400 || address == 0xBFD00404)
                 mopoutcome = _MMIO_WriteClockCounter(address, width, src);
