@@ -1,6 +1,6 @@
 #
 if [[ "$K221_BE_GLOBALCONFIG" != "true" ]]; then
-    echo "%Error: You need to run BullsEye global config script first."
+    echo -e "%\033[1;31mError\033[0m: You need to run BullsEye global config script first."
     exit 1
 fi
 
@@ -31,7 +31,7 @@ eval "test -d $LOG_FOLDER || mkdir $LOG_FOLDER"
 
 #
 USAGE="\
-Usage: build.sh [-c] [-r] [-j <count>] [-v <path>] [-t <target>] [-R] [-a <params>] [-s <options>]\n\
+Usage: build.sh [-c] [-r] [-j <count>] [-v <path>] [-t <target>] [-T <file>] [-R] [-a <params>] [-s <options>]\n\
 -c: Clean the verilated build path before build.\n\
 -v: Specify the Verilog Project path.\n\
 -r: Clean and rebuild the C-app and dependencies output.\n\
@@ -104,7 +104,7 @@ specify_target () {
     fi
 
     if [[ ! -n "$CAPP_TARGET" ]]; then
-        echo "%Error: Please specify the C-app target by parameter \"-t\""
+        echo -e "%\033[1;31mError\033[0m: Please specify the C-app target by parameter \"-t\""
         exit 1
     fi
 
@@ -116,7 +116,7 @@ specify_target () {
     #
     test -d "$CAPP_DIR"
     if [[ $? -ne 0 ]]; then
-        echo "%Error: C-app target \"$CAPP_TARGET\" directory not found."
+        echo -e "%\033[1;31mError\033[0m: C-app target \"$CAPP_TARGET\" directory not found."
         exit 1
     fi
 
@@ -168,7 +168,7 @@ build_dependencies () {
     for CAPP_DEP in ${CAPP_DEPS[@]}
     do
         if [[ "$(type -t build_library_$CAPP_DEP)" != function ]]; then
-            echo "%Error: Build routine for dependency \"$CAPP_DEP\" (build_library_$CAPP_DEP) not defined."
+            echo -e "%\033[1;31mError\033[0m: Build routine for dependency \"$CAPP_DEP\" (build_library_$CAPP_DEP) not defined."
             exit 1
         fi
     done
@@ -180,7 +180,7 @@ build_dependencies () {
         echo -e "\033[33m[dependency build] Discovered dependency \"$CAPP_DEP\".\033[0m"
         eval "build_library_$CAPP_DEP $BUILD_ARG_C $BUILD_ARG_J"
         if [ $? -ne 0 ]; then
-            echo -e "%Error: \033[1;31mFailed at build for \"$CAPP_DEP\".\033[0m"
+            echo -e "%\033[1;31mError\033[0m: \033[1;31mFailed at build for \"$CAPP_DEP\".\033[0m"
             exit 1
         fi
     done
@@ -195,7 +195,7 @@ link_dependencies () {
     for CAPP_DEP in ${CAPP_DEPS[@]}
     do
         if [[ "$(type -t link_library_$CAPP_DEP)" != function ]]; then
-            echo "%Error: Link configuration routine for dependency \"$CAPP_DEP\" (link_library_$CAPP_DEP) not defined."
+            echo -e "%\033[1;31mError\033[0m: Link configuration routine for dependency \"$CAPP_DEP\" (link_library_$CAPP_DEP) not defined."
             exit 1
         fi
     done
@@ -208,7 +208,7 @@ link_dependencies () {
         echo -e "\033[33m[dependency link] Discovered dependency \"$CAPP_DEP\".\033[0m"
         eval "link_library_$CAPP_DEP -l CAPP_DEP_LD_FILE"
         if [ $? -ne 0 ]; then
-            echo -e "%Error: \033[1;31mFailed at link configuration for \"$CAPP_DEP\".\033[0m"
+            echo -e "%\033[1;31mError\033[0m: \033[1;31mFailed at link configuration for \"$CAPP_DEP\".\033[0m"
             exit 1
         fi
 
@@ -218,7 +218,7 @@ link_dependencies () {
         then
             LD_LIBRARY="$CAPP_DEP_LD_FILE $LD_LIBRARY"
         else
-            echo -e "%Error: Linkage file of \"$CAPP_DEP\" not found or not built yet."
+            echo -e "%\033[1;31mError\033[0m: Linkage file of \"$CAPP_DEP\" not found or not built yet."
             exit 1
         fi
     done
@@ -235,14 +235,14 @@ build_peripherals () {
     if [[ -n "$BUILD_ARG_C" ]]; then
         eval "make -C csrc clean"
         if [ $? -ne 0 ]; then
-            echo -e "%Error: \033[1;31mFailed at core peripherals clean task.\033[0m"
+            echo -e "%\033[1;31mError\033[0m: \033[1;31mFailed at core peripherals clean task.\033[0m"
             exit 1
         fi
     fi
 
     eval "make -C csrc $BUILD_ARG_J"
     if [ $? -ne 0 ]; then
-        echo -e "%Error: \033[1;31mFailed at core peripherals make task.\033[0m"
+        echo -e "%\033[1;31mError\033[0m: \033[1;31mFailed at core peripherals make task.\033[0m"
         exit 1
     fi
 
@@ -257,7 +257,7 @@ link_peripherials () {
     then
         LD_LIBRARY="$PERIPH_LD_FILE $LD_LIBRARY"
     else
-        echo -e "%Error: Linkage file of core peripherals not found or not built yet."
+        echo -e "%\033[1;31mError\033[0m: Linkage file of core peripherals not found or not built yet."
         exit 1
     fi
 
@@ -273,14 +273,14 @@ build_capp_main () {
     if [[ -n "$BUILD_ARG_C" ]]; then
         eval "make -C $CAPP_DIR clean"
         if [ $? -ne 0 ]; then
-            echo -e "%Error: \033[1;31mFailed at C-app main clean task.\033[0m"
+            echo -e "%\033[1;31mError\033[0m: \033[1;31mFailed at C-app main clean task.\033[0m"
             exit 1
         fi
     fi
 
     eval "make -C $CAPP_DIR $BUILD_ARG_J"
     if [ $? -ne 0 ]; then
-        echo -e "%Error: \033[1;31mFailed at C-app main build task.\033[0m"
+        echo -e "%\033[1;31mError\033[0m: \033[1;31mFailed at C-app main build task.\033[0m"
         exit 1
     fi
 
@@ -299,7 +299,7 @@ link_capp_main () {
     then
         LD_LIBRARY="$CAPP_LD_FILE $LD_LIBRARY"
     else
-        echo -e "%Error: Linkage file of C-app main not found or not built yet."
+        echo -e "%\033[1;31mError\033[0m: Linkage file of C-app main not found or not built yet."
         exit 1
     fi
 
@@ -315,7 +315,7 @@ verilate () {
     eval "./verilate.sh $VERILATE_ARG_C >.log/verilate.out.log 2>.log/verilate.err.log"
 
     if [ $? -ne 0 ]; then
-        echo -e "%Error: \033[1;31mFailed at verilator make task.\033[0m"
+        echo -e "%\033[1;31mError\033[0m: \033[1;31mFailed at verilator make task.\033[0m"
         eval "cat .log/verilate.err.log | head -n 5"
         echo "..."
         echo -e "\033[1;30mVerilator error logs saved to .log/verilate.err.log\033[0m"
@@ -339,7 +339,7 @@ link_verilated () {
     then
         LD_LIBRARY="$LD_LIBRARY $VERILATED_LD_FILE"
     else
-        echo -e "%Error: Linkage file of verilated not found or not built yet."
+        echo -e "%\033[1;31mError\033[0m: Linkage file of verilated not found or not built yet."
         exit 1
     fi
 
@@ -372,7 +372,7 @@ run_capp () {
         echo "------------------------------------------------"
         eval "$BUILD_TARGET $CAPP_RUN_ARGS"
     else
-        echo "%Error: C-app target \"$BUILD_TARGET\" not found or not built yet."
+        echo -e "%\033[1;31mError\033[0m: C-app target \"$BUILD_TARGET\" not found or not built yet."
         exit 1
     fi
     
