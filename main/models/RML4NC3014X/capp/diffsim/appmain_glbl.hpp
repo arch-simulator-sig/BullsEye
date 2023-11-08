@@ -7,6 +7,7 @@
 #include <string>
 
 
+#include "appmain_pctrace.hpp"
 #include "appmain_periph.hpp"
 #include "appmain_verifier.hpp"
 #include "appmain_err.hpp"
@@ -28,6 +29,7 @@
 #include AUTOINC_BE_JASSE2_LA32(addon/la32diff.hpp)
 
 
+//
 struct GlobalContextRM {
 
     unsigned int                                eventBusId;
@@ -71,8 +73,37 @@ struct GlobalContext {
     DifferentialVerifier*                   verifier;
 
     //
+    Jasse::pc_t                             lastPC;
+
+    PCTrace                                 tracePC;
+
+    uint64_t                                commitCount;
+
+    //
     GlobalContextRM                         ref;
     GlobalContextDUT                        dut;
+};
+
+
+//
+struct GlobalConfigDump0 {
+
+    bool                                    enabled;
+
+    unsigned int                            upperCount;
+    unsigned int                            lowerCount;
+
+    bool                                    muteUnread;
+};
+
+struct GlobalConfigDump1 {
+
+    bool                                    enabled;
+
+    unsigned int                            upperCount;
+    unsigned int                            lowerCount;
+
+    bool                                    muteUnread;
 };
 
 
@@ -80,9 +111,14 @@ struct GlobalConfig {
 
     //
     std::string                             binaryFileName;
+
+    //
+    GlobalConfigDump0                       dump0;
+    GlobalConfigDump1                       dump1;
 };
 
 
+//
 struct GlobalError {
 
     //
@@ -90,6 +126,7 @@ struct GlobalError {
 };
 
 
+//
 struct GlobalErrorCapture {
 
     //
@@ -99,6 +136,7 @@ struct GlobalErrorCapture {
 };
 
 
+//
 struct Global {
 
     GlobalContext       ctx;

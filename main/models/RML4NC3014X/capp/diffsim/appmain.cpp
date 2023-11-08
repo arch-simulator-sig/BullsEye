@@ -7,6 +7,7 @@
 #include "appmain_glbl.hpp"
 #include "appmain_config.hpp"
 #include "appmain_startup.hpp"
+#include "appmain_dump.hpp"
 
 
 #include "../../csrc/core/ds232_diff.hpp"
@@ -88,7 +89,11 @@ int main(int argc, char* argv[])
                 glbl.ctx.ref.emu->Eval();
 
                 if (!incr.IsEmpty())
-                    last_pc = incr.Get(i).GetPC();
+                {
+                    glbl.ctx.lastPC = last_pc = incr.Get(i).GetPC();
+                    glbl.ctx.tracePC.Push(last_pc);
+                    glbl.ctx.commitCount++;
+                }
 
                 // difftest
                 glbl.ctx.verifier->Verify(i);
@@ -109,7 +114,7 @@ int main(int argc, char* argv[])
                     std::cout << "--------------------------------" << std::endl;
                     for (size_t j = 0; j < glbl.err.captured.size(); j++)
                     {
-                        std::cout << "(Error #" << j << ")" << std::endl;
+                        std::cout << "(\033[1;31mError\033[0m #" << j << ")" << std::endl;
                         std::cout << "Source                : \033[1;33m" << glbl.err.captured[j].GetSource() << "\033[0m" << std::endl;
                         std::cout << "Type                  : \033[1;33m" << glbl.err.captured[j].GetType() << "\033[0m" << std::endl; 
                         std::cout << "Further information   :" << std::endl;
@@ -117,6 +122,8 @@ int main(int argc, char* argv[])
                             std::cout << "  " << info << std::endl;
                         std::cout << "--------------------------------" << std::endl;
                     }
+
+                    dump();
 
                     shutdown();
 

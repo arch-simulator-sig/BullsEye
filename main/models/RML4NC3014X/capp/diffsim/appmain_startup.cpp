@@ -48,6 +48,12 @@ int startup()
     using namespace BullsEye::NSCSCCSingle;
 
 
+    //
+    glbl.ctx.lastPC = 0xDEADBEEF;
+
+    glbl.ctx.commitCount = 0;
+
+
     // Configure seperate EventBus for reference model and DUT
     EventBusDispatchment eventBusDispatchment;
 

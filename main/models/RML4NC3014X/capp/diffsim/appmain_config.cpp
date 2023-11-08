@@ -30,6 +30,24 @@ int config(int argc, char* argv[])
     glbl.cfg.binaryFileName = binaryfilename;
 
 
+    // dump 0
+    glbl.cfg.dump0.enabled = true;
+
+    glbl.cfg.dump0.upperCount = 3;
+    glbl.cfg.dump0.lowerCount = 3;
+
+    glbl.cfg.dump0.muteUnread = true;
+
+
+    // dump 1
+    glbl.cfg.dump1.enabled = true;
+
+    glbl.cfg.dump1.upperCount = 4;
+    glbl.cfg.dump1.lowerCount = 1;
+
+    glbl.cfg.dump1.muteUnread = true;
+
+
     //
 
     return 0;
