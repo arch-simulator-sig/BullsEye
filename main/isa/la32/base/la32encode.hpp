@@ -10,7 +10,7 @@
 
 
 #define ENCODE_LA32_STD_OPERAND(val, name) \
-    ((val & (name##_MASK >> name##_OFFSET)) << name##_OFFSET)
+    ((uint32_t(val) & (name##_MASK >> name##_OFFSET)) << name##_OFFSET)
 
 
 #define ENCODE_LA32_IMM8(value) \
