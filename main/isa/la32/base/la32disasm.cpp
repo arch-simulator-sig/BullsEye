@@ -12,7 +12,7 @@
 // Implementation of Instruction Textualizers
 namespace Jasse {
 
-#define LA32_TEXTUALIZE_GPR_AS_ABI
+//#define LA32_TEXTUALIZE_GPR_AS_ABI
 #define LA32_TEXTUALIZE_GPR_WITH_PREFIX
 
 #define LA32_TEXTUALIZE_NAME_ALIGNMENT              8
