@@ -271,6 +271,15 @@ void PeripheralInjector::OnDUTSerialWrite(BullsEye::NSCSCCSingle::NSCSCC2023MMUM
     injectionsAfter.pop_front();
 }
 
+
+Jasse::addr_t PeripheralInjector::ConvertBusAddress(Jasse::addr_t address, bool uncached) noexcept
+{
+    if (uncached)
+        address = (address & 0x1FFFFFFF) | 0xA0000000;
+
+    return address;
+}
+
 void PeripheralInjector::OnDUTMemoryStore(BullsEye::Draconids3014::DS232StoreCommitEvent& event) noexcept
 {
     // *NOTICE: Only check address for this injection.
@@ -278,11 +287,7 @@ void PeripheralInjector::OnDUTMemoryStore(BullsEye::Draconids3014::DS232StoreCom
     //          and compensating the access delay caused by AXI bridge to MMU.
     //          Address is converted on AXI to MMU path, so we need to convert it back here.
 
-    Jasse::addr_t address = event.GetAddress();
-
-    if (event.IsUncached())
-        address = (address & 0x1FFFFFFF) | 0xA0000000;
-
+    Jasse::addr_t address = ConvertBusAddress(event.GetAddress(), event.IsUncached());
 
     if (BullsEye::NSCSCCSingle::NSCSCC2023MMU::IsSerial(address))
         injections.emplace_back(

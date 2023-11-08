@@ -257,7 +257,12 @@ int startup()
     std::cout << "Enabled peripheral I/O injector." << std::endl;
 
 
-    //
+    // Enable Differential Verifier
+    glbl.ctx.verifier = DifferentialVerifier::Builder()
+        .DifferentialRef    (glbl.ctx.ref.diff)
+        .DifferentialDUT    (glbl.ctx.dut.diff)
+        .Build();
+    std::cout << "Enabled differential verifier." << std::endl;
 
 
     // Enable Error Capture
@@ -266,6 +271,11 @@ int startup()
         .Build();
     std::cout << "Enabled error capture of peripheral I/O." << std::endl;
 
+
+    glbl.errcapt.verifier = DifferentialVerifierErrorCapture::Builder()
+        .CapturedTo     (&glbl.err.captured)
+        .Build();
+    std::cout << "Enabled error capture of differential verifier." << std::endl;
 
 
     //
@@ -279,10 +289,23 @@ int startup()
 
 int shutdown()
 {
+    if (glbl.errcapt.verifier)
+    {
+        delete glbl.errcapt.verifier;
+        glbl.errcapt.verifier = nullptr;
+    }
+
     if (glbl.errcapt.peripheral)
     {
         delete glbl.errcapt.peripheral;
         glbl.errcapt.peripheral = nullptr;
+    }
+
+
+    if (glbl.ctx.verifier)
+    {
+        delete glbl.ctx.verifier;
+        glbl.ctx.verifier = nullptr;
     }
 
 

@@ -8,6 +8,7 @@
 
 
 #include "appmain_periph.hpp"
+#include "appmain_verifier.hpp"
 #include "appmain_err.hpp"
 #include "appmain_errcapt.hpp"
 
@@ -67,6 +68,8 @@ struct GlobalContext {
 
     PeripheralInjector*                     peripheralInjector;
 
+    DifferentialVerifier*                   verifier;
+
     //
     GlobalContextRM                         ref;
     GlobalContextDUT                        dut;
@@ -91,6 +94,8 @@ struct GlobalErrorCapture {
 
     //
     PeripheralErrorCapture*                 peripheral;
+
+    DifferentialVerifierErrorCapture*       verifier;
 };
 
 

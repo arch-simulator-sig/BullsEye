@@ -177,7 +177,7 @@ void PeripheralErrorCapture::OnPeripheralInjectorRejected(PeripheralInjector::Re
     CapturedError error("PeripheralInjector", "InjectionMismatch(rejected)");
 
     error.AppendMessage("Reference model performed differently on peripheral access.");
-    error.AppendMessage("DUT didn't accessed peripheral as expected.");
+    error.AppendMessage("DUT didn't access peripheral as expected.");
 
     //
     error.AppendMessage("Errored peripheral access (from injector):");

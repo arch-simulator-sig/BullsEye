@@ -113,6 +113,9 @@ protected:
     void            OnDUTMemoryStore(BullsEye::Draconids3014::DS232StoreCommitEvent& event) noexcept;
 
 public:
+    static Jasse::addr_t    ConvertBusAddress(Jasse::addr_t address, bool uncached) noexcept;
+
+public:
     ~PeripheralInjector() noexcept;
 
     PeripheralInjector(const PeripheralInjector&) = delete;

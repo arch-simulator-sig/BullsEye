@@ -90,6 +90,9 @@ int main(int argc, char* argv[])
                 if (!incr.IsEmpty())
                     last_pc = incr.Get(i).GetPC();
 
+                // difftest
+                glbl.ctx.verifier->Verify(i);
+
                 // check error
                 if (!glbl.err.captured.empty())
                 {
