@@ -58,6 +58,9 @@
 #define GPR_dst_trace           gpr_dst_trace
 
 #define MEM_src_trace           memory_src_trace
+#define MEM_address             memory_address
+
+#define BRANCH_address          branch_address
 
 #define TRACE_REF               trace_ref
 #define TRACE_CONTENT           trace_content
@@ -85,12 +88,29 @@
 
 #define trace_gpr_memload \
     { \
+        TRACE_CONTENT.value_second = MEM_address; \
         TRACE_CONTENT.SetTracedFirstOperand (*TRACE_REF, GPR_src_trace(0)); \
         TRACE_CONTENT.SetTracedSecondOperand(*TRACE_REF, MEM_src_trace); \
     }
 
 #define trace_gpr_memstore \
-    trace_gpr_2src
+    { \
+        TRACE_CONTENT.value_second = MEM_address; \
+        trace_gpr_2src \
+    }
+
+
+#define trace_branchlink_0src \
+    { \
+        TRACE_CONTENT.value_second = BRANCH_address; \
+        trace_gpr_0src \
+    }
+
+#define trace_branchlink_1src \
+    { \
+        TRACE_CONTENT.value_second = BRANCH_address; \
+        trace_gpr_1src \
+    }
 
 
 #define read_GPR_src(ordinal, last, index) \
@@ -131,6 +151,7 @@
 
 
 #define write_GPR_dst(index, trace_action) \
+    LA32TraceEntity::Reference TRACE_REF; \
     { \
         /*Traced Instruction GPR Pre-Modify Event*/ \
         LA32TracedInstructionGPRPreModifyEvent preEvent \
@@ -142,14 +163,17 @@
         \
         GPR_dst_value = preEvent.GetNewValue(); \
         \
-        /*Generate GPR destination trace (If GPR tracer enabled)*/ \
-        if (INSTANCE.IsTraceEnabled() && INSTANCE.Tracers().HasGPRTracer()) \
+        /*Generate GPR destination trace (If GPR Tracer or Execution Tracer enabled)*/ \
+        if (INSTANCE.IsTraceEnabled() \
+        &&  (INSTANCE.Tracers().HasGPRTracer() || INSTANCE.Tracers().HasExecutionTracer())) \
         { \
             if (preEvent.IsNewValueModified()) \
-                INSTANCE.Tracers().GetGPRTracer()->Get(real_index).Append(preEvent.GetNewValueTrace()); \
+            { \
+                TRACE_REF = preEvent.GetNewValueTrace(); \
+            } \
             else \
             { \
-                LA32TraceEntity::Reference TRACE_REF = INSTANCE.TracePool().Acquire(); \
+                TRACE_REF = INSTANCE.TracePool().Acquire(); \
                 if (TRACE_REF.IsValid()) \
                 { \
                     LA32TracedInstructionExecution& TRACE_CONTENT \
@@ -160,8 +184,13 @@
                     trace_fetch; \
                     trace_action; \
                 } \
-                INSTANCE.Tracers().GetGPRTracer()->Get(real_index).Append(TRACE_REF); \
             } \
+            \
+            if (INSTANCE.Tracers().HasGPRTracer()) \
+                INSTANCE.Tracers().GetGPRTracer()->Get(real_index).Append(TRACE_REF); \
+            \
+            if (INSTANCE.Tracers().HasExecutionTracer()) \
+                INSTANCE.Tracers().GetExecutionTracer()->Get().Append(TRACE_REF); \
         } \
         \
         /*Write GPR*/ \
@@ -176,6 +205,7 @@
 
 
 #define traced_memory_load(width, sext) \
+    uint32_t MEM_address; \
     LA32TraceEntity::Reference MEM_src_trace; \
     { \
         addr_t          real_address    = GPR_src_value(0) + SI12; \
@@ -231,10 +261,13 @@
                     MEM_src_trace = mem_trace->get().Get(); \
             } \
         } \
+        \
+        MEM_address = real_address;\
     }
 
 
 #define traced_memory_store(width) \
+    uint32_t MEM_address; \
     { \
         addr_t          real_address    = GPR_src_value(0) + SI12; \
         LA32MOPWidth    real_width      = MOPW_##width; \
@@ -274,8 +307,11 @@
             (INSTANCE, PC, INSTRUCTION, real_address, real_width, real_data); \
         postEvent.Fire(INSTANCE.GetEventBusId()); \
         \
-        /*Generate memory destination trace (If memory tracer enabled)*/ \
-        if (INSTANCE.IsTraceEnabled() && INSTANCE.Tracers().HasMemoryTracer()) \
+        MEM_address = real_address;\
+        \
+        /*Generate memory destination trace (If Memory Tracer or Execution Tracer enabled)*/ \
+        if (INSTANCE.IsTraceEnabled() \
+        &&  (INSTANCE.Tracers().HasMemoryTracer() || INSTANCE.Tracers().HasExecutionTracer())) \
         { \
             LA32TraceEntity::Reference TRACE_REF = INSTANCE.TracePool().Acquire(); \
             if (TRACE_REF.IsValid()) \
@@ -288,8 +324,13 @@
                 trace_fetch; \
                 trace_gpr_memstore; \
             } \
-            if (INSTANCE.Tracers().GetMemoryTracer()->CheckBound(real_address)) \
-                INSTANCE.Tracers().GetMemoryTracer()->Acquire(real_address).Append(TRACE_REF); \
+            \
+            if (INSTANCE.Tracers().HasMemoryTracer()) \
+                if (INSTANCE.Tracers().GetMemoryTracer()->CheckBound(real_address)) \
+                    INSTANCE.Tracers().GetMemoryTracer()->Acquire(real_address).Append(TRACE_REF); \
+            \
+            if (INSTANCE.Tracers().HasExecutionTracer()) \
+                INSTANCE.Tracers().GetExecutionTracer()->Get().Append(TRACE_REF); \
         } \
     }
 
@@ -380,6 +421,30 @@
         src0_action; \
         src1_action; \
         INSTANCE.SetBranchTarget(condition, pc_target); \
+        \
+        /*Generate PC trace (IF PC Tracer or Execution Tracer enabled)*/ \
+        if (INSTANCE.IsTraceEnabled() \
+        &&  (INSTANCE.Tracers().HasPCTracer() || INSTANCE.Tracers().HasExecutionTracer())) \
+        { \
+            LA32TraceEntity::Reference TRACE_REF = INSTANCE.TracePool().Acquire(); \
+            if (TRACE_REF.IsValid()) \
+            { \
+                LA32TracedInstructionExecution& TRACE_CONTENT \
+                    = TRACE_REF->SetContentType(LA32TraceContentLegacyType::INSTRUCTION_EXECUTION); \
+                TRACE_CONTENT.pc    = PC; \
+                TRACE_CONTENT.value = (condition) ? (pc_target) : (PC + 4); \
+                TRACE_CONTENT.insn  = INSTRUCTION; \
+                trace_fetch; \
+                trace_gpr_2src; \
+            } \
+            \
+            if (INSTANCE.Tracers().HasPCTracer()) \
+                INSTANCE.Tracers().GetPCTracer()->Get().Append(TRACE_REF); \
+            \
+            if (INSTANCE.Tracers().HasExecutionTracer()) \
+                INSTANCE.Tracers().GetExecutionTracer()->Get().Append(TRACE_REF); \
+        } \
+        \
         return { LA32ExecStatus::EXEC_BRANCH }; \
     }
 
@@ -394,6 +459,30 @@
 #define traced_branch_0r(condition, pc_target) \
     { \
         INSTANCE.SetBranchTarget(condition, pc_target); \
+        \
+        /*Generate PC trace (If PC Tracer or Execution Tracer enabled)*/ \
+        if (INSTANCE.IsTraceEnabled() \
+        &&  (INSTANCE.Tracers().HasPCTracer() || INSTANCE.Tracers().HasExecutionTracer())) \
+        { \
+            LA32TraceEntity::Reference TRACE_REF = INSTANCE.TracePool().Acquire(); \
+            if (TRACE_REF.IsValid()) \
+            { \
+                LA32TracedInstructionExecution& TRACE_CONTENT \
+                    = TRACE_REF->SetContentType(LA32TraceContentLegacyType::INSTRUCTION_EXECUTION); \
+                TRACE_CONTENT.pc    = PC; \
+                TRACE_CONTENT.value = (condition) ? (pc_target) : (PC + 4); \
+                TRACE_CONTENT.insn  = INSTRUCTION; \
+                trace_fetch; \
+                trace_gpr_0src; \
+            } \
+            \
+            if (INSTANCE.Tracers().HasPCTracer()) \
+                INSTANCE.Tracers().GetPCTracer()->Get().Append(TRACE_REF); \
+            \
+            if (INSTANCE.Tracers().HasExecutionTracer()) \
+                INSTANCE.Tracers().GetExecutionTracer()->Get().Append(TRACE_REF); \
+        } \
+        \
         return { LA32ExecStatus::EXEC_BRANCH }; \
     }
 
@@ -406,10 +495,20 @@
 #define traced_branchlink_1r(src0_action, condition, pc_target, dst_expr, dst_action) \
     { \
         src0_action; \
+        \
         INSTANCE.SetBranchTarget(condition, pc_target); \
+        uint32_t BRANCH_address = (condition) ? (pc_target) : (PC + 4); \
+        \
         arch32_t GPR_dst_value; \
         dst_expr; \
         dst_action; \
+        \
+        /*Generate PC trace (If PC Tracer enabled)*/ \
+        if (INSTANCE.IsTraceEnabled() && INSTANCE.Tracers().HasPCTracer()) \
+        { \
+            INSTANCE.Tracers().GetPCTracer()->Get().Append(TRACE_REF); \
+        } \
+        \
         return { LA32ExecStatus::EXEC_BRANCH }; \
     }
 
@@ -419,15 +518,24 @@
         condition, \
         pc_target, \
         dst_expr, \
-        write_GPR_dst(RDi, trace_gpr_1src))
+        write_GPR_dst(RDi, trace_branchlink_1src))
 
 
 #define traced_branchlink_0r(condition, pc_target, dst_expr, dst_action) \
     { \
         INSTANCE.SetBranchTarget(condition, pc_target); \
+        uint32_t BRANCH_address = (condition) ? (pc_target) : (PC + 4); \
+        \
         arch32_t GPR_dst_value; \
         dst_expr; \
         dst_action; \
+        \
+        /*Generate PC trace (If PC Tracer enabled)*/ \
+        if (INSTANCE.IsTraceEnabled() && INSTANCE.Tracers().HasPCTracer()) \
+        { \
+            INSTANCE.Tracers().GetPCTracer()->Get().Append(TRACE_REF); \
+        } \
+        \
         return { LA32ExecStatus::EXEC_BRANCH }; \
     }
 
@@ -436,7 +544,7 @@
         condition, \
         pc_target, \
         dst_expr, \
-        write_GPR_dst(1, trace_gpr_0src))
+        write_GPR_dst(1, trace_branchlink_0src))
 
 
 #define implexec(name, expr) \
@@ -779,6 +887,9 @@ namespace Jasse::LA32R_NSCSCC {
 #undef GPR_dst_trace
 
 #undef MEM_src_trace
+#undef MEM_address
+
+#undef BRANCH_address
 
 #undef TRACE_REF
 #undef TRACE_CONTENT
@@ -790,6 +901,9 @@ namespace Jasse::LA32R_NSCSCC {
 #undef trace_gpr_2src
 #undef trace_gpr_memload
 #undef trace_gpr_memstore
+
+#undef trace_branchlink_0src
+#undef trace_branchlink_1src
 
 #undef read_GPR_src
 #undef write_GPR_dst

@@ -527,6 +527,22 @@ namespace Jasse {
     }
 }
 
+// Implementation of: class LA32Trait::Destination::Memory::NormalStoreAddress
+namespace Jasse {
+
+    LA32Trait::Destination::Memory::NormalStoreAddress::NormalStoreAddress(unsigned int ordinal) noexcept
+        : Memory    (memoryType, ordinal)
+    { }
+}
+
+// Implementation of: class LA32Trait::Destination::Memory::NormalLoadAddress
+namespace Jasse {
+
+    LA32Trait::Destination::Memory::NormalLoadAddress::NormalLoadAddress(unsigned int ordinal) noexcept
+        : Memory    (memoryType, ordinal)
+    { }
+}
+
 
 
 // Implementation of: class LA32Trait::Immediate
@@ -1102,7 +1118,8 @@ namespace Jasse {
             new LA32Trait::Source::Memory::NormalLoad(0)
         },
         {
-            new LA32Trait::Destination::GPR::RD(0)
+            new LA32Trait::Destination::GPR::RD(0),
+            new LA32Trait::Destination::Memory::NormalLoadAddress(1)
         },
         {
             new LA32Trait::Immediate::SI12(0)
@@ -1116,7 +1133,8 @@ namespace Jasse {
         },
         {},
         {
-            new LA32Trait::Destination::Memory::NormalStore(0)
+            new LA32Trait::Destination::Memory::NormalStore(0),
+            new LA32Trait::Destination::Memory::NormalStoreAddress(1)
         },
         {
             new LA32Trait::Immediate::SI12(0)

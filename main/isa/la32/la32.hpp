@@ -95,15 +95,20 @@ namespace Jasse {
 
     using LA32MemoryTracer      = LA32MemoryTracerSubtrate<LA32TraceHistoryManagement::Pretouch>;
 
+    using LA32ExecutionTracer   = LA32ExecutionTracerSubtrate;
+
+    using LA32FetchTracer       = LA32FetchTracerSubtrate;
+
     using LA32PCTracer          = LA32PCTracerSubtrate;
 
-    using LA32ExecutionTracer   = LA32ExecutionTracerSubtrate;
 
 
     // LA32 Tracer Container
     class LA32TracerContainer {
     private:
         LA32PCTracer*           pcTracer;
+
+        LA32FetchTracer*        fetchTracer;
 
         LA32ExecutionTracer*    executionTracer;
 
@@ -117,6 +122,7 @@ namespace Jasse {
         ~LA32TracerContainer() noexcept;
 
         LA32TracerContainer(LA32PCTracer*           pcTracer,
+                            LA32FetchTracer*        fetchTracer,
                             LA32ExecutionTracer*    executionTracer,
                             LA32GPRTracer*          gprTracer,
                             LA32MemoryTracer*       memoryTracer) noexcept;
@@ -131,6 +137,15 @@ namespace Jasse {
 
         [[nodiscard("potential memory leak : caller swap object management")]]
         LA32PCTracer*               SwapPCTracer(LA32PCTracer* obj) noexcept;
+
+        //
+        bool                        HasFetchTracer() const noexcept;
+        LA32FetchTracer*            GetFetchTracer() noexcept;
+        const LA32FetchTracer*      GetFetchTracer() const noexcept;
+        void                        DestroyFetchTracer() noexcept;
+
+        [[nodiscard("potential memory leak : caller swap object management")]]
+        LA32FetchTracer*            SwapFetchTracer(LA32FetchTracer* obj) noexcept;
 
         //
         bool                        HasExecutionTracer() const noexcept;
@@ -260,6 +275,9 @@ namespace Jasse {
         bool                    pcTracerEnabled;
         size_t                  pcTracerDepth;
 
+        bool                    fetchTracerEnabled;
+        size_t                  fetchTracerDepth;
+
         bool                    executionTracerEnabled;
         size_t                  executionTracerDepth;
 
@@ -299,6 +317,13 @@ namespace Jasse {
         Builder&                        DisablePCTracer() noexcept;
 
         Builder&                        PCTracerDepth(size_t depth) noexcept;
+
+        //
+        Builder&                        EnableFetchTracer() noexcept;
+        Builder&                        EnableFetchTracer(size_t depth) noexcept;
+        Builder&                        DisableFetchTracer() noexcept;
+
+        Builder&                        FetchTracerDepth(size_t depth) noexcept;
 
         //
         Builder&                        EnableExecutionTracer() noexcept;
@@ -341,6 +366,11 @@ namespace Jasse {
         void                            SetPCTracerEnabled(bool enabled) noexcept;
         size_t                          GetPCTracerDepth() const noexcept;
         void                            SetPCTracerDepth(size_t depth) noexcept;
+
+        bool                            IsFetchTracerEnabled() const noexcept;
+        void                            SetFetchTracerEnabled(bool enabled) noexcept;
+        size_t                          GetFetchTracerDepth() const noexcept;
+        void                            SetFetchTracerDepth(size_t depth) noexcept;
 
         bool                            IsExecutionTracerEnabled() const noexcept;
         void                            SetExecutionTracerEnabled(bool enabled) noexcept;

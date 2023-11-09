@@ -52,27 +52,36 @@ namespace Jasse {
 
         if (IsTraceEnabled())
         {
-            LA32TraceEntity::Reference trace_ref = tracePool->Acquire();
-            if (trace_ref.IsValid())
+            if (tracers.HasFetchTracer())
             {
-                LA32TracedInstructionFetch& trace_content
-                    = trace_ref->SetContentType(LA32TraceContentLegacyType::INSTRUCTION_FETCH);
-
-                trace_content.insn  = fetched.data32;
-                trace_content.pc    = arch.PC();
-
-                if (tracers.HasPCTracer())
-                    trace_content.SetTracedAddressSource(*trace_ref, tracers.GetPCTracer()->Get().Get());
-
-                if (tracers.HasMemoryTracer())
+                LA32TraceEntity::Reference trace_ref = tracePool->Acquire();
+                if (trace_ref.IsValid())
                 {
-                    auto mem_trace = tracers.GetMemoryTracer()->Get(arch.PC());
-                    if (mem_trace)
-                        trace_content.SetTracedMemorySource(*trace_ref, mem_trace->get().Get());
-                }
-            }
+                    LA32TracedInstructionFetch& trace_content
+                        = trace_ref->SetContentType(LA32TraceContentLegacyType::INSTRUCTION_FETCH);
 
-            this->lastFetchTrace = trace_ref;
+                    trace_content.insn  = fetched.data32;
+                    trace_content.pc    = arch.PC();
+
+                    if (tracers.HasPCTracer())
+                        trace_content.SetTracedAddressSource(*trace_ref, tracers.GetPCTracer()->Get().Get());
+
+                    if (tracers.HasMemoryTracer())
+                    {
+                        auto mem_trace = tracers.GetMemoryTracer()->Get(arch.PC());
+                        if (mem_trace)
+                            trace_content.SetTracedMemorySource(*trace_ref, mem_trace->get().Get());
+                    }
+                }
+
+                tracers.GetFetchTracer()->Get().Append(trace_ref);
+
+                this->lastFetchTrace = trace_ref;
+            }
+            else if (tracers.HasPCTracer())
+            {
+                this->lastFetchTrace = tracers.GetPCTracer()->Get().Get();
+            }
         }
 
         LA32Instruction insn(
@@ -273,6 +282,8 @@ namespace Jasse {
     /*
     LA32PCTracer*           pcTracer;
 
+    LA32FetchTracer*        fetchTracer;
+
     LA32ExecutionTracer*    executionTracer;
 
     LA32GPRTracer*          gprTracer;
@@ -282,16 +293,19 @@ namespace Jasse {
 
     LA32TracerContainer::LA32TracerContainer() noexcept
         : pcTracer          (nullptr)
+        , fetchTracer       (nullptr)
         , executionTracer   (nullptr)
         , gprTracer         (nullptr)
         , memoryTracer      (nullptr)
     { }
 
     LA32TracerContainer::LA32TracerContainer(LA32PCTracer*          pcTracer,
+                                             LA32FetchTracer*       fetchTracer,
                                              LA32ExecutionTracer*   executionTracer,
                                              LA32GPRTracer*         gprTracer,
                                              LA32MemoryTracer*      memoryTracer) noexcept
         : pcTracer          (pcTracer)
+        , fetchTracer       (fetchTracer)
         , executionTracer   (executionTracer)
         , gprTracer         (gprTracer)
         , memoryTracer      (memoryTracer)
@@ -299,11 +313,13 @@ namespace Jasse {
 
     LA32TracerContainer::LA32TracerContainer(LA32TracerContainer&& obj) noexcept
         : pcTracer          (obj.pcTracer)
+        , fetchTracer       (obj.fetchTracer)
         , executionTracer   (obj.executionTracer)
         , gprTracer         (obj.gprTracer)
         , memoryTracer      (obj.memoryTracer)
     {
         obj.pcTracer        = nullptr;
+        obj.fetchTracer     = nullptr;
         obj.executionTracer = nullptr;
         obj.gprTracer       = nullptr;
         obj.memoryTracer    = nullptr;
@@ -344,6 +360,36 @@ namespace Jasse {
     LA32PCTracer* LA32TracerContainer::SwapPCTracer(LA32PCTracer* obj) noexcept
     {
         std::swap(this->pcTracer, obj);
+        return obj;
+    }
+
+    bool LA32TracerContainer::HasFetchTracer() const noexcept
+    {
+        return this->fetchTracer != nullptr;
+    }
+
+    LA32FetchTracer* LA32TracerContainer::GetFetchTracer() noexcept
+    {
+        return this->fetchTracer;
+    }
+
+    const LA32FetchTracer* LA32TracerContainer::GetFetchTracer() const noexcept
+    {
+        return this->fetchTracer;
+    }
+
+    void LA32TracerContainer::DestroyFetchTracer() noexcept
+    {
+        if (this->fetchTracer)
+        {
+            delete this->fetchTracer;
+            this->fetchTracer = nullptr;
+        }
+    }
+
+    LA32FetchTracer* LA32TracerContainer::SwapFetchTracer(LA32FetchTracer* obj) noexcept
+    {
+        std::swap(this->fetchTracer, obj);
         return obj;
     }
 
@@ -637,6 +683,9 @@ namespace Jasse {
     bool                    pcTracerEnabled;
     size_t                  pcTracerDepth;
 
+    bool                    fetchTracerEnabled;
+    size_t                  fetchTracerDepth;
+
     bool                    executionTracerEnabled;
     size_t                  executionTracerDepth;
 
@@ -659,6 +708,8 @@ namespace Jasse {
         , traceMaxFactor            (0)
         , pcTracerEnabled           (false)
         , pcTracerDepth             (0)
+        , fetchTracerEnabled        (false)
+        , fetchTracerDepth          (0)
         , executionTracerEnabled    (false)
         , executionTracerDepth      (0)
         , gprTracerEnabled          (false)
@@ -760,6 +811,31 @@ namespace Jasse {
     LA32Instance::Builder& LA32Instance::Builder::PCTracerDepth(size_t depth) noexcept
     {
         this->pcTracerDepth     = depth;
+        return *this;
+    }
+
+    LA32Instance::Builder& LA32Instance::Builder::EnableFetchTracer() noexcept
+    {
+        this->fetchTracerEnabled    = true;
+        return *this;
+    }
+
+    LA32Instance::Builder& LA32Instance::Builder::EnableFetchTracer(size_t depth) noexcept
+    {
+        this->fetchTracerEnabled    = true;
+        this->fetchTracerDepth      = depth;
+        return *this;
+    }
+
+    LA32Instance::Builder& LA32Instance::Builder::DisableFetchTracer() noexcept
+    {
+        this->fetchTracerEnabled    = false;
+        return *this;
+    }
+
+    LA32Instance::Builder& LA32Instance::Builder::FetchTracerDepth(size_t depth) noexcept
+    {
+        this->fetchTracerDepth      = depth;
         return *this;
     }
 
@@ -920,6 +996,26 @@ namespace Jasse {
         this->pcTracerDepth = depth;
     }
 
+    bool LA32Instance::Builder::IsFetchTracerEnabled() const noexcept
+    {
+        return this->fetchTracerEnabled;
+    }
+
+    void LA32Instance::Builder::SetFetchTracerEnabled(bool enabled) noexcept
+    {
+        this->fetchTracerEnabled = enabled;
+    }
+
+    size_t LA32Instance::Builder::GetFetchTracerDepth() const noexcept
+    {
+        return this->fetchTracerDepth;
+    }
+
+    void LA32Instance::Builder::SetFetchTracerDepth(size_t depth) noexcept
+    {
+        this->fetchTracerDepth = depth;
+    }
+
     bool LA32Instance::Builder::IsExecutionTracerEnabled() const noexcept
     {
         return this->executionTracerEnabled;
@@ -1010,6 +1106,7 @@ namespace Jasse {
             traceEnabled ? new LA32TraceEntity::Pool(traceUnit, traceMaxFactor) : nullptr,
             LA32TracerContainer(
                 traceEnabled && pcTracerEnabled     ? new LA32PCTracer(pcTracerDepth)                           : nullptr,
+                traceEnabled && fetchTracerEnabled  ? new LA32FetchTracer(fetchTracerDepth)                     : nullptr,
                 traceEnabled && executionTracerEnabled ? new LA32ExecutionTracer(executionTracerDepth)         : nullptr,
                 traceEnabled && gprTracerEnabled    ? new LA32GPRTracer(gprTracerDepth)                         : nullptr,
                 traceEnabled && memoryTracerEnabled ? new LA32MemoryTracer(memoryTracerDepth, memoryTracerSize) : nullptr

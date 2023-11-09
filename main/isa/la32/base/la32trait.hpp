@@ -376,9 +376,15 @@ namespace Jasse {
     public:
         class NormalStore;
 
+        class NormalStoreAddress;
+        class NormalLoadAddress;
+
     public:
         enum class MemoryType {
-            NormalStore = 0
+            NormalStore = 0,
+
+            NormalStoreAddress,
+            NormalLoadAddress
         };
 
     private:
@@ -401,6 +407,26 @@ namespace Jasse {
 
     public:
         NormalStore(unsigned int ordinal) noexcept;
+    };
+
+    // LA32 Trait of Memory Destination (NormalStoreAddress)
+    class LA32Trait::Destination::Memory::NormalStoreAddress 
+        : public LA32Trait::Destination::Memory {
+    public:
+        static constexpr MemoryType memoryType  = MemoryType::NormalStoreAddress;
+
+    public:
+        NormalStoreAddress(unsigned int ordinal) noexcept;
+    };
+
+    // LA32 Trait of Memory Destination (NormalLoadAddress)
+    class LA32Trait::Destination::Memory::NormalLoadAddress 
+        : public LA32Trait::Destination::Memory {
+    public:
+        static constexpr MemoryType memoryType  = MemoryType::NormalLoadAddress;
+    
+    public:
+        NormalLoadAddress(unsigned int ordinal) noexcept;
     };
 
 }

@@ -512,6 +512,34 @@ namespace Jasse {
     };
 
 
+    // LA32 Fetch Tracer
+    class LA32FetchTracerSubtrate {
+    private:
+        LA32TraceHistory            traces;
+    
+    public:
+        LA32FetchTracerSubtrate(const LA32FetchTracerSubtrate& obj) = delete;
+        LA32FetchTracerSubtrate(LA32FetchTracerSubtrate&& obj) = delete;
+        LA32FetchTracerSubtrate(size_t default_depth) noexcept;
+        ~LA32FetchTracerSubtrate() noexcept;
+
+        size_t                      GetDefaultDepth() const noexcept;
+        void                        SetDefaultDepth(size_t depth) noexcept;
+
+        LA32TraceHistory&           Get() noexcept;
+        const LA32TraceHistory&     Get() const noexcept;
+
+        void                        Set(const LA32TraceHistory& obj) noexcept;
+        void                        Set(LA32TraceHistory&& obj) noexcept;
+
+        void                        Swap(LA32TraceHistory& obj) noexcept;
+
+        //
+        LA32FetchTracerSubtrate&    operator=(const LA32FetchTracerSubtrate& obj) = delete;
+        LA32FetchTracerSubtrate&    operator=(LA32FetchTracerSubtrate&& obj) = delete;
+    };
+
+
     // LA32 Execution Tracer
     class LA32ExecutionTracerSubtrate {
     private:
