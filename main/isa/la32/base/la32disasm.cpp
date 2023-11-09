@@ -205,7 +205,7 @@ namespace Jasse {
         std::ostringstream oss;
 
         oss << TextualizeLA32Name(insn.GetName());
-        oss << TextualizeLA32GPR(insn.GetRJ()) << ", ";
+        oss << TextualizeLA32GPR(insn.GetRD()) << ", ";
         oss << "0x" << std::hex << std::setw(5) << std::setfill('0') << insn.GetExImm20();
 
         return oss.str();
