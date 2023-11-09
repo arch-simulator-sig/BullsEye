@@ -60,6 +60,14 @@ namespace Jasse {
 
             const std::string_view&     GetName() const noexcept;
 
+            virtual bool                HasTracedArch32Value() const noexcept;
+            virtual arch32_t            GetTracedArch32Value(const _TContent& content) const noexcept;
+            virtual void                SetTracedArch32Value(_TContent& content, arch32_t value) const noexcept;
+
+            virtual bool                HasTracedArch32ValueSecond() const noexcept;
+            virtual arch32_t            GetTracedArch32ValueSecond(const _TContent& content) const noexcept;
+            virtual void                SetTracedArch32ValueSecond(_TContent& content, arch32_t value) const noexcept;
+
             virtual void                Finalize(LA32TraceEntity& entity) const noexcept;
         };
 
@@ -140,7 +148,6 @@ namespace Jasse {
 
         LA32Instruction     insn;
         
-
     public:
         static void                                 SetTracedFetch(LA32TraceEntity& entity, const LA32TraceEntity::Reference& trace) noexcept;
         static LA32TraceEntity::Reference&          GetTracedFetch(LA32TraceEntity& entity) noexcept;
@@ -155,7 +162,20 @@ namespace Jasse {
         static const LA32TraceEntity::Reference&    GetTracedSecondOperand(const LA32TraceEntity& entity) noexcept;
     };
 
-    using LA32TracedInstructionExecutionTypeInstance    = LA32TraceEntity::ContentTypeBase<LA32TracedInstructionExecution>;
+    class LA32TracedInstructionExecutionTypeInstance 
+        : public LA32TraceEntity::ContentTypeBase<LA32TracedInstructionExecution> {
+    public:
+        LA32TracedInstructionExecutionTypeInstance(const char* name) noexcept;
+
+        virtual bool        HasTracedArch32Value() const noexcept override;
+        virtual arch32_t    GetTracedArch32Value(const LA32TracedInstructionExecution& content) const noexcept override;
+        virtual void        SetTracedArch32Value(LA32TracedInstructionExecution& content, arch32_t value) const noexcept override;
+
+        virtual bool        HasTracedArch32ValueSecond() const noexcept override;
+        virtual arch32_t    GetTracedArch32ValueSecond(const LA32TracedInstructionExecution& content) const noexcept override;
+        virtual void        SetTracedArch32ValueSecond(LA32TracedInstructionExecution& content, arch32_t value) const noexcept override;
+    };
+
     using LA32TracedInstructionExecutionType            = LA32TraceEntity::ContentType<LA32TracedInstructionExecution>;
 
 

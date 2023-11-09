@@ -194,6 +194,45 @@ namespace Jasse {
 }
 
 
+// Implementation of: class LA32TracedInstructionExecutionTypeInstance
+namespace Jasse {
+    
+    LA32TracedInstructionExecutionTypeInstance::LA32TracedInstructionExecutionTypeInstance(const char* name) noexcept
+        : LA32TraceEntity::ContentTypeBase<LA32TracedInstructionExecution>(name)
+    { }
+    
+    bool LA32TracedInstructionExecutionTypeInstance::HasTracedArch32Value() const noexcept
+    {
+        return true;
+    }
+
+    arch32_t LA32TracedInstructionExecutionTypeInstance::GetTracedArch32Value(const LA32TracedInstructionExecution& content) const noexcept
+    {
+        return content.value;
+    }
+
+    void LA32TracedInstructionExecutionTypeInstance::SetTracedArch32Value(LA32TracedInstructionExecution& content, arch32_t value) const noexcept
+    {
+        content.value = value;
+    }
+
+    bool LA32TracedInstructionExecutionTypeInstance::HasTracedArch32ValueSecond() const noexcept
+    {
+        return true;
+    }
+
+    arch32_t LA32TracedInstructionExecutionTypeInstance::GetTracedArch32ValueSecond(const LA32TracedInstructionExecution& content) const noexcept
+    {
+        return content.value_second;
+    }
+
+    void LA32TracedInstructionExecutionTypeInstance::SetTracedArch32ValueSecond(LA32TracedInstructionExecution& content, arch32_t value) const noexcept
+    {
+        content.value_second = value;
+    }
+}
+
+
 
 // Implementation of: struct LA32TracedInstructionFetch
 namespace Jasse {

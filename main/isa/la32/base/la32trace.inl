@@ -5,6 +5,7 @@
 // Trace Subsystem Infrastructures
 //
 
+#include <cstdint>
 #include <limits>
 
 
@@ -33,7 +34,7 @@ namespace Jasse {
     template<class _TContent>
     inline std::optional<std::reference_wrapper<_TContent>> LA32TraceEntity::GetContent(ContentType<_TContent> type) noexcept
     {
-        if (this->contentType == type)
+        if (uintptr_t(this->contentType) == uintptr_t(type))
             return { std::ref(this->ReinterpretContent<_TContent>()) };
 
         return std::nullopt;
@@ -42,7 +43,7 @@ namespace Jasse {
     template<class _TContent>
     inline std::optional<std::reference_wrapper<const _TContent>> LA32TraceEntity::GetContent(ContentType<_TContent> type) const noexcept
     {
-        if (this->contentType == type)
+        if (uintptr_t(this->contentType) == uintptr_t(type))
             return { std::cref(this->ReinterpretContent<_TContent>()) };
 
         return std::nullopt;
@@ -67,7 +68,8 @@ namespace Jasse {
 // Template implementation of: class LA32TraceEntity::ContentTypeBase
 namespace Jasse {
     /*
-    const std::string_view  name;
+    const std::string_view          name;
+
     */
 
     template<class _TContent>
@@ -80,6 +82,38 @@ namespace Jasse {
     {
         return this->name;
     }
+
+    template<class _TContent>
+    inline bool LA32TraceEntity::ContentTypeBase<_TContent>::HasTracedArch32Value() const noexcept
+    {
+        return false;
+    }
+
+    template<class _TContent>
+    inline arch32_t LA32TraceEntity::ContentTypeBase<_TContent>::GetTracedArch32Value(const _TContent& content) const noexcept
+    {
+        return 0;
+    }
+
+    template<class _TContent>
+    inline void LA32TraceEntity::ContentTypeBase<_TContent>::SetTracedArch32Value(_TContent& content, arch32_t value) const noexcept
+    { }
+
+    template<class _TContent>
+    inline bool LA32TraceEntity::ContentTypeBase<_TContent>::HasTracedArch32ValueSecond() const noexcept
+    {
+        return false;
+    }
+
+    template<class _TContent>
+    inline arch32_t LA32TraceEntity::ContentTypeBase<_TContent>::GetTracedArch32ValueSecond(const _TContent& content) const noexcept
+    {
+        return 0;
+    }
+
+    template<class _TContent>
+    inline void LA32TraceEntity::ContentTypeBase<_TContent>::SetTracedArch32ValueSecond(_TContent& content, arch32_t value) const noexcept
+    { }
 
     template<class _TContent>
     inline void LA32TraceEntity::ContentTypeBase<_TContent>::Finalize(LA32TraceEntity& entity) const noexcept
