@@ -40,19 +40,19 @@ namespace Jasse {
 
         bool                HasOperand() const noexcept;
         unsigned int        GetOperandCount() const noexcept;
-        const Operand&      GetOperand(unsigned int ordinal) const noexcept;
+        const Operand*      GetOperand(unsigned int ordinal) const noexcept;
 
         bool                HasSource() const noexcept;
         unsigned int        GetSourceCount() const noexcept;
-        const Source&       GetSource(unsigned int ordinal) const noexcept;
+        const Source*       GetSource(unsigned int ordinal) const noexcept;
 
         bool                HasDestination() const noexcept;
         unsigned int        GetDestinationCount() const noexcept;
-        const Destination&  GetDestination(unsigned int ordinal) const noexcept;
+        const Destination*  GetDestination(unsigned int ordinal) const noexcept;
 
         bool                HasImmediate() const noexcept;
         unsigned int        GetImmediateCount() const noexcept;
-        const Immediate&    GetImmediate(unsigned int ordinal) const noexcept;
+        const Immediate*    GetImmediate(unsigned int ordinal) const noexcept;
     };
 }
 
@@ -765,33 +765,33 @@ namespace Jasse {
 
     struct LA32Traits {
 
-        static const LA32Trait* NORMAL_3R;
+        static const LA32Trait NORMAL_3R;
 
-        static const LA32Trait* NORMAL_2RSI12;
+        static const LA32Trait NORMAL_2RSI12;
 
-        static const LA32Trait* NORMAL_2RUI12;
+        static const LA32Trait NORMAL_2RUI12;
 
 
-        static const LA32Trait* NORMAL_2ROFFS16;
+        static const LA32Trait NORMAL_2ROFFS16;
 
-        static const LA32Trait* NORMAL_OFFS26;
+        static const LA32Trait NORMAL_OFFS26;
 
-        static const LA32Trait* NORMAL_OFFS26R1;
+        static const LA32Trait NORMAL_OFFS26R1;
 
         
-        static const LA32Trait* NORMAL_LOAD_2RSI12;
+        static const LA32Trait NORMAL_LOAD_2RSI12;
 
-        static const LA32Trait* NORMAL_STORE_2RSI12;
-
-
-        static const LA32Trait* EXTENDED_1RI20;
-
-        static const LA32Trait* EXTENDED_1RI20PC;
+        static const LA32Trait NORMAL_STORE_2RSI12;
 
 
-        static const LA32Trait* EXTENDED_2RI5;
+        static const LA32Trait EXTENDED_1RI20;
+
+        static const LA32Trait EXTENDED_1RI20PC;
+
+
+        static const LA32Trait EXTENDED_2RI5;
         
 
-        static const LA32Trait* JIRL_2ROFFS16;
+        static const LA32Trait JIRL_2ROFFS16;
     };
 }

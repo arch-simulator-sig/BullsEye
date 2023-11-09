@@ -49,9 +49,9 @@ namespace Jasse {
         return operands.size();
     }
 
-    const LA32Trait::Operand& LA32Trait::GetOperand(unsigned int ordinal) const noexcept
+    const LA32Trait::Operand* LA32Trait::GetOperand(unsigned int ordinal) const noexcept
     {
-        return *operands[ordinal];
+        return operands[ordinal];
     }
 
     bool LA32Trait::HasSource() const noexcept
@@ -64,9 +64,9 @@ namespace Jasse {
         return sources.size();
     }
 
-    const LA32Trait::Source& LA32Trait::GetSource(unsigned int ordinal) const noexcept
+    const LA32Trait::Source* LA32Trait::GetSource(unsigned int ordinal) const noexcept
     {
-        return *sources[ordinal];
+        return sources[ordinal];
     }
 
     bool LA32Trait::HasDestination() const noexcept
@@ -79,9 +79,9 @@ namespace Jasse {
         return destinations.size();
     }
 
-    const LA32Trait::Destination& LA32Trait::GetDestination(unsigned int ordinal) const noexcept
+    const LA32Trait::Destination* LA32Trait::GetDestination(unsigned int ordinal) const noexcept
     {
-        return *destinations[ordinal];
+        return destinations[ordinal];
     }
 
     bool LA32Trait::HasImmediate() const noexcept
@@ -94,9 +94,9 @@ namespace Jasse {
         return immediates.size();
     }
 
-    const LA32Trait::Immediate& LA32Trait::GetImmediate(unsigned int ordinal) const noexcept
+    const LA32Trait::Immediate* LA32Trait::GetImmediate(unsigned int ordinal) const noexcept
     {
-        return *immediates[ordinal];
+        return immediates[ordinal];
     }
 }
 
@@ -1027,7 +1027,7 @@ namespace Jasse {
 // Implementation of: struct LA32Traits
 namespace Jasse {
 
-    const LA32Trait* LA32Traits::NORMAL_3R = new LA32Trait(
+    const LA32Trait LA32Traits::NORMAL_3R = LA32Trait(
         {
             new LA32Trait::Operand::GPR::RJ(0),
             new LA32Trait::Operand::GPR::RK(1)
@@ -1039,7 +1039,7 @@ namespace Jasse {
         {}
     );
 
-    const LA32Trait* LA32Traits::NORMAL_2RSI12 = new LA32Trait(
+    const LA32Trait LA32Traits::NORMAL_2RSI12 = LA32Trait(
         {
             new LA32Trait::Operand::GPR::RJ(0)
         }, 
@@ -1052,7 +1052,7 @@ namespace Jasse {
         }
     );
 
-    const LA32Trait* LA32Traits::NORMAL_2RUI12 = new LA32Trait(
+    const LA32Trait LA32Traits::NORMAL_2RUI12 = LA32Trait(
         {
             new LA32Trait::Operand::GPR::RJ(0)
         },
@@ -1066,7 +1066,7 @@ namespace Jasse {
     );
 
 
-    const LA32Trait* LA32Traits::NORMAL_2ROFFS16 = new LA32Trait(
+    const LA32Trait LA32Traits::NORMAL_2ROFFS16 = LA32Trait(
         {
             new LA32Trait::Operand::GPR::RJ(0),
             new LA32Trait::Operand::GPR::RD(1)
@@ -1082,7 +1082,7 @@ namespace Jasse {
         }
     );
 
-    const LA32Trait* LA32Traits::NORMAL_OFFS26 = new LA32Trait(
+    const LA32Trait LA32Traits::NORMAL_OFFS26 = LA32Trait(
         {},
         {
             new LA32Trait::Source::PC(0)
@@ -1095,7 +1095,7 @@ namespace Jasse {
         }
     );
 
-    const LA32Trait* LA32Traits::NORMAL_OFFS26R1 = new LA32Trait(
+    const LA32Trait LA32Traits::NORMAL_OFFS26R1 = LA32Trait(
         {},
         {
             new LA32Trait::Source::PC(0)
@@ -1110,7 +1110,7 @@ namespace Jasse {
     );
 
 
-    const LA32Trait* LA32Traits::NORMAL_LOAD_2RSI12 = new LA32Trait(
+    const LA32Trait LA32Traits::NORMAL_LOAD_2RSI12 = LA32Trait(
         {
             new LA32Trait::Operand::GPR::RJ(0)
         },
@@ -1126,7 +1126,7 @@ namespace Jasse {
         }
     );
 
-    const LA32Trait* LA32Traits::NORMAL_STORE_2RSI12 = new LA32Trait(
+    const LA32Trait LA32Traits::NORMAL_STORE_2RSI12 = LA32Trait(
         {
             new LA32Trait::Operand::GPR::RJ(0),
             new LA32Trait::Operand::GPR::RD(1)
@@ -1142,7 +1142,7 @@ namespace Jasse {
     );
 
 
-    const LA32Trait* LA32Traits::EXTENDED_1RI20 = new LA32Trait(
+    const LA32Trait LA32Traits::EXTENDED_1RI20 = LA32Trait(
         {},
         {},
         {
@@ -1153,7 +1153,7 @@ namespace Jasse {
         }
     );
 
-    const LA32Trait* LA32Traits::EXTENDED_1RI20PC = new LA32Trait(
+    const LA32Trait LA32Traits::EXTENDED_1RI20PC = LA32Trait(
         {},
         {
             new LA32Trait::Source::PC(0)
@@ -1167,7 +1167,7 @@ namespace Jasse {
     );
 
 
-    const LA32Trait* LA32Traits::EXTENDED_2RI5 = new LA32Trait(
+    const LA32Trait LA32Traits::EXTENDED_2RI5 = LA32Trait(
         {
             new LA32Trait::Operand::GPR::RJ(0)
         },
@@ -1181,7 +1181,7 @@ namespace Jasse {
     );
 
 
-    const LA32Trait* LA32Traits::JIRL_2ROFFS16 = new LA32Trait(
+    const LA32Trait LA32Traits::JIRL_2ROFFS16 = LA32Trait(
         {
             new LA32Trait::Operand::GPR::RJ(0)
         },

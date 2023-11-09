@@ -15,7 +15,7 @@ namespace Jasse::Decoder {
 namespace Jasse::Codepoint::LA32R_NSCSCC {
 
 #define _T(name)            LA32CodepointType::TYPE_##name
-#define _TR(name)           LA32Traits::name
+#define _TR(name)           &LA32Traits::name
 
 #define _D_U6L0(name)       &Jasse::LA32R_NSCSCC::LA32R_DECODER_STUB_U6L0(name)
 #define _D_U6L1(name)       &Jasse::LA32R_NSCSCC::LA32R_DECODER_STUB_U6L1(name)
