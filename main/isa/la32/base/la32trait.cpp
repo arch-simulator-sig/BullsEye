@@ -114,6 +114,9 @@ namespace Jasse {
         , ordinal   (ordinal)
     { }
 
+    LA32Trait::Operand::~Operand() noexcept
+    { }
+
     LA32Trait::Operand::Type LA32Trait::Operand::GetType() const noexcept
     {
         return type;
@@ -261,6 +264,9 @@ namespace Jasse {
         , ordinal   (ordinal)
     { }
 
+    LA32Trait::Source::~Source() noexcept
+    { }
+
     LA32Trait::Source::Type LA32Trait::Source::GetType() const noexcept
     {
         return type;
@@ -321,6 +327,9 @@ namespace Jasse {
     LA32Trait::Destination::Destination(Type type, unsigned int ordinal) noexcept
         : type      (type)
         , ordinal   (ordinal)
+    { }
+
+    LA32Trait::Destination::~Destination() noexcept
     { }
 
     LA32Trait::Destination::Type LA32Trait::Destination::GetType() const noexcept
@@ -530,6 +539,9 @@ namespace Jasse {
     LA32Trait::Immediate::Immediate(Type type, unsigned int ordinal) noexcept
         : type      (type)
         , ordinal   (ordinal)
+    { }
+
+    LA32Trait::Immediate::~Immediate() noexcept
     { }
 
     LA32Trait::Immediate::Type LA32Trait::Immediate::GetType() const noexcept

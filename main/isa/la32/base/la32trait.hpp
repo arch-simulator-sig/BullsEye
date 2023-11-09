@@ -76,6 +76,7 @@ namespace Jasse {
 
     public:
         Operand(Type type, unsigned int ordinal) noexcept;
+        virtual ~Operand() noexcept;
 
         Type            GetType() const noexcept;
         unsigned int    GetOrdinal() const noexcept;
@@ -179,6 +180,7 @@ namespace Jasse {
 
     public:
         Source(Type type, unsigned int ordinal) noexcept;
+        virtual ~Source() noexcept;
 
         Type            GetType() const noexcept;
         unsigned int    GetOrdinal() const noexcept;
@@ -257,6 +259,7 @@ namespace Jasse {
 
     public:
         Destination(Type type, unsigned int ordinal) noexcept;
+        virtual ~Destination() noexcept;
 
         Type            GetType() const noexcept;
         unsigned int    GetOrdinal() const noexcept;
@@ -456,6 +459,7 @@ namespace Jasse {
 
     public:
         Immediate(Type type, unsigned int ordinal) noexcept;
+        virtual ~Immediate() noexcept;
 
         Type                GetType() const noexcept;
         unsigned int        GetOrdinal() const noexcept;
