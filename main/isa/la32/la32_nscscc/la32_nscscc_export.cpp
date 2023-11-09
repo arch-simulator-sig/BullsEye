@@ -1,4 +1,4 @@
-#include "la32_nscscc_export.hpp"
+#include "la32_nscscc_export.hpp"   // IWYU pragma: keep
 //
 // LA32R (NSCSCC) ISA Emulator (Jasse)
 //
