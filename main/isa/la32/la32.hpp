@@ -97,57 +97,71 @@ namespace Jasse {
 
     using LA32PCTracer          = LA32PCTracerSubtrate;
 
+    using LA32ExecutionTracer   = LA32ExecutionTracerSubtrate;
+
 
     // LA32 Tracer Container
     class LA32TracerContainer {
     private:
-        LA32PCTracer*       pcTracer;
+        LA32PCTracer*           pcTracer;
 
-        LA32GPRTracer*      gprTracer;
+        LA32ExecutionTracer*    executionTracer;
 
-        LA32MemoryTracer*   memoryTracer;
+        LA32GPRTracer*          gprTracer;
+
+        LA32MemoryTracer*       memoryTracer;
 
     public:
         LA32TracerContainer() noexcept;
         LA32TracerContainer(LA32TracerContainer&& obj) noexcept;
         ~LA32TracerContainer() noexcept;
 
-        LA32TracerContainer(LA32PCTracer*       pcTracer,
-                            LA32GPRTracer*      gprTracer,
-                            LA32MemoryTracer*   memoryTracer) noexcept;
+        LA32TracerContainer(LA32PCTracer*           pcTracer,
+                            LA32ExecutionTracer*    executionTracer,
+                            LA32GPRTracer*          gprTracer,
+                            LA32MemoryTracer*       memoryTracer) noexcept;
 
         LA32TracerContainer(const LA32TracerContainer&) = delete;
 
         //
-        bool                    HasPCTracer() const noexcept;
-        LA32PCTracer*           GetPCTracer() noexcept;
-        const LA32PCTracer*     GetPCTracer() const noexcept;
-        void                    DestroyPCTracer() noexcept;
+        bool                        HasPCTracer() const noexcept;
+        LA32PCTracer*               GetPCTracer() noexcept;
+        const LA32PCTracer*         GetPCTracer() const noexcept;
+        void                        DestroyPCTracer() noexcept;
 
         [[nodiscard("potential memory leak : caller swap object management")]]
-        LA32PCTracer*           SwapPCTracer(LA32PCTracer* obj) noexcept;
+        LA32PCTracer*               SwapPCTracer(LA32PCTracer* obj) noexcept;
 
         //
-        bool                    HasGPRTracer() const noexcept;
-        LA32GPRTracer*          GetGPRTracer() noexcept;
-        const LA32GPRTracer*    GetGPRTracer() const noexcept;
-        void                    DestroyGPRTracer() noexcept;
+        bool                        HasExecutionTracer() const noexcept;
+        LA32ExecutionTracer*        GetExecutionTracer() noexcept;
+        const LA32ExecutionTracer*  GetExecutionTracer() const noexcept;
+        void                        DestroyExecutionTracer() noexcept;
 
         [[nodiscard("potential memory leak : caller swap object management")]]
-        LA32GPRTracer*          SwapGPRTracer(LA32GPRTracer* obj) noexcept;
+        LA32ExecutionTracer*        SwapExecutionTracer(LA32ExecutionTracer* obj) noexcept;
 
         //
-        bool                    HasMemoryTracer() const noexcept;
-        LA32MemoryTracer*       GetMemoryTracer() noexcept;
-        const LA32MemoryTracer* GetMemoryTracer() const noexcept;
-        void                    DestroyMemoryTracer() noexcept;
+        bool                        HasGPRTracer() const noexcept;
+        LA32GPRTracer*              GetGPRTracer() noexcept;
+        const LA32GPRTracer*        GetGPRTracer() const noexcept;
+        void                        DestroyGPRTracer() noexcept;
 
         [[nodiscard("potential memory leak : caller swap object management")]]
-        LA32MemoryTracer*       SwapMemoryTracer(LA32MemoryTracer* obj) noexcept;
+        LA32GPRTracer*              SwapGPRTracer(LA32GPRTracer* obj) noexcept;
 
         //
-        LA32TracerContainer&    operator=(const LA32TracerContainer& obj) = delete;
-        LA32TracerContainer&    operator=(LA32TracerContainer&& obj) noexcept;
+        bool                        HasMemoryTracer() const noexcept;
+        LA32MemoryTracer*           GetMemoryTracer() noexcept;
+        const LA32MemoryTracer*     GetMemoryTracer() const noexcept;
+        void                        DestroyMemoryTracer() noexcept;
+
+        [[nodiscard("potential memory leak : caller swap object management")]]
+        LA32MemoryTracer*           SwapMemoryTracer(LA32MemoryTracer* obj) noexcept;
+
+        //
+        LA32TracerContainer&        operator=(const LA32TracerContainer& obj) = delete;
+        LA32TracerContainer&        operator=(LA32TracerContainer&& obj) noexcept;
     };
 
 
@@ -246,6 +260,9 @@ namespace Jasse {
         bool                    pcTracerEnabled;
         size_t                  pcTracerDepth;
 
+        bool                    executionTracerEnabled;
+        size_t                  executionTracerDepth;
+
         bool                    gprTracerEnabled;
         size_t                  gprTracerDepth;
 
@@ -284,6 +301,13 @@ namespace Jasse {
         Builder&                        PCTracerDepth(size_t depth) noexcept;
 
         //
+        Builder&                        EnableExecutionTracer() noexcept;
+        Builder&                        EnableExecutionTracer(size_t depth) noexcept;
+        Builder&                        DisableExecutionTracer() noexcept;
+
+        Builder&                        ExecutionTracerDepth(size_t depth) noexcept;
+
+        //
         Builder&                        EnableGPRTracer() noexcept;
         Builder&                        EnableGPRTracer(size_t depth) noexcept;
         Builder&                        DisableGPRTracer() noexcept;
@@ -317,6 +341,11 @@ namespace Jasse {
         void                            SetPCTracerEnabled(bool enabled) noexcept;
         size_t                          GetPCTracerDepth() const noexcept;
         void                            SetPCTracerDepth(size_t depth) noexcept;
+
+        bool                            IsExecutionTracerEnabled() const noexcept;
+        void                            SetExecutionTracerEnabled(bool enabled) noexcept;
+        size_t                          GetExecutionTracerDepth() const noexcept;
+        void                            SetExecutionTracerDepth(size_t depth) noexcept;
 
         bool                            IsGPRTracerEnabled() const noexcept;
         void                            SetGPRTracerEnabled(bool enabled) noexcept;

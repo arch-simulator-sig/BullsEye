@@ -512,6 +512,34 @@ namespace Jasse {
     };
 
 
+    // LA32 Execution Tracer
+    class LA32ExecutionTracerSubtrate {
+    private:
+        LA32TraceHistory            traces;
+
+    public:
+        LA32ExecutionTracerSubtrate(const LA32ExecutionTracerSubtrate& obj) = delete;
+        LA32ExecutionTracerSubtrate(LA32ExecutionTracerSubtrate&& obj) = delete;
+        LA32ExecutionTracerSubtrate(size_t default_depth) noexcept;
+        ~LA32ExecutionTracerSubtrate() noexcept;
+
+        size_t                      GetDefaultDepth() const noexcept;
+        void                        SetDefaultDepth(size_t depth) noexcept;
+
+        LA32TraceHistory&           Get() noexcept;
+        const LA32TraceHistory&     Get() const noexcept;
+
+        void                        Set(const LA32TraceHistory& obj) noexcept;
+        void                        Set(LA32TraceHistory&& obj) noexcept;
+
+        void                        Swap(LA32TraceHistory& obj) noexcept;
+
+        //
+        LA32ExecutionTracerSubtrate&    operator=(const LA32ExecutionTracerSubtrate& obj) = delete;
+        LA32ExecutionTracerSubtrate&    operator=(LA32ExecutionTracerSubtrate&& obj) = delete;
+    };
+
+
     // LA32 GPR Tracer
     template<LA32TraceHistoryManager _HistoryManager 
         = LA32TraceHistoryManagement::Pretouch>

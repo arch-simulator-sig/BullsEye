@@ -814,3 +814,53 @@ namespace Jasse {
         std::swap(traces, obj);
     }
 }
+
+
+// Implementation of: class LA32ExecutionTracerSubtrate
+namespace Jasse {
+    // 
+    // LA32TraceHistory              traces;
+    //
+
+    LA32ExecutionTracerSubtrate::LA32ExecutionTracerSubtrate(size_t default_depth) noexcept
+        : traces        (default_depth)
+    { }
+
+    LA32ExecutionTracerSubtrate::~LA32ExecutionTracerSubtrate() noexcept
+    { }
+
+    size_t LA32ExecutionTracerSubtrate::GetDefaultDepth() const noexcept
+    {
+        return traces.GetDepth();
+    }
+
+    void LA32ExecutionTracerSubtrate::SetDefaultDepth(size_t depth) noexcept
+    {
+        traces.SetDepth(depth);
+    }
+
+    LA32TraceHistory& LA32ExecutionTracerSubtrate::Get() noexcept
+    {
+        return traces;
+    }
+
+    const LA32TraceHistory& LA32ExecutionTracerSubtrate::Get() const noexcept
+    {
+        return traces;
+    }
+
+    void LA32ExecutionTracerSubtrate::Set(const LA32TraceHistory& obj) noexcept
+    {
+        traces = obj;
+    }
+
+    void LA32ExecutionTracerSubtrate::Set(LA32TraceHistory&& obj) noexcept
+    {
+        traces = std::move(obj);
+    }
+
+    void LA32ExecutionTracerSubtrate::Swap(LA32TraceHistory& obj) noexcept
+    {
+        std::swap(traces, obj);
+    }
+}
