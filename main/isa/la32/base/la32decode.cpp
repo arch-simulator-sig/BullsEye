@@ -6,6 +6,201 @@
 //
 
 
+// Implementation of static functions of: class LA32Instruction
+namespace Jasse {
+    
+    imm_t LA32Instruction::GetImm8(insnraw_t insn) noexcept
+    {
+        return GET_LA32_IMM8(insn);
+    }
+
+    imm_t LA32Instruction::GetImm12(insnraw_t insn) noexcept
+    {
+        return GET_LA32_IMM12(insn);
+    }
+
+    imm_t LA32Instruction::GetImm14(insnraw_t insn) noexcept
+    {
+        return GET_LA32_IMM14(insn);
+    }
+
+    imm_t LA32Instruction::GetImm16(insnraw_t insn) noexcept
+    {
+        return GET_LA32_IMM16(insn);
+    }
+
+    imm_t LA32Instruction::GetImm21(insnraw_t insn) noexcept
+    {
+        return GET_LA32_IMM21(insn);
+    }
+
+    imm_t LA32Instruction::GetImm26(insnraw_t insn) noexcept
+    {
+        return GET_LA32_IMM26(insn);
+    }
+
+    imm_t LA32Instruction::GetExImm20(insnraw_t insn) noexcept
+    {
+        return GET_LA32_X_IMM20(insn);
+    }
+
+    imm_t LA32Instruction::GetExImm5(insnraw_t insn) noexcept
+    {
+        return GET_LA32_X_IMM5(insn);
+    }
+
+    unsigned int LA32Instruction::GetOpcodeUpper6(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_OPCODE_U6);
+    }
+
+    unsigned int LA32Instruction::GetOpcodeLower2(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_OPCODE_L2);
+    }
+
+    unsigned int LA32Instruction::GetOpcodeLower4(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_OPCODE_L4);
+    }
+
+    unsigned int LA32Instruction::GetOpcodeLower8(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_OPCODE_L8);
+    }
+
+    unsigned int LA32Instruction::GetOpcodeLower6(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_OPCODE_L6);
+    }
+
+    unsigned int LA32Instruction::GetOpcodeLower11(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_OPCODE_L11);
+    }
+
+    unsigned int LA32Instruction::GetOpcodeLower16(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_OPCODE_L16);
+    }
+
+    unsigned int LA32Instruction::GetRD(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_RD);
+    }
+
+    unsigned int LA32Instruction::GetRJ(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_RJ);
+    }
+
+    unsigned int LA32Instruction::GetRK(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_RK);
+    }
+
+    unsigned int LA32Instruction::GetRA(insnraw_t insn) noexcept
+    {
+        return GET_LA32_STD_OPERAND(insn, LA32_RA);
+    }
+
+    insnraw_t LA32Instruction::SetImm8(insnraw_t insn, imm_t imm) noexcept
+    {
+        return SET_LA32_IMM8(insn, imm);
+    }
+
+    insnraw_t LA32Instruction::SetImm12(insnraw_t insn, imm_t imm) noexcept
+    {
+        return SET_LA32_IMM12(insn, imm);
+    }
+
+    insnraw_t LA32Instruction::SetImm14(insnraw_t insn, imm_t imm) noexcept
+    {
+        return SET_LA32_IMM14(insn, imm);
+    }
+
+    insnraw_t LA32Instruction::SetImm16(insnraw_t insn, imm_t imm) noexcept
+    {
+        return SET_LA32_IMM16(insn, imm);
+    }
+
+    insnraw_t LA32Instruction::SetImm21(insnraw_t insn, imm_t imm) noexcept
+    {
+        return SET_LA32_IMM21(insn, imm);
+    }
+
+    insnraw_t LA32Instruction::SetImm26(insnraw_t insn, imm_t imm) noexcept
+    {
+        return SET_LA32_IMM26(insn, imm);
+    }
+
+    insnraw_t LA32Instruction::SetExImm20(insnraw_t insn, imm_t imm) noexcept
+    {
+        return SET_LA32_X_IMM20(insn, imm);
+    }
+
+    insnraw_t LA32Instruction::SetExImm5(insnraw_t insn, imm_t imm) noexcept
+    {
+        return SET_LA32_X_IMM5(insn, imm);
+    }
+
+    insnraw_t LA32Instruction::SetOpcodeUpper6(insnraw_t insn, unsigned int opcode_u6) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_OPCODE_U6, opcode_u6);
+    }
+
+    insnraw_t LA32Instruction::SetOpcodeLower2(insnraw_t insn, unsigned int opcode_l2) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_OPCODE_L2, opcode_l2);
+    }
+
+    insnraw_t LA32Instruction::SetOpcodeLower4(insnraw_t insn, unsigned int opcode_l4) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_OPCODE_L4, opcode_l4);
+    }
+
+    insnraw_t LA32Instruction::SetOpcodeLower8(insnraw_t insn, unsigned int opcode_l8) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_OPCODE_L8, opcode_l8);
+    }
+
+    insnraw_t LA32Instruction::SetOpcodeLower6(insnraw_t insn, unsigned int opcode_l6) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_OPCODE_L6, opcode_l6);
+    }
+
+    insnraw_t LA32Instruction::SetOpcodeLower11(insnraw_t insn, unsigned int opcode_l11) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_OPCODE_L11, opcode_l11);
+    }
+
+    insnraw_t LA32Instruction::SetOpcodeLower16(insnraw_t insn, unsigned int opcode_l16) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_OPCODE_L16, opcode_l16);
+    }
+
+    insnraw_t LA32Instruction::SetRD(insnraw_t insn, unsigned int rd) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_RD, rd);
+    }
+
+    insnraw_t LA32Instruction::SetRJ(insnraw_t insn, unsigned int rj) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_RJ, rj);
+    }
+
+    insnraw_t LA32Instruction::SetRK(insnraw_t insn, unsigned int rk) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_RK, rk);
+    }
+
+    insnraw_t LA32Instruction::SetRA(insnraw_t insn, unsigned int ra) noexcept
+    {
+        return SET_LA32_STD_OPERAND(insn, LA32_RA, ra);
+    }
+}
+
+
 // Implementation of: class LA32Instruction
 namespace Jasse {
     /*
@@ -39,97 +234,97 @@ namespace Jasse {
 
     imm_t LA32Instruction::GetImm8() const noexcept
     {
-        return GET_LA32_IMM8(this->insn);
+        return GetImm8(this->insn);
     }
 
     imm_t LA32Instruction::GetImm12() const noexcept
     {
-        return GET_LA32_IMM12(this->insn);
+        return GetImm12(this->insn);
     }
 
     imm_t LA32Instruction::GetImm14() const noexcept
     {
-        return GET_LA32_IMM14(this->insn);
+        return GetImm14(this->insn);
     }
 
     imm_t LA32Instruction::GetImm16() const noexcept
     {
-        return GET_LA32_IMM16(this->insn);
+        return GetImm16(this->insn);
     }
 
     imm_t LA32Instruction::GetImm21() const noexcept
     {
-        return GET_LA32_IMM21(this->insn);
+        return GetImm21(this->insn);
     }
 
     imm_t LA32Instruction::GetImm26() const noexcept
     {
-        return GET_LA32_IMM26(this->insn);
+        return GetImm26(this->insn);
     }
 
     imm_t LA32Instruction::GetExImm20() const noexcept
     {
-        return GET_LA32_X_IMM20(this->insn);
+        return GetExImm20(this->insn);
     }
 
     imm_t LA32Instruction::GetExImm5() const noexcept
     {
-        return GET_LA32_X_IMM5(this->insn);
+        return GetExImm5(this->insn);
     }
 
     unsigned int LA32Instruction::GetOpcodeUpper6() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_U6);
+        return GetOpcodeUpper6(this->insn);
     }
 
     unsigned int LA32Instruction::GetOpcodeLower2() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L2);
+        return GetOpcodeLower2(this->insn);
     }
 
     unsigned int LA32Instruction::GetOpcodeLower4() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L4);
+        return GetOpcodeLower4(this->insn);
     }
 
     unsigned int LA32Instruction::GetOpcodeLower8() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L8);
+        return GetOpcodeLower8(this->insn);
     }
 
     unsigned int LA32Instruction::GetOpcodeLower6() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L6);
+        return GetOpcodeLower6(this->insn);
     }
 
     unsigned int LA32Instruction::GetOpcodeLower11() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L11);
+        return GetOpcodeLower11(this->insn);
     }
 
     unsigned int LA32Instruction::GetOpcodeLower16() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L16);
+        return GetOpcodeLower16(this->insn);
     }
 
     unsigned int LA32Instruction::GetRD() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_RD);
+        return GetRD(this->insn);
     }
 
     unsigned int LA32Instruction::GetRJ() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_RJ);
+        return GetRJ(this->insn);
     }
 
     unsigned int LA32Instruction::GetRK() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_RK);
+        return GetRK(this->insn);
     }
 
     unsigned int LA32Instruction::GetRA() const noexcept
     {
-        return GET_LA32_STD_OPERAND(this->insn, LA32_RA);
+        return GetRA(this->insn);
     }
 
     bool LA32Instruction::IsDecoded() const noexcept
@@ -214,115 +409,115 @@ namespace Jasse {
 
     void LA32Instruction::SetImm8(imm_t imm) noexcept
     {
-        SET_LA32_IMM8(this->insn, imm);
+        this->insn = SetImm8(this->insn, imm);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetImm12(imm_t imm) noexcept
     {
-        SET_LA32_IMM12(this->insn, imm);
+        this->insn = SetImm12(this->insn, imm);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetImm14(imm_t imm) noexcept
     {
-        SET_LA32_IMM14(this->insn, imm);
+        this->insn = SetImm14(this->insn, imm);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetImm16(imm_t imm) noexcept
     {
-        SET_LA32_IMM16(this->insn, imm);
+        this->insn = SetImm16(this->insn, imm);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetImm21(imm_t imm) noexcept
     {
-        SET_LA32_IMM21(this->insn, imm);
+        this->insn = SetImm21(this->insn, imm);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetImm26(imm_t imm) noexcept
     {
-        SET_LA32_IMM26(this->insn, imm);
+        this->insn = SetImm26(this->insn, imm);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetExImm20(imm_t imm) noexcept
     {
-        SET_LA32_X_IMM20(this->insn, imm);
+        this->insn = SetExImm20(this->insn, imm);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetExImm5(imm_t imm) noexcept
     {
-        SET_LA32_X_IMM5(this->insn, imm);
+        this->insn = SetExImm5(this->insn, imm);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetOpcodeUpper6(unsigned int opcode_u6) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_U6, opcode_u6);
+        this->insn = SetOpcodeUpper6(this->insn, opcode_u6);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetOpcodeLower2(unsigned int opcode_l2) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L2, opcode_l2);
+        this->insn = SetOpcodeLower2(this->insn, opcode_l2);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetOpcodeLower4(unsigned int opcode_l4) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L4, opcode_l4);
+        this->insn = SetOpcodeLower4(this->insn, opcode_l4);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetOpcodeLower8(unsigned int opcode_l8) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L8, opcode_l8);
+        this->insn = SetOpcodeLower8(this->insn, opcode_l8);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetOpcodeLower6(unsigned int opcode_l6) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L6, opcode_l6);
+        this->insn = SetOpcodeLower6(this->insn, opcode_l6);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetOpcodeLower11(unsigned int opcode_l11) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L11, opcode_l11);
+        this->insn = SetOpcodeLower11(this->insn, opcode_l11);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetOpcodeLower16(unsigned int opcode_l16) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_OPCODE_L16, opcode_l16);
+        this->insn = SetOpcodeLower16(this->insn, opcode_l16);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetRD(unsigned int rd) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_RD, rd);
+        this->insn = SetRD(this->insn, rd);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetRJ(unsigned int rj) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_RJ, rj);
+        this->insn = SetRJ(this->insn, rj);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetRK(unsigned int rk) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_RK, rk);
+        this->insn = SetRK(this->insn, rk);
         SetCodepoint(nullptr);
     }
 
     void LA32Instruction::SetRA(unsigned int ra) noexcept
     {
-        SET_LA32_STD_OPERAND(this->insn, LA32_RA, ra);
+        this->insn = SetRA(this->insn, ra);
         SetCodepoint(nullptr);
     }
 

@@ -14,6 +14,7 @@
 
 #include "base/la32def.hpp"         // IWYU pragma: export
 #include "base/la32code.hpp"        // IWYU pragma: export
+#include "base/la32trait.hpp"       // IWYU pragma: export
 #include "base/la32decode.hpp"      // IWYU pragma: export
 #include "base/la32mem.hpp"         // IWYU pragma: export
 #include "base/la32event.hpp"       // IWYU pragma: export

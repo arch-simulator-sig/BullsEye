@@ -21,6 +21,47 @@ namespace Jasse {
 
     // LA32 Instruction
     class LA32Instruction {
+    public:
+        static imm_t            GetImm8(insnraw_t insn) noexcept;
+        static imm_t            GetImm12(insnraw_t insn) noexcept;
+        static imm_t            GetImm14(insnraw_t insn) noexcept;
+        static imm_t            GetImm16(insnraw_t insn) noexcept;
+        static imm_t            GetImm21(insnraw_t insn) noexcept;
+        static imm_t            GetImm26(insnraw_t insn) noexcept;
+        static imm_t            GetExImm20(insnraw_t insn) noexcept;
+        static imm_t            GetExImm5(insnraw_t insn) noexcept;
+        static unsigned int     GetOpcodeUpper6(insnraw_t insn) noexcept;
+        static unsigned int     GetOpcodeLower2(insnraw_t insn) noexcept;
+        static unsigned int     GetOpcodeLower4(insnraw_t insn) noexcept;
+        static unsigned int     GetOpcodeLower8(insnraw_t insn) noexcept;
+        static unsigned int     GetOpcodeLower6(insnraw_t insn) noexcept; 
+        static unsigned int     GetOpcodeLower11(insnraw_t insn) noexcept;
+        static unsigned int     GetOpcodeLower16(insnraw_t insn) noexcept;
+        static unsigned int     GetRD(insnraw_t insn) noexcept;
+        static unsigned int     GetRJ(insnraw_t insn) noexcept;
+        static unsigned int     GetRK(insnraw_t insn) noexcept;
+        static unsigned int     GetRA(insnraw_t insn) noexcept;
+
+        static insnraw_t        SetImm8(insnraw_t insn, imm_t imm) noexcept;
+        static insnraw_t        SetImm12(insnraw_t insn, imm_t imm) noexcept;
+        static insnraw_t        SetImm14(insnraw_t insn, imm_t imm) noexcept;
+        static insnraw_t        SetImm16(insnraw_t insn, imm_t imm) noexcept;
+        static insnraw_t        SetImm21(insnraw_t insn, imm_t imm) noexcept;
+        static insnraw_t        SetImm26(insnraw_t insn, imm_t imm) noexcept;
+        static insnraw_t        SetExImm20(insnraw_t insn, imm_t imm) noexcept;
+        static insnraw_t        SetExImm5(insnraw_t insn, imm_t imm) noexcept;
+        static insnraw_t        SetOpcodeUpper6(insnraw_t insn, unsigned int opcode_u6) noexcept;
+        static insnraw_t        SetOpcodeLower2(insnraw_t insn, unsigned int opcode_l2) noexcept;
+        static insnraw_t        SetOpcodeLower4(insnraw_t insn, unsigned int opcode_l4) noexcept;
+        static insnraw_t        SetOpcodeLower8(insnraw_t insn, unsigned int opcode_l8) noexcept;
+        static insnraw_t        SetOpcodeLower6(insnraw_t insn, unsigned int opcode_l6) noexcept;
+        static insnraw_t        SetOpcodeLower11(insnraw_t insn, unsigned int opcode_l11) noexcept;
+        static insnraw_t        SetOpcodeLower16(insnraw_t insn, unsigned int opcode_l16) noexcept;
+        static insnraw_t        SetRD(insnraw_t insn, unsigned int rd) noexcept;
+        static insnraw_t        SetRJ(insnraw_t insn, unsigned int rj) noexcept;
+        static insnraw_t        SetRK(insnraw_t insn, unsigned int rk) noexcept;
+        static insnraw_t        SetRA(insnraw_t insn, unsigned int ra) noexcept;
+
     private:
         insnraw_t               insn;
 

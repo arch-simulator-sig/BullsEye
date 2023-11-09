@@ -34,6 +34,9 @@ namespace Jasse {
     // LA32R Codepoint (declaration)
     class LA32Codepoint;
 
+    // LA32R Codepoint Trait (declaration)
+    class LA32Trait;
+
     // LA32R Codepoint Type
     typedef enum class __tag_LA32CodepointType {
         TYPE_2R,
@@ -173,6 +176,17 @@ namespace BullsEye {
 #define ZEXT32_H(expr)      ((uint32_t) ((uint16_t) (expr)))
 #define ZEXT32_B(expr)      ((uint32_t) ((uint8_t)  (expr)))
 #define ZEXT32_W(expr)      ((uint32_t) (           (expr)))
+
+#define ZEXT32(expr, len)   (uint32_t(expr))
+
+#define ZEXT32_IMM8(expr)   ZEXT32_B(expr)
+#define ZEXT32_IMM12(expr)  ZEXT32(expr, 12)
+#define ZEXT32_IMM14(expr)  ZEXT32(expr, 14)
+#define ZEXT32_IMM16(expr)  ZEXT32_H(expr)
+#define ZEXT32_IMM21(expr)  ZEXT32(expr, 21)
+#define ZEXT32_IMM26(expr)  ZEXT32(expr, 26)
+#define ZEXT32_IMM20(expr)  ZEXT32(expr, 20)
+#define ZEXT32_IMM5(expr)   ZEXT32(expr, 5)
 
 
 // Integral extension alias

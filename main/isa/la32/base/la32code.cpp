@@ -13,6 +13,7 @@ namespace Jasse {
     /*
     const std::string       name;
     const LA32CodepointType type;
+    const LA32Trait*        trait;
 
     const LA32DecodePath    decodePath;
 
@@ -20,25 +21,29 @@ namespace Jasse {
     const Textualizer       textualizer;
     */
 
-    LA32Codepoint::LA32Codepoint(const char*               name,
-                                 const LA32CodepointType   type,
-                                 const LA32DecodePath      decodePath,
-                                 const Executor            executor,
-                                 const Textualizer         textualizer) noexcept
+    LA32Codepoint::LA32Codepoint(const char*                name,
+                                 const LA32CodepointType    type,
+                                 const LA32Trait*           trait,
+                                 const LA32DecodePath       decodePath,
+                                 const Executor             executor,
+                                 const Textualizer          textualizer) noexcept
         : name          (std::string(name))
         , type          (type)
+        , trait         (trait)
         , decodePath    (decodePath)
         , executor      (executor)
         , textualizer   (textualizer) 
     { }
 
-    LA32Codepoint::LA32Codepoint(const std::string&        name,
-                                 const LA32CodepointType   type,
-                                 const LA32DecodePath      decodePath,
-                                 const Executor            executor,
-                                 const Textualizer         textualizer) noexcept
+    LA32Codepoint::LA32Codepoint(const std::string&         name,
+                                 const LA32CodepointType    type,
+                                 const LA32Trait*           trait,
+                                 const LA32DecodePath       decodePath,
+                                 const Executor             executor,
+                                 const Textualizer          textualizer) noexcept
         : name          (name)
         , type          (type)
+        , trait         (trait)
         , decodePath    (decodePath)
         , executor      (executor)
         , textualizer   (textualizer)
@@ -47,6 +52,7 @@ namespace Jasse {
     LA32Codepoint::LA32Codepoint(const LA32Codepoint& obj) noexcept
         : name          (obj.name)
         , type          (obj.type)
+        , trait         (obj.trait)
         , decodePath    (obj.decodePath)
         , executor      (obj.executor)
         , textualizer   (obj.textualizer)
@@ -63,6 +69,11 @@ namespace Jasse {
     LA32CodepointType LA32Codepoint::GetType() const noexcept
     {
         return this->type;
+    }
+
+    const LA32Trait* LA32Codepoint::GetTrait() const noexcept
+    {
+        return this->trait;
     }
 
     const LA32Codepoint::Executor LA32Codepoint::GetExecutor() const noexcept

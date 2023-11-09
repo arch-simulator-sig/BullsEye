@@ -33,6 +33,8 @@ namespace Jasse {
         const std::string       name;
         const LA32CodepointType type;
 
+        const LA32Trait*        trait;
+
         const LA32DecodePath    decodePath;
 
         const Executor          executor;
@@ -41,12 +43,14 @@ namespace Jasse {
     public:
         LA32Codepoint(const char*               name,
                       const LA32CodepointType   type,
+                      const LA32Trait*          trait,
                       const LA32DecodePath      decodePath,
                       const Executor            executor,
                       const Textualizer         textualizer) noexcept;
 
         LA32Codepoint(const std::string&        name,
                       const LA32CodepointType   type,
+                      const LA32Trait*          trait,
                       const LA32DecodePath      decodePath,
                       const Executor            executor,
                       const Textualizer         textualizer) noexcept;
@@ -56,6 +60,8 @@ namespace Jasse {
 
         const std::string&      GetName() const noexcept;
         LA32CodepointType       GetType() const noexcept;
+        const LA32Trait*        GetTrait() const noexcept;
+
         const Executor          GetExecutor() const noexcept;
         const Textualizer       GetTextualizer() const noexcept;
 

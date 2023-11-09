@@ -39,6 +39,8 @@ namespace Jasse {
             uint32_t    dword3;
             uint32_t    dword4;
             uint32_t    dword5;
+            uint32_t    dword6;
+            uint32_t    dword7;
         } Content;
 
         template<class _TContent>
@@ -134,6 +136,7 @@ namespace Jasse {
     public:
         pc_t                pc;
         arch32_t            value;
+        arch32_t            value_second;
 
         LA32Instruction     insn;
         
