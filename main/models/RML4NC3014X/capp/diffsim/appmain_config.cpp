@@ -42,8 +42,10 @@ int config(int argc, char* argv[])
     // dump 1
     glbl.cfg.dump1.enabled = true;
 
-    glbl.cfg.dump1.upperCount = 4;
+    glbl.cfg.dump1.upperCount = 8;
     glbl.cfg.dump1.lowerCount = 1;
+
+    glbl.cfg.dump1.displayTrace = true;
 
     glbl.cfg.dump1.muteUnread = true;
 

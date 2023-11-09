@@ -103,6 +103,8 @@ struct GlobalConfigDump1 {
     unsigned int                            upperCount;
     unsigned int                            lowerCount;
 
+    bool                                    displayTrace;
+
     bool                                    muteUnread;
 };
 

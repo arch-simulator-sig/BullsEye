@@ -211,6 +211,11 @@ int startup()
         .Decoder    (Decoder::LA32R_NSCSCC)
         .Memory     (&glbl.ctx.ref.soc->MMU())
         .EventBusId (glbl.ctx.ref.eventBusId)
+        .EnableTrace            (32, 32)
+        .EnablePCTracer         (32)
+        .EnableGPRTracer        (32)
+        .EnableFetchTracer      (32)
+        .EnableExecutionTracer  (32)
         .Build();
     
     std::cout << "Instantiated reference model emulator." << std::endl;
