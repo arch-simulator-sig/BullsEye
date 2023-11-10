@@ -30,6 +30,9 @@ namespace Jasse {
     std::string TextualizeLA32Type1RI21(const LA32Instruction& insn) noexcept;
     std::string TextualizeLA32TypeI26(const LA32Instruction& insn) noexcept;
 
+    std::string TextualizeLA32Type2ROffs16(const LA32Instruction& insn) noexcept;
+    std::string TextualizeLA32TypeOffs26(const LA32Instruction& insn) noexcept;
+
     std::string TextualizeLA32TypeX2RI5(const LA32Instruction& insn) noexcept;
     std::string TextualizeLA32TypeX1RI20(const LA32Instruction& insn) noexcept;
 }

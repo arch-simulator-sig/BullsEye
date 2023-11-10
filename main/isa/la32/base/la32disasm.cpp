@@ -200,6 +200,28 @@ namespace Jasse {
         return oss.str();
     }
 
+    std::string TextualizeLA32Type2ROffs16(const LA32Instruction &insn) noexcept
+    {
+        std::ostringstream oss;
+
+        oss << TextualizeLA32Name(insn.GetName());
+        oss << TextualizeLA32GPR(insn.GetRD()) << ", ";
+        oss << TextualizeLA32GPR(insn.GetRJ()) << ", ";
+        oss << "0x" << std::hex << std::setw(5) << std::setfill('0') << (insn.GetImm16() << 2);
+
+        return oss.str();
+    }
+
+    std::string TextualizeLA32TypeOffs26(const LA32Instruction &insn) noexcept
+    {
+        std::ostringstream oss;
+
+        oss << TextualizeLA32Name(insn.GetName());
+        oss << "0x" << std::hex << std::setw(7) << std::setfill('0') << (insn.GetImm26() << 2);
+
+        return oss.str();
+    }
+
     std::string TextualizeLA32TypeX1RI20(const LA32Instruction& insn) noexcept
     {
         std::ostringstream oss;
