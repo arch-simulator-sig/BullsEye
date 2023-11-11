@@ -3,7 +3,7 @@
 #include <functional>
 
 
-#include AUTOINC_BE_JASSE2_LA32(la32_nscscc.hpp)
+#include AUTOINC_BE_JASSE2_LA32(la32_nscscc.hpp)    // IWYU pragma: keep
 
 
 // Implementation of: class uop40::imm26_t
