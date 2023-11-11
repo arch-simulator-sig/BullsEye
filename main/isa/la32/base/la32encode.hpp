@@ -34,10 +34,10 @@
     | ENCODE_LA32_STD_OPERAND((value & 0xFFFF), LA32_IMM26_L16))
 
 #define ENCODE_LA32_X_IMM20(value) \
-    ( (value & 0x000FFFFF) << 5)
+    ( (uint32_t(value) & 0x000FFFFF) << 5)
 
 #define ENCODE_LA32_X_IMM5(value) \
-    ( (value & 0x0000001F) << 10)
+    ( (uint32_t(value) & 0x0000001F) << 10)
 
 
 #define ENCODE_LA32_TYPE_2R(opcode_u6, opcode_l16, rj, rd) \
