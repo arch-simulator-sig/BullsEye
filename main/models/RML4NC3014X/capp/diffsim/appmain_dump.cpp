@@ -24,6 +24,8 @@ static constexpr const char* _COLOR_CORRECT     = "\033[1;32m";
 
 static constexpr const char* _COLOR_ERROR       = "\033[1;31m";
 
+static constexpr const char* _COLOR_PAUSE       = "\033[33m";
+
 static constexpr const char* _COLOR_COMMENT     = "\033[1;30m";
 
 static constexpr const char* _COLOR_RESET       = "\033[0m";
@@ -46,7 +48,7 @@ static inline std::string dump_at(Jasse::addr_t address)
     if (mopoutcome.status != Jasse::LA32MOPStatus::MOP_SUCCESS)
     {
         if (glbl.cfg.dump0.muteUnread)
-            return std::string();
+            return "";
         else
         {
             oss << "<unreadable>";
@@ -247,7 +249,7 @@ static inline std::string dump_trace_at(Jasse::addr_t address, int traceOffset)
     oss << "; ";
 
     //
-    int padding = 36 - oss.view().length();
+    int padding = 40 - oss.view().length();
 
     for (int i = 0; i < padding; i++)
         oss << " ";
@@ -320,18 +322,189 @@ static inline std::string dump_trace_at(Jasse::addr_t address, int traceOffset)
 }
 
 
-//
-void dump()
+static inline std::string dump_trace_incomplete_at(Jasse::addr_t address)
 {
-    dump0();
-    dump1();
+    //
+    Jasse::memdata_t data;
+    Jasse::LA32MOPOutcome mopoutcome 
+        = glbl.ctx.ref.soc->MMU().ReadInsn(address, Jasse::MOPW_WORD, &data);
+
+    if (mopoutcome.status != Jasse::LA32MOPStatus::MOP_SUCCESS)
+        return "";
+
+    //
+    Jasse::LA32Instruction insn(data.data32);
+    
+    if (!Jasse::Decoder::LA32R_NSCSCC->Decode(insn))
+        return "";
+
+    //
+    const Jasse::LA32Trait* trait = insn.GetCodepoint()->GetTrait();
+
+    if (!trait)
+        return "<unrecognized-trait>";
+
+    //
+    std::ostringstream oss;
+
+    // display destination traces
+    for (int i = 0; i < trait->GetDestinationCount(); i++)
+    {
+        if (i)
+            oss << ", ";
+
+        const Jasse::LA32Trait::Destination* dst = trait->GetDestination(i);
+
+        switch (dst->GetType())
+        {
+            case Jasse::LA32Trait::Destination::Type::GPR: {
+
+                const Jasse::LA32Trait::Destination::GPR* dst_gpr = 
+                    static_cast<const Jasse::LA32Trait::Destination::GPR*>(dst);
+
+                unsigned int gpr_index = dst_gpr->GetGPRIndex(insn);
+
+                oss << Jasse::TextualizeLA32GPR(gpr_index) << " <= ";
+                oss << "<incomplete>";
+
+                break;
+            }
+
+            case Jasse::LA32Trait::Destination::Type::PC: {
+
+                oss << "PC   <= <incomplete>";
+                break;
+            }
+
+            case Jasse::LA32Trait::Destination::Type::Memory: {
+
+                oss << "<incomplete>";
+                break;
+            }
+
+            default:
+                oss << "<malformed-trait>";
+                break;
+        }
+    }
+
+
+    //
+    oss << "; ";
+
+    //
+    int padding = 40 - oss.view().length();
+
+    for (int i = 0; i < padding; i++)
+        oss << " ";
+
+    
+    // display operand traces
+    for (int i = 0; i < trait->GetOperandCount(); i++)
+    {
+        if (i)
+            oss << ", ";
+
+        const Jasse::LA32Trait::Operand* opd = trait->GetOperand(i);
+
+        switch (opd->GetType())
+        {
+            case Jasse::LA32Trait::Operand::Type::GPR: {
+
+                const Jasse::LA32Trait::Operand::GPR* opd_gpr = 
+                    static_cast<const Jasse::LA32Trait::Operand::GPR*>(opd);
+
+                unsigned int gpr_index = opd_gpr->GetGPRIndex(insn);
+
+                oss << Jasse::TextualizeLA32GPR(gpr_index) << " = ";
+
+                if (!gpr_index)
+                {
+                    oss << "0x00000000";
+                    break;
+                }
+
+                //
+                if (!glbl.ctx.ref.emu->Tracers().HasGPRTracer())
+                {
+                    oss << "<out-of-trace>";
+                    break;
+                }
+
+                auto gprTracer = glbl.ctx.ref.emu->Tracers().GetGPRTracer();
+
+                //
+                Jasse::LA32TraceEntity::Reference operandTrace;
+
+                // *NOTICE: Instruction itself is already commited in EMU side at this time.
+                //          Search trait of destination to uncover the source operand value.
+                //
+                int traceOffset = 0;
+                for (int i = 0; i < trait->GetDestinationCount(); i++)
+                {
+                    const Jasse::LA32Trait::Destination* dst = trait->GetDestination(i);
+
+                    if (dst->GetType() == Jasse::LA32Trait::Destination::Type::GPR)
+                    {
+                        const Jasse::LA32Trait::Destination::GPR* dst_gpr = 
+                                static_cast<const Jasse::LA32Trait::Destination::GPR*>(dst);
+
+                        if (dst_gpr->GetGPRIndex(insn) == gpr_index)
+                            traceOffset++;
+                    }
+                }
+
+                if (traceOffset >= gprTracer->Get(gpr_index).GetCount())
+                {
+                    oss << "<out-of-trace>";
+                    break;
+                }
+
+                operandTrace = gprTracer->Get(gpr_index).Get(traceOffset);
+
+                if (!operandTrace.IsValid())
+                {
+                    oss << "<out-of-trace>";
+                    break;
+                }
+
+                if (!operandTrace->GetContentType()->HasTracedArch32Value())
+                {
+                    oss << "<unrecognized-trace>";
+                    break;
+                }
+
+                oss << "0x";
+                oss << std::hex << std::setw(8) << std::setfill('0') 
+                    << operandTrace->GetContentType()->GetTracedArch32Value(operandTrace->GetContent());
+
+                break;
+
+                break;
+            }
+
+            default:
+                oss << "<malformed-trait>";
+                break;
+        }
+    }
+
+    return oss.str();
 }
 
 
 //
-void dump0()
+void dump(bool pause)
 {
-    std::cout << "\033[1;33mEmulation dumped\033[0m (dump #0: program memory)" << std::endl;
+    dump0(pause);
+    dump1(pause);
+}
+
+
+//
+void dump0(bool pause)
+{
+    std::cout << "\033[1;33mEmulation dumped\033[0m from reference (dump #0: program memory)" << std::endl;
     std::cout << "Program stopped at: " << std::endl;
 
     int j = (uint32_t) std::min(glbl.ctx.commitCount, uint64_t(glbl.cfg.dump0.upperCount));
@@ -343,7 +516,7 @@ void dump0()
         std::cout << _COLOR_RESET << std::endl;
     }
 
-    std::cout << _COLOR_ERROR;
+    std::cout << (pause ? _COLOR_PAUSE : _COLOR_ERROR);
     std::cout << "--> ";
     std::cout << dump_at(glbl.ctx.lastPC);
     std::cout << _COLOR_RESET << std::endl;
@@ -360,9 +533,9 @@ void dump0()
 
 
 //
-void dump1()
+void dump1(bool pause)
 {
-    std::cout << "\033[1;33mEmulation dumped\033[0m (dump #1: program execution trace)" << std::endl;
+    std::cout << "\033[1;33mEmulation dumped\033[0m from reference (dump #1: program execution trace)" << std::endl;
     std::cout << "Program stopped at: " << std::endl;
 
     int j = (uint32_t) std::min(glbl.ctx.commitCount, uint64_t(glbl.cfg.dump1.upperCount));
@@ -382,10 +555,18 @@ void dump1()
         }
     }
 
-    std::cout << _COLOR_ERROR;
+    std::cout << (pause ? _COLOR_PAUSE : _COLOR_ERROR);
     std::cout << "--> ";
     std::cout << dump_at(glbl.ctx.tracePC.Get(0));
     std::cout << _COLOR_RESET << std::endl;
+
+    if (glbl.cfg.dump1.displayTrace)
+    {
+        std::cout << _COLOR_COMMENT;
+        std::cout << "  # ";
+        std::cout << dump_trace_at(glbl.ctx.tracePC.Get(0), 0);
+        std::cout << _COLOR_RESET << std::endl;
+    }
 
     for (int i = 0; i < glbl.cfg.dump1.lowerCount; i++)
     {

@@ -133,16 +133,19 @@ int main(int argc, char* argv[])
         }
 
 
-        if (counter_interval_commit == 10000) // commit watchdog
+        if (counter_interval_commit == 512) // commit watchdog
         {
             std::ostringstream oss;
 
             std::cout << "--------------------------------" << std::endl;
             std::cout << "\033[1;31mEmulation stopped\033[0m due to WATCH DOG." << std::endl;
-            std::cout << "Nothing commited in past 10000 clocks." << std::endl;
+            std::cout << "Nothing commited in past 512 clocks." << std::endl;
 
             oss << "\nLast commit PC: \033[1;33m0x" << std::hex << std::setw(8) << std::setfill(' ') << last_pc << "\033[0m" << std::endl;
             std::cout << oss.str();
+            std::cout << "--------------------------------" << std::endl;
+
+            dump(true);
 
             shutdown();
 
