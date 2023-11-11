@@ -58,15 +58,12 @@ namespace BullsEye::NSCSCCSingle {
         else
             mopoutcome = preReadPreEvent.GetProxyRoutine()(path, phyaddress, width, dst);
 
-        if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
-            return mopoutcome;
-
         // Post-Read Event
-        NSCSCC2023MMUBaseRAMPostReadPreEvent postReadPreEvent(this, path, phyaddress, width, *dst);
+        NSCSCC2023MMUBaseRAMPostReadPreEvent postReadPreEvent(this, path, phyaddress, width, *dst, mopoutcome);
         if (postReadPreEvent.Fire(eventBusId).HasException())
             return postReadPreEvent.GetException();
 
-        NSCSCC2023MMUBaseRAMPostReadPostEvent(this, path, phyaddress, width, *dst)
+        NSCSCC2023MMUBaseRAMPostReadPostEvent(this, path, phyaddress, width, *dst, mopoutcome)
             .Fire(eventBusId);
 
         //
@@ -90,15 +87,12 @@ namespace BullsEye::NSCSCCSingle {
         else
             mopoutcome = preWritePreEvent.GetProxyRoutine()(path, phyaddress, width, src);
 
-        if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
-            return mopoutcome;
-
         // Post-Write Event
-        NSCSCC2023MMUBaseRAMPostWritePreEvent postWritePreEvent(this, path, phyaddress, width, src);
+        NSCSCC2023MMUBaseRAMPostWritePreEvent postWritePreEvent(this, path, phyaddress, width, src, mopoutcome);
         if (postWritePreEvent.Fire(eventBusId).HasException())
             return postWritePreEvent.GetException();
 
-        NSCSCC2023MMUBaseRAMPostWritePostEvent(this, path, phyaddress, width, src)
+        NSCSCC2023MMUBaseRAMPostWritePostEvent(this, path, phyaddress, width, src, mopoutcome)
             .Fire(eventBusId);
 
         //
@@ -142,15 +136,12 @@ namespace BullsEye::NSCSCCSingle {
         else
             mopoutcome = preReadPreEvent.GetProxyRoutine()(path, phyaddress, width, dst);
 
-        if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
-            return mopoutcome;
-
         // Post-Read Event
-        NSCSCC2023MMUExtRAMPostReadPreEvent postReadPreEvent(this, path, phyaddress, width, *dst);
+        NSCSCC2023MMUExtRAMPostReadPreEvent postReadPreEvent(this, path, phyaddress, width, *dst, mopoutcome);
         if (postReadPreEvent.Fire(eventBusId).HasException())
             return postReadPreEvent.GetException();
 
-        NSCSCC2023MMUExtRAMPostReadPostEvent(this, path, phyaddress, width, *dst)
+        NSCSCC2023MMUExtRAMPostReadPostEvent(this, path, phyaddress, width, *dst, mopoutcome)
             .Fire(eventBusId);
 
         //
@@ -174,15 +165,12 @@ namespace BullsEye::NSCSCCSingle {
         else
             mopoutcome = preWritePreEvent.GetProxyRoutine()(path, phyaddress, width, src);
 
-        if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
-            return mopoutcome;
-
         // Post-Write Event
-        NSCSCC2023MMUExtRAMPostWritePreEvent postWritePreEvent(this, path, phyaddress, width, src);
+        NSCSCC2023MMUExtRAMPostWritePreEvent postWritePreEvent(this, path, phyaddress, width, src, mopoutcome);
         if (postWritePreEvent.Fire(eventBusId).HasException())
             return postWritePreEvent.GetException();
 
-        NSCSCC2023MMUExtRAMPostWritePostEvent(this, path, phyaddress, width, src)
+        NSCSCC2023MMUExtRAMPostWritePostEvent(this, path, phyaddress, width, src, mopoutcome)
             .Fire(eventBusId);
 
         //
@@ -223,40 +211,41 @@ namespace BullsEye::NSCSCCSingle {
             .Fire(eventBusId);
 
         // Serial device read
-        if (!preReadPreEvent.HasProxy())
+        LA32MOPOutcome mopoutcome = [&]() -> LA32MOPOutcome 
         {
-            if (!serial)
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
+            if (!preReadPreEvent.HasProxy())
+            {
+                if (!serial)
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
 
-            if (width != MOPW_BYTE)
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
+                if (width != MOPW_BYTE)
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
 
-            if (address == 0xBFD003F8)
-                dst->data8 = serial->Read();
-            else if (address == 0xBFD003FC)
-                dst->data8 = ((serial->IsWriteAvailable() ? 0x01 : 0x00) | (serial->IsReadAvailable() ? 0x02 : 0x00));
+                if (address == 0xBFD003F8)
+                    dst->data8 = serial->Read();
+                else if (address == 0xBFD003FC)
+                    dst->data8 = ((serial->IsWriteAvailable() ? 0x01 : 0x00) | (serial->IsReadAvailable() ? 0x02 : 0x00));
+                else
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
+
+                return { LA32MOPStatus::MOP_SUCCESS };
+            }
             else
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
-        }
-        else
-        {
-            LA32MOPOutcome proxy_mopoutcome 
-                = preReadPreEvent.GetProxyRoutine()(path, address, width, dst);
-
-            if (proxy_mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
-                return proxy_mopoutcome;
-        }
+            {
+                return preReadPreEvent.GetProxyRoutine()(path, address, width, dst);
+            }
+        }();
 
         // Post-Read Event
-        NSCSCC2023MMUMappedIOSerialPostReadPreEvent postReadPreEvent(this, path, address, width, *dst);
+        NSCSCC2023MMUMappedIOSerialPostReadPreEvent postReadPreEvent(this, path, address, width, *dst, mopoutcome);
         if (postReadPreEvent.Fire(eventBusId).HasException())
             return preReadPreEvent.GetException();
 
-        NSCSCC2023MMUMappedIOSerialPostReadPostEvent(this, path, address, width, *dst)
+        NSCSCC2023MMUMappedIOSerialPostReadPostEvent(this, path, address, width, *dst, mopoutcome)
             .Fire(eventBusId);
 
         //
-        return { LA32MOPStatus::MOP_SUCCESS };
+        return mopoutcome;;
     }
 
     LA32MOPOutcome NSCSCC2023MMU::_MMIO_WriteSerial(addr_t address, LA32MOPWidth width, memdata_t src) noexcept
@@ -273,38 +262,39 @@ namespace BullsEye::NSCSCCSingle {
             .Fire(eventBusId);
 
         // Serial device write
-        if (!preWritePreEvent.HasProxy())
+        LA32MOPOutcome mopoutcome = [&]() -> LA32MOPOutcome
         {
-            if (!serial)
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
+            if (!preWritePreEvent.HasProxy())
+            {
+                if (!serial)
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
 
-            if (width != MOPW_BYTE)
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
+                if (width != MOPW_BYTE)
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
 
-            if (address == 0xBFD003F8)
-                serial->Write(src.data8);
+                if (address == 0xBFD003F8)
+                    serial->Write(src.data8);
+                else
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
+
+                return { LA32MOPStatus::MOP_SUCCESS };
+            }
             else
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
-        }
-        else
-        {
-            LA32MOPOutcome proxy_mopoutcome 
-                = preWritePreEvent.GetProxyRoutine()(path, address, width, src);
-
-            if (proxy_mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
-                return proxy_mopoutcome;
-        }
+            {
+                return preWritePreEvent.GetProxyRoutine()(path, address, width, src);
+            }
+        }();
 
         // Post-Write Event
-        NSCSCC2023MMUMappedIOSerialPostWritePreEvent postWritePreEvent(this, path, address, width, src);
+        NSCSCC2023MMUMappedIOSerialPostWritePreEvent postWritePreEvent(this, path, address, width, src, mopoutcome);
         if (postWritePreEvent.Fire(eventBusId).HasException())
             return postWritePreEvent.GetException();
 
-        NSCSCC2023MMUMappedIOSerialPostWritePostEvent(this, path, address, width, src)
+        NSCSCC2023MMUMappedIOSerialPostWritePostEvent(this, path, address, width, src, mopoutcome)
             .Fire(eventBusId);
         
         //
-        return { LA32MOPStatus::MOP_SUCCESS };
+        return mopoutcome;
     }
 
     LA32MOPOutcome NSCSCC2023MMU::_MMIO_ReadClockCounter(addr_t address, LA32MOPWidth width, memdata_t* dst) noexcept
@@ -321,35 +311,37 @@ namespace BullsEye::NSCSCCSingle {
             .Fire(eventBusId);
 
         // device read
-        LA32MOPOutcome mopoutcome;
-        if (!preReadPreEvent.HasProxy())
+        LA32MOPOutcome mopoutcome = [&]() -> LA32MOPOutcome 
         {
-            if (!clk_counter)
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
+            if (!preReadPreEvent.HasProxy())
+            {
+                if (!clk_counter)
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
 
-            if (width != MOPW_WORD)
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
+                if (width != MOPW_WORD)
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, ENOSYS };
 
-            if (address == 0xBFD00400)
-                dst->data32 = clk_counter->GetCounterLo();
-            else if (address == 0xBFD00404)
-                dst->data32 = clk_counter->GetCounterHi();
+                if (address == 0xBFD00400)
+                    dst->data32 = clk_counter->GetCounterLo();
+                else if (address == 0xBFD00404)
+                    dst->data32 = clk_counter->GetCounterHi();
+                else
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
+
+                return { LA32MOPStatus::MOP_SUCCESS };
+            }
             else
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
-
-            mopoutcome = { LA32MOPStatus::MOP_SUCCESS };
-        }
-        else
-        {
-            mopoutcome = preReadPreEvent.GetProxyRoutine()(path, address, width, dst);
-        }
+            {
+                return preReadPreEvent.GetProxyRoutine()(path, address, width, dst);
+            }
+        }();
 
         // Post-Read Event
-        NSCSCC2023MMUMappedIOClockCounterPostReadPreEvent postReadPreEvent(this, path, address, width, *dst);
+        NSCSCC2023MMUMappedIOClockCounterPostReadPreEvent postReadPreEvent(this, path, address, width, *dst, mopoutcome);
         if (postReadPreEvent.Fire(eventBusId).HasException())
             return postReadPreEvent.GetException();
 
-        NSCSCC2023MMUMappedIOClockCounterPostReadPostEvent(this, path, address, width, *dst)
+        NSCSCC2023MMUMappedIOClockCounterPostReadPostEvent(this, path, address, width, *dst, mopoutcome)
             .Fire(eventBusId);
 
         //
@@ -374,30 +366,29 @@ namespace BullsEye::NSCSCCSingle {
             .Fire(eventBusId);
 
         // device read
-        LA32MOPOutcome mopoutcome;
-        if (!preReadPreEvent.HasProxy())
+        LA32MOPOutcome mopoutcome = [&]() -> LA32MOPOutcome 
         {
-            if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
-                mopoutcome = _BaseRAM_ReadInsn(phyaddress, width, dst);
-            else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
-                mopoutcome = _ExtRAM_ReadInsn(phyaddress - 0x00400000, width, dst);
+            if (!preReadPreEvent.HasProxy())
+            {
+                if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
+                    return _BaseRAM_ReadInsn(phyaddress, width, dst);
+                else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
+                    return _ExtRAM_ReadInsn(phyaddress - 0x00400000, width, dst);
+                else
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
+            }
             else
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
-        }
-        else
-        {
-            mopoutcome = preReadPreEvent.GetProxyRoutine()(LA32MOPPath::MOP_INSN, phyaddress, width, dst);
-        }
-
-        if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
-            return mopoutcome;
+            {
+                return preReadPreEvent.GetProxyRoutine()(LA32MOPPath::MOP_INSN, phyaddress, width, dst);
+            }
+        }();
 
         // Post-Read Event
-        NSCSCC2023MMUPostReadPreEvent postReadPreEvent(this, LA32MOPPath::MOP_INSN, phyaddress, width, *dst);
+        NSCSCC2023MMUPostReadPreEvent postReadPreEvent(this, LA32MOPPath::MOP_INSN, phyaddress, width, *dst, mopoutcome);
         if (postReadPreEvent.Fire(eventBusId).HasException())
             return postReadPreEvent.GetException();
 
-        NSCSCC2023MMUPostReadPostEvent(this, LA32MOPPath::MOP_INSN, phyaddress, width, *dst)
+        NSCSCC2023MMUPostReadPostEvent(this, LA32MOPPath::MOP_INSN, phyaddress, width, *dst, mopoutcome)
             .Fire(eventBusId);
 
         //
@@ -417,37 +408,33 @@ namespace BullsEye::NSCSCCSingle {
             .Fire(eventBusId);
 
         // device read
-        LA32MOPOutcome mopoutcome;
-        if (!preReadPreEvent.HasProxy())
+        LA32MOPOutcome mopoutcome = [&]() -> LA32MOPOutcome 
         {
-            if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
-                mopoutcome = _BaseRAM_ReadData(phyaddress, width, dst);
-            else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
-                mopoutcome = _ExtRAM_ReadData(phyaddress - 0x00400000, width, dst);
-            else if (IsSerial(address))
-                mopoutcome = _MMIO_ReadSerial(address, width, dst);
-            else if (address == 0xBFD00400 || address == 0xBFD00404)
-                mopoutcome = _MMIO_ReadClockCounter(address, width, dst);
-            else
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
-        }
-        else 
-        {
-            mopoutcome = preReadPreEvent.GetProxyRoutine()(LA32MOPPath::MOP_DATA, phyaddress, width, dst);
-        }
-
-        if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
-        {
-            printf("Failed ReadData: 0x%08x %d\n", address, width.length); // TODO: DEBUG purpose, removed in future
-            return mopoutcome;
-        }
+            if (!preReadPreEvent.HasProxy())
+            {
+                if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
+                    return _BaseRAM_ReadData(phyaddress, width, dst);
+                else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
+                    return _ExtRAM_ReadData(phyaddress - 0x00400000, width, dst);
+                else if (IsSerial(address))
+                    return _MMIO_ReadSerial(address, width, dst);
+                else if (address == 0xBFD00400 || address == 0xBFD00404)
+                    return _MMIO_ReadClockCounter(address, width, dst);
+                else
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
+            }
+            else 
+            {
+                return preReadPreEvent.GetProxyRoutine()(LA32MOPPath::MOP_DATA, phyaddress, width, dst);
+            }
+        }();
 
         // Post-Read Event
-        NSCSCC2023MMUPostReadPreEvent postReadPreEvent(this, LA32MOPPath::MOP_DATA, phyaddress, width, *dst);
+        NSCSCC2023MMUPostReadPreEvent postReadPreEvent(this, LA32MOPPath::MOP_DATA, phyaddress, width, *dst, mopoutcome);
         if (postReadPreEvent.Fire(eventBusId).HasException())
             return postReadPreEvent.GetException();
 
-        NSCSCC2023MMUPostReadPostEvent(this, LA32MOPPath::MOP_DATA, phyaddress, width, *dst)
+        NSCSCC2023MMUPostReadPostEvent(this, LA32MOPPath::MOP_DATA, phyaddress, width, *dst, mopoutcome)
             .Fire(eventBusId);
 
         //
@@ -467,30 +454,29 @@ namespace BullsEye::NSCSCCSingle {
             .Fire(eventBusId);
 
         // device write
-        LA32MOPOutcome mopoutcome;
-        if (!preWritePreEvent.HasProxy())
+        LA32MOPOutcome mopoutcome = [&]() -> LA32MOPOutcome 
         {
-            if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
-                mopoutcome = _BaseRAM_WriteInsn(phyaddress, width, src);
-            else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
-                mopoutcome = _ExtRAM_WriteInsn(phyaddress - 0x00400000, width, src);
+            if (!preWritePreEvent.HasProxy())
+            {
+                if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
+                    return _BaseRAM_WriteInsn(phyaddress, width, src);
+                else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
+                    return _ExtRAM_WriteInsn(phyaddress - 0x00400000, width, src);
+                else
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
+            }
             else
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
-        }
-        else
-        {
-            mopoutcome = preWritePreEvent.GetProxyRoutine()(LA32MOPPath::MOP_INSN, phyaddress, width, src);
-        }
-
-        if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
-            return mopoutcome;
+            {
+                return preWritePreEvent.GetProxyRoutine()(LA32MOPPath::MOP_INSN, phyaddress, width, src);
+            }
+        }();
 
         // Post-Write Event
-        NSCSCC2023MMUPostWritePreEvent postWritePreEvent(this, LA32MOPPath::MOP_INSN, phyaddress, width, src);
+        NSCSCC2023MMUPostWritePreEvent postWritePreEvent(this, LA32MOPPath::MOP_INSN, phyaddress, width, src, mopoutcome);
         if (postWritePreEvent.Fire(eventBusId).HasException())
             return postWritePreEvent.GetException();
 
-        NSCSCC2023MMUPostWritePostEvent(this, LA32MOPPath::MOP_INSN, phyaddress, width, src)
+        NSCSCC2023MMUPostWritePostEvent(this, LA32MOPPath::MOP_INSN, phyaddress, width, src, mopoutcome)
             .Fire(eventBusId);
 
         //
@@ -510,37 +496,33 @@ namespace BullsEye::NSCSCCSingle {
             .Fire(eventBusId);
 
         // device write
-        LA32MOPOutcome mopoutcome;
-        if (!preWritePreEvent.HasProxy())
+        LA32MOPOutcome mopoutcome = [&]() -> LA32MOPOutcome
         {
-            if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
-                mopoutcome = _BaseRAM_WriteData(phyaddress, width, src);
-            else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
-                mopoutcome = _ExtRAM_WriteData(phyaddress - 0x00400000, width, src);
-            else if (IsSerial(address))
-                mopoutcome = _MMIO_WriteSerial(address, width, src);
-            else if (address == 0xBFD00400 || address == 0xBFD00404)
-                mopoutcome = _MMIO_WriteClockCounter(address, width, src);
-            else
-                return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
-        }
-        else 
-        {
-            mopoutcome = preWritePreEvent.GetProxyRoutine()(LA32MOPPath::MOP_DATA, phyaddress, width, src);
-        }
-
-        if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
-        {
-            printf("Failed WriteData: 0x%08x %d\n", address, width.length); // TODO: DEBUG purpose, removed in future
-            return mopoutcome;
-        }
+            if (!preWritePreEvent.HasProxy())
+            {
+                if (phyaddress >= 0x00000000 && phyaddress <= 0x003FFFFF)
+                    return _BaseRAM_WriteData(phyaddress, width, src);
+                else if (phyaddress >= 0x00400000 && phyaddress <= 0x007FFFFF)
+                    return _ExtRAM_WriteData(phyaddress - 0x00400000, width, src);
+                else if (IsSerial(address))
+                    return _MMIO_WriteSerial(address, width, src);
+                else if (address == 0xBFD00400 || address == 0xBFD00404)
+                    return _MMIO_WriteClockCounter(address, width, src);
+                else
+                    return { LA32MOPStatus::MOP_ACCESS_FAULT, EFAULT };
+            }
+            else 
+            {
+                return preWritePreEvent.GetProxyRoutine()(LA32MOPPath::MOP_DATA, phyaddress, width, src);
+            }
+        }();
 
         // Post-Write Event
-        NSCSCC2023MMUPostWritePreEvent postWritePreEvent(this, LA32MOPPath::MOP_DATA, phyaddress, width, src);
+        NSCSCC2023MMUPostWritePreEvent postWritePreEvent(this, LA32MOPPath::MOP_DATA, phyaddress, width, src, mopoutcome);
         if (postWritePreEvent.Fire(eventBusId).HasException())
             return postWritePreEvent.GetException();
 
-        NSCSCC2023MMUPostWritePostEvent(this, LA32MOPPath::MOP_DATA, phyaddress, width, src)
+        NSCSCC2023MMUPostWritePostEvent(this, LA32MOPPath::MOP_DATA, phyaddress, width, src, mopoutcome)
             .Fire(eventBusId);
 
         //

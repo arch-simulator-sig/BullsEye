@@ -148,17 +148,20 @@ namespace BullsEye::NSCSCCSingle {
     addr_t          address;
     LA32MOPWidth    width;
     memdata_t&      data;
+    LA32MOPOutcome& outcome;
     */
 
     NSCSCC2023MMUPostReadPreEventBase::NSCSCC2023MMUPostReadPreEventBase(
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t&      data) noexcept
+        memdata_t&      data,
+        LA32MOPOutcome& outcome) noexcept
         : path          (path)
         , address       (address)
         , width         (width)
         , data          (data)
+        , outcome       (outcome)
     { }
 
     LA32MOPPath NSCSCC2023MMUPostReadPreEventBase::GetPath() const noexcept
@@ -185,6 +188,16 @@ namespace BullsEye::NSCSCCSingle {
     {
         this->data = data;
     }
+
+    LA32MOPOutcome NSCSCC2023MMUPostReadPreEventBase::GetOutcome() const noexcept
+    {
+        return outcome;
+    }
+
+    void NSCSCC2023MMUPostReadPreEventBase::SetOutcome(LA32MOPOutcome outcome) noexcept
+    {
+        this->outcome = outcome;
+    }
 }
 
 // Implementation of: class NSCSCC2023MMUPostReadPostEventBase
@@ -194,17 +207,20 @@ namespace BullsEye::NSCSCCSingle {
     addr_t          address;
     LA32MOPWidth    width;
     memdata_t       data;
+    LA32MOPOutcome  outcome;
     */
 
     NSCSCC2023MMUPostReadPostEventBase::NSCSCC2023MMUPostReadPostEventBase(
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
         : path          (path)
         , address       (address)
         , width         (width)
         , data          (data)
+        , outcome       (outcome)
     { }
 
     LA32MOPPath NSCSCC2023MMUPostReadPostEventBase::GetPath() const noexcept
@@ -225,6 +241,11 @@ namespace BullsEye::NSCSCCSingle {
     memdata_t NSCSCC2023MMUPostReadPostEventBase::GetData() const noexcept
     {
         return data;
+    }
+
+    LA32MOPOutcome NSCSCC2023MMUPostReadPostEventBase::GetOutcome() const noexcept
+    {
+        return outcome;
     }
 }
 
@@ -371,44 +392,106 @@ namespace BullsEye::NSCSCCSingle {
     }
 }
 
-// Implementation of: class NSCSCC2023MMUPostWriteEventBase
+// Implementation of: class NSCSCC2023MMUPostWritePreEventBase
 namespace BullsEye::NSCSCCSingle {
     /*
     LA32MOPPath     path;
     addr_t          address;
     LA32MOPWidth    width;
     memdata_t       data;
+    LA32MOPOutcome& outcome;
     */
 
-    NSCSCC2023MMUPostWriteEventBase::NSCSCC2023MMUPostWriteEventBase(
+    NSCSCC2023MMUPostWritePreEventBase::NSCSCC2023MMUPostWritePreEventBase(
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
+        memdata_t       data,
+        LA32MOPOutcome& outcome) noexcept
         : path          (path)
         , address       (address)
         , width         (width)
         , data          (data)
+        , outcome       (outcome)
     { }
 
-    LA32MOPPath NSCSCC2023MMUPostWriteEventBase::GetPath() const noexcept
+    LA32MOPPath NSCSCC2023MMUPostWritePreEventBase::GetPath() const noexcept
     {
         return path;
     }
 
-    addr_t NSCSCC2023MMUPostWriteEventBase::GetAddress() const noexcept
+    addr_t NSCSCC2023MMUPostWritePreEventBase::GetAddress() const noexcept
     {
         return address;
     }
 
-    LA32MOPWidth NSCSCC2023MMUPostWriteEventBase::GetWidth() const noexcept
+    LA32MOPWidth NSCSCC2023MMUPostWritePreEventBase::GetWidth() const noexcept
     {
         return width;
     }
 
-    memdata_t NSCSCC2023MMUPostWriteEventBase::GetData() const noexcept
+    memdata_t NSCSCC2023MMUPostWritePreEventBase::GetData() const noexcept
     {
         return data;
+    }
+
+    LA32MOPOutcome NSCSCC2023MMUPostWritePreEventBase::GetOutcome() const noexcept
+    {
+        return outcome;
+    }
+
+    void NSCSCC2023MMUPostWritePreEventBase::SetOutcome(LA32MOPOutcome outcome) noexcept
+    {
+        this->outcome = outcome;
+    }
+}
+
+// Implementation of: class NSCSCC2023MMUPostWritePostEventBase
+namespace BullsEye::NSCSCCSingle {
+    /*
+    LA32MOPPath     path;
+    addr_t          address;
+    LA32MOPWidth    width;
+    memdata_t       data;
+    LA32MOPOutcome  outcome;
+    */
+
+    NSCSCC2023MMUPostWritePostEventBase::NSCSCC2023MMUPostWritePostEventBase(
+        LA32MOPPath     path,
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
+        : path          (path)
+        , address       (address)
+        , width         (width)
+        , data          (data)
+        , outcome       (outcome)
+    { }
+
+    LA32MOPPath NSCSCC2023MMUPostWritePostEventBase::GetPath() const noexcept
+    {
+        return path;
+    }
+
+    addr_t NSCSCC2023MMUPostWritePostEventBase::GetAddress() const noexcept
+    {
+        return address;
+    }
+
+    LA32MOPWidth NSCSCC2023MMUPostWritePostEventBase::GetWidth() const noexcept
+    {
+        return width;
+    }
+
+    memdata_t NSCSCC2023MMUPostWritePostEventBase::GetData() const noexcept
+    {
+        return data;
+    }
+
+    LA32MOPOutcome NSCSCC2023MMUPostWritePostEventBase::GetOutcome() const noexcept
+    {
+        return outcome;
     }
 }
 
@@ -449,9 +532,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t&      data) noexcept
+        memdata_t&      data,
+        LA32MOPOutcome& outcome) noexcept
         : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostReadPreEventBase (path, address, width, data)
+        , NSCSCC2023MMUPostReadPreEventBase (path, address, width, data, outcome)
     { }
 }
 
@@ -463,9 +547,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
         : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostReadPostEventBase(path, address, width, data)
+        , NSCSCC2023MMUPostReadPostEventBase(path, address, width, data, outcome)
     { }
 }
 
@@ -507,9 +592,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
-        : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostWriteEventBase   (path, address, width, data)
+        memdata_t       data,
+        LA32MOPOutcome& outcome) noexcept
+        : NSCSCC2023MMUEventBase                (mmu)
+        , NSCSCC2023MMUPostWritePreEventBase    (path, address, width, data, outcome)
     { }
 }
 
@@ -521,9 +607,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
-        : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostWriteEventBase   (path, address, width, data)
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
+        : NSCSCC2023MMUEventBase                (mmu)
+        , NSCSCC2023MMUPostWritePostEventBase   (path, address, width, data, outcome)
     { }
 }
 
@@ -564,9 +651,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t&      data) noexcept
+        memdata_t&      data,
+        LA32MOPOutcome& outcome) noexcept
         : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostReadPreEventBase (path, address, width, data)
+        , NSCSCC2023MMUPostReadPreEventBase (path, address, width, data, outcome)
     { }
 }
 
@@ -578,9 +666,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
         : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostReadPostEventBase(path, address, width, data)
+        , NSCSCC2023MMUPostReadPostEventBase(path, address, width, data, outcome)
     { }
 }
 
@@ -621,9 +710,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t&      data) noexcept
+        memdata_t&      data,
+        LA32MOPOutcome& outcome) noexcept
         : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostReadPreEventBase (path, address, width, data)
+        , NSCSCC2023MMUPostReadPreEventBase (path, address, width, data, outcome)
     { }
 }
 
@@ -635,9 +725,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
         : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostReadPostEventBase(path, address, width, data)
+        , NSCSCC2023MMUPostReadPostEventBase(path, address, width, data, outcome)
     { }
 }
 
@@ -679,9 +770,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
-        : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostWriteEventBase   (path, address, width, data)
+        memdata_t       data,
+        LA32MOPOutcome& outcome) noexcept
+        : NSCSCC2023MMUEventBase                (mmu)
+        , NSCSCC2023MMUPostWritePreEventBase    (path, address, width, data, outcome)
     { }
 }
 
@@ -693,9 +785,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
-        : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostWriteEventBase   (path, address, width, data)
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
+        : NSCSCC2023MMUEventBase                (mmu)
+        , NSCSCC2023MMUPostWritePostEventBase   (path, address, width, data, outcome)
     { }
 }
 
@@ -736,9 +829,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t&      data) noexcept
+        memdata_t&      data,
+        LA32MOPOutcome& outcome) noexcept
         : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostReadPreEventBase (path, address, width, data)
+        , NSCSCC2023MMUPostReadPreEventBase (path, address, width, data, outcome)
     { }
 }
 
@@ -750,9 +844,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
         : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostReadPostEventBase(path, address, width, data)
+        , NSCSCC2023MMUPostReadPostEventBase(path, address, width, data, outcome)
     { }
 }
 
@@ -794,9 +889,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
-        : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostWriteEventBase   (path, address, width, data)
+        memdata_t       data,
+        LA32MOPOutcome& outcome) noexcept
+        : NSCSCC2023MMUEventBase                (mmu)
+        , NSCSCC2023MMUPostWritePreEventBase    (path, address, width, data, outcome)
     { }
 }
 
@@ -808,9 +904,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
-        : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostWriteEventBase   (path, address, width, data)
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
+        : NSCSCC2023MMUEventBase                (mmu)
+        , NSCSCC2023MMUPostWritePostEventBase   (path, address, width, data, outcome)
     { }
 }
 
@@ -851,9 +948,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path, 
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t&      data) noexcept
+        memdata_t&      data,
+        LA32MOPOutcome& outcome) noexcept
         : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostReadPreEventBase (path, address, width, data)
+        , NSCSCC2023MMUPostReadPreEventBase (path, address, width, data, outcome)
     { }
 }
 
@@ -865,9 +963,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path, 
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
         : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostReadPostEventBase(path, address, width, data)
+        , NSCSCC2023MMUPostReadPostEventBase(path, address, width, data, outcome)
     { }
 }
 
@@ -909,9 +1008,10 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
-        : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostWriteEventBase   (path, address, width, data)
+        memdata_t       data,
+        LA32MOPOutcome& outcome) noexcept
+        : NSCSCC2023MMUEventBase                (mmu)
+        , NSCSCC2023MMUPostWritePreEventBase    (path, address, width, data, outcome)
     { }
 }
 
@@ -923,8 +1023,9 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPPath     path,
         addr_t          address, 
         LA32MOPWidth    width, 
-        memdata_t       data) noexcept
-        : NSCSCC2023MMUEventBase            (mmu)
-        , NSCSCC2023MMUPostWriteEventBase   (path, address, width, data)
+        memdata_t       data,
+        LA32MOPOutcome  outcome) noexcept
+        : NSCSCC2023MMUEventBase                (mmu)
+        , NSCSCC2023MMUPostWritePostEventBase   (path, address, width, data, outcome)
     { }
 }
