@@ -413,6 +413,14 @@ if [[ -n "$CAPP_TARGET" ]]; then
 fi
 
 
+## Build : verilate
+if [[ $(test_build_skip $SKIP_BUILD_VERILATE) == "false" ]]; then
+    verilate
+fi
+
+link_verilated
+
+
 ## Build : peripherals
 if [[ $(test_build_skip $SKIP_BUILD_PERPH) == "false" ]]; then
     build_peripherals
@@ -420,13 +428,6 @@ fi
 
 link_peripherials
 
-
-## Build : verilate
-if [[ $(test_build_skip $SKIP_BUILD_VERILATE) == "false" ]]; then
-    verilate
-fi
-
-link_verilated
 
 ## Build : C-app main
 if [[ -n "$CAPP_TARGET" ]]; then
