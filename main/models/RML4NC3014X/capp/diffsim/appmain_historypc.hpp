@@ -12,22 +12,22 @@
 #include AUTOINC_BE_JASSE2_LA32(base/la32def.hpp)
 
 
-#define PC_TRACE_DEPTH      32
+#define PC_HISTORY_DEPTH      32
 
 
-class PCTrace {
+class PCHistory {
 public:
-    static constexpr size_t     MAX_SIZE    = PC_TRACE_DEPTH;
+    static constexpr size_t     MAX_SIZE    = PC_HISTORY_DEPTH;
 
 private:
-    std::deque<Jasse::pc_t> traced;
+    std::deque<Jasse::pc_t> history;
 
 public:
     using iterator          = std::deque<Jasse::pc_t>::iterator;
     using const_iterator    = std::deque<Jasse::pc_t>::const_iterator;
 
 public:
-    PCTrace() noexcept;
+    PCHistory() noexcept;
 
     //
     void                Push(Jasse::pc_t pc) noexcept;

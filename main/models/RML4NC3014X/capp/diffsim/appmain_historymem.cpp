@@ -1,0 +1,367 @@
+#include "appmain_historymem.hpp"
+//
+//
+//
+//
+
+#include <sstream>
+#include <iomanip>
+
+
+#include "autoinclude.h"
+
+#include AUTOINC_BE_COMMON(eventbus.hpp)
+
+
+// Implementation of: class MMIOHistory::Entry
+/*
+Jasse::LA32MOPPath      path;
+Jasse::addr_t           address;
+Jasse::LA32MOPWidth     width;
+Jasse::memdata_t        data;
+Jasse::LA32MOPOutcome   outcome;
+*/
+
+MMIOHistory::Entry::Entry(Jasse::LA32MOPPath    path,
+                          Jasse::addr_t         address,
+                          Jasse::LA32MOPWidth   width,
+                          Jasse::memdata_t      data,
+                          Jasse::LA32MOPOutcome outcome) noexcept
+    : path      (path)
+    , address   (address)
+    , width     (width)
+    , data      (data)
+    , outcome   (outcome)
+{ }
+
+Jasse::LA32MOPPath MMIOHistory::Entry::GetPath() const noexcept
+{
+    return path;
+}
+
+Jasse::addr_t MMIOHistory::Entry::GetAddress() const noexcept
+{
+    return address;
+}
+
+Jasse::LA32MOPWidth MMIOHistory::Entry::GetWidth() const noexcept
+{
+    return width;
+}
+
+Jasse::memdata_t MMIOHistory::Entry::GetData() const noexcept
+{
+    return data;
+}
+
+Jasse::LA32MOPOutcome MMIOHistory::Entry::GetOutcome() const noexcept
+{
+    return outcome;
+}
+
+
+// Implementation of: class MMIOHistory
+/*
+std::deque<Entry>   history;
+*/
+
+MMIOHistory::MMIOHistory() noexcept
+    : history   ()
+{ }
+
+void MMIOHistory::Push(const Entry& entry) noexcept
+{
+    history.push_front(entry);
+
+    while (history.size() > MAX_SIZE)
+        history.pop_back();
+}
+
+void MMIOHistory::Emplace(Jasse::LA32MOPPath    path,
+                          Jasse::addr_t         address,
+                          Jasse::LA32MOPWidth   width,
+                          Jasse::memdata_t      data,
+                          Jasse::LA32MOPOutcome outcome) noexcept
+{
+    history.emplace_front(path, address, width, data, outcome);
+
+    while (history.size() > MAX_SIZE)
+        history.pop_back();
+}
+
+size_t MMIOHistory::GetSize() const noexcept
+{
+    return history.size();
+}
+
+MMIOHistory::Entry MMIOHistory::Get(unsigned int index) const noexcept
+{
+    return history[index];
+}
+
+void MMIOHistory::Clear() noexcept
+{
+    history.clear();
+}
+
+MMIOHistory::iterator MMIOHistory::begin() noexcept
+{
+    return history.begin();
+}
+
+MMIOHistory::const_iterator MMIOHistory::begin() const noexcept
+{
+    return history.begin();
+}
+
+MMIOHistory::iterator MMIOHistory::end() noexcept
+{
+    return history.end();
+}
+
+MMIOHistory::const_iterator MMIOHistory::end() const noexcept
+{
+    return history.end();
+}
+
+
+
+// Implementation of: class MMIOReadHistory
+/*
+unsigned int    eventBusId;
+int             eventPriority;
+*/
+
+MMIOReadHistory::MMIOReadHistory(unsigned int eventBusId, int eventPriority) noexcept
+    : eventBusId    (eventBusId)
+    , eventPriority (eventPriority)
+{ 
+    RegisterListeners();
+}
+
+MMIOReadHistory::~MMIOReadHistory() noexcept
+{
+    UnregisterListeners();
+}
+
+unsigned int MMIOReadHistory::GetEventBusId() const noexcept
+{
+    return eventBusId;
+}
+
+int MMIOReadHistory::GetEventPriority() const noexcept
+{
+    return eventPriority;
+}
+
+std::string MMIOReadHistory::GetListenerName(const char* listener_name) const noexcept
+{
+    std::ostringstream oss;
+    oss << "MMIOReadHistory[";
+    oss << std::hex << std::setw(16) << std::setfill('0') << uintptr_t(this);
+    oss << "]::" << listener_name;
+    return oss.str();
+}
+
+void MMIOReadHistory::RegisterListeners() noexcept
+{
+    BullsEye::RegisterListener(
+        BullsEye::MakeListener(
+            GetListenerName("OnMMUPostReadPostEvent"),
+            eventPriority,
+            &MMIOReadHistory::OnMMUPostReadPostEvent,
+            this
+        ),
+        eventBusId
+    );
+}
+
+void MMIOReadHistory::UnregisterListeners() noexcept
+{
+    BullsEye::UnregisterListener(
+        GetListenerName("OnMMUPostReadPostEvent"),
+        &MMIOReadHistory::OnMMUPostReadPostEvent,
+        eventBusId
+    );
+}
+
+void MMIOReadHistory::OnMMUPostReadPostEvent(BullsEye::NSCSCCSingle::NSCSCC2023MMUPostReadPostEvent& event) noexcept
+{
+    Emplace(
+        event.GetPath(),
+        event.GetAddress(),
+        event.GetWidth(),
+        event.GetData(),
+        event.GetOutcome()
+    );
+}
+
+
+// Implementation of: class MMIOReadHistory::Builder
+/*
+unsigned int    eventBusId;
+int             eventPriority;
+*/
+
+MMIOReadHistory::Builder::Builder() noexcept
+    : eventBusId    (0)
+    , eventPriority (0)
+{ }
+
+MMIOReadHistory::Builder& MMIOReadHistory::Builder::EventBusId(unsigned int eventBusId) noexcept
+{
+    this->eventBusId = eventBusId;
+    return *this;
+}
+
+MMIOReadHistory::Builder& MMIOReadHistory::Builder::EventPriority(int eventPriority) noexcept
+{
+    this->eventPriority = eventPriority;
+    return *this;
+}
+
+unsigned int MMIOReadHistory::Builder::GetEventBusId() const noexcept
+{
+    return eventBusId;
+}
+
+void MMIOReadHistory::Builder::SetEventBusId(unsigned int eventBusId) noexcept
+{
+    this->eventBusId = eventBusId;
+}
+
+int MMIOReadHistory::Builder::GetEventPriority() const noexcept
+{
+    return eventPriority;
+}
+
+void MMIOReadHistory::Builder::SetEventPriority(int eventPriority) noexcept
+{
+    this->eventPriority = eventPriority;
+}
+
+MMIOReadHistory* MMIOReadHistory::Builder::Build() noexcept
+{
+    return new MMIOReadHistory(eventBusId, eventPriority);
+}
+
+
+
+// Implementation of: class MMIOWriteHistory
+/*
+unsigned int    eventBusId;
+int             eventPriority;
+*/
+
+MMIOWriteHistory::MMIOWriteHistory(unsigned int eventBusId, int eventPriority) noexcept
+    : eventBusId    (eventBusId)
+    , eventPriority (eventPriority)
+{ 
+    RegisterListeners();
+}
+
+MMIOWriteHistory::~MMIOWriteHistory() noexcept
+{
+    UnregisterListeners();
+}
+
+unsigned int MMIOWriteHistory::GetEventBusId() const noexcept
+{
+    return eventBusId;
+}
+
+int MMIOWriteHistory::GetEventPriority() const noexcept
+{
+    return eventPriority;
+}
+
+std::string MMIOWriteHistory::GetListenerName(const char* listener_name) const noexcept
+{
+    std::ostringstream oss;
+    oss << "MMIOWriteHistory[";
+    oss << std::hex << std::setw(16) << std::setfill('0') << uintptr_t(this);
+    oss << "]::" << listener_name;
+    return oss.str();
+}
+
+void MMIOWriteHistory::RegisterListeners() noexcept
+{
+    BullsEye::RegisterListener(
+        BullsEye::MakeListener(
+            GetListenerName("OnMMUPostWritePostEvent"),
+            eventPriority,
+            &MMIOWriteHistory::OnMMUPostWritePostEvent,
+            this
+        ),
+        eventBusId
+    );
+}
+
+void MMIOWriteHistory::UnregisterListeners() noexcept
+{
+    BullsEye::UnregisterListener(
+        GetListenerName("OnMMUPostWritePostEvent"),
+        &MMIOWriteHistory::OnMMUPostWritePostEvent,
+        eventBusId
+    );
+}
+
+void MMIOWriteHistory::OnMMUPostWritePostEvent(BullsEye::NSCSCCSingle::NSCSCC2023MMUPostWritePostEvent& event) noexcept
+{
+    Emplace(
+        event.GetPath(),
+        event.GetAddress(),
+        event.GetWidth(),
+        event.GetData(),
+        event.GetOutcome()
+    );
+}
+
+
+// Implementation of: class MMIOWriteHistory::Builder
+/*
+unsigned int    eventBusId;
+int             eventPriority;
+*/
+
+MMIOWriteHistory::Builder::Builder() noexcept
+    : eventBusId    (0)
+    , eventPriority (0)
+{ }
+
+MMIOWriteHistory::Builder& MMIOWriteHistory::Builder::EventBusId(unsigned int eventBusId) noexcept
+{
+    this->eventBusId = eventBusId;
+    return *this;
+}
+
+MMIOWriteHistory::Builder& MMIOWriteHistory::Builder::EventPriority(int eventPriority) noexcept
+{
+    this->eventPriority = eventPriority;
+    return *this;
+}
+
+unsigned int MMIOWriteHistory::Builder::GetEventBusId() const noexcept
+{
+    return eventBusId;
+}
+
+void MMIOWriteHistory::Builder::SetEventBusId(unsigned int eventBusId) noexcept
+{
+    this->eventBusId = eventBusId;
+}
+
+int MMIOWriteHistory::Builder::GetEventPriority() const noexcept
+{
+    return eventPriority;
+}
+
+void MMIOWriteHistory::Builder::SetEventPriority(int eventPriority) noexcept
+{
+    this->eventPriority = eventPriority;
+}
+
+MMIOWriteHistory* MMIOWriteHistory::Builder::Build() noexcept
+{
+    return new MMIOWriteHistory(eventBusId, eventPriority);
+}

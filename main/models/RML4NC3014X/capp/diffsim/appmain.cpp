@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
                 if (!incr.IsEmpty())
                 {
                     glbl.ctx.lastPC = last_pc = incr.Get(i).GetPC();
-                    glbl.ctx.tracePC.Push(last_pc);
+                    glbl.ctx.dut.history.PC->Push(last_pc);
                     glbl.ctx.commitCount++;
                 }
 

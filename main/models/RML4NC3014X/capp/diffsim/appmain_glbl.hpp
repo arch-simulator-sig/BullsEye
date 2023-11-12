@@ -7,11 +7,13 @@
 #include <string>
 
 
-#include "appmain_pctrace.hpp"
 #include "appmain_periph.hpp"
 #include "appmain_verifier.hpp"
 #include "appmain_err.hpp"
 #include "appmain_errcapt.hpp"
+
+#include "appmain_historypc.hpp"
+#include "appmain_historymem.hpp"
 
 
 #include "../../csrc/core/ds232_verilated.hpp"
@@ -46,6 +48,16 @@ struct GlobalContextRM {
     Jasse::LA32Differential*                    diff;
 };
 
+
+struct GlobalContextDUTHistory {
+
+    PCHistory*                                  PC;    
+
+    MMIOReadHistory*                            MMIORead;
+
+    MMIOWriteHistory*                           MMIOWrite;
+};
+
 struct GlobalContextDUT {
 
     unsigned int                                eventBusId;
@@ -60,6 +72,9 @@ struct GlobalContextDUT {
     BullsEye::Draconids3014::Thinpad*           dut;
 
     BullsEye::Draconids3014::DS232Differential* diff;
+
+    //
+    GlobalContextDUTHistory                     history;
 };
 
 
@@ -74,8 +89,6 @@ struct GlobalContext {
 
     //
     Jasse::pc_t                             lastPC;
-
-    PCTrace                                 tracePC;
 
     uint64_t                                commitCount;
 

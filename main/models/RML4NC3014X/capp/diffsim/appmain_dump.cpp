@@ -543,28 +543,28 @@ void dump1(bool pause)
     {
         std::cout << _COLOR_CORRECT;
         std::cout << "    ";
-        std::cout << dump_at(glbl.ctx.tracePC.Get(j));
+        std::cout << dump_at(glbl.ctx.dut.history.PC->Get(j));
         std::cout << _COLOR_RESET << std::endl;
 
         if (glbl.cfg.dump1.displayTrace)
         {
             std::cout << _COLOR_COMMENT;
             std::cout << "  # ";
-            std::cout << dump_trace_at(glbl.ctx.tracePC.Get(j), j);
+            std::cout << dump_trace_at(glbl.ctx.dut.history.PC->Get(j), j);
             std::cout << _COLOR_RESET << std::endl;
         }
     }
 
     std::cout << (pause ? _COLOR_PAUSE : _COLOR_ERROR);
     std::cout << "--> ";
-    std::cout << dump_at(glbl.ctx.tracePC.Get(0));
+    std::cout << dump_at(glbl.ctx.dut.history.PC->Get(0));
     std::cout << _COLOR_RESET << std::endl;
 
     if (glbl.cfg.dump1.displayTrace)
     {
         std::cout << _COLOR_COMMENT;
         std::cout << "  # ";
-        std::cout << dump_trace_at(glbl.ctx.tracePC.Get(0), 0);
+        std::cout << dump_trace_at(glbl.ctx.dut.history.PC->Get(0), 0);
         std::cout << _COLOR_RESET << std::endl;
     }
 

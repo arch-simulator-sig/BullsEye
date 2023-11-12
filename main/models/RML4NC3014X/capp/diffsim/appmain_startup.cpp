@@ -292,6 +292,17 @@ int startup()
     //
 
 
+    // History collection
+    glbl.ctx.dut.history.PC = new PCHistory;
+
+    glbl.ctx.dut.history.MMIORead = MMIOReadHistory::Builder()
+        .EventBusId(glbl.ctx.dut.eventBusId)
+        .Build();
+
+    glbl.ctx.dut.history.MMIOWrite = MMIOWriteHistory::Builder()
+        .EventBusId(glbl.ctx.dut.eventBusId)
+        .Build();
+
 
     //
     return 0;
@@ -300,6 +311,25 @@ int startup()
 
 int shutdown()
 {
+    if (glbl.ctx.dut.history.MMIOWrite)
+    {
+        delete glbl.ctx.dut.history.MMIOWrite;
+        glbl.ctx.dut.history.MMIOWrite = nullptr;
+    }
+
+    if (glbl.ctx.dut.history.MMIORead)
+    {
+        delete glbl.ctx.dut.history.MMIORead;
+        glbl.ctx.dut.history.MMIORead = nullptr;
+    }
+
+    if (glbl.ctx.dut.history.PC)
+    {
+        delete glbl.ctx.dut.history.PC;
+        glbl.ctx.dut.history.PC = nullptr;
+    }
+
+
     if (glbl.errcapt.verifier)
     {
         delete glbl.errcapt.verifier;
