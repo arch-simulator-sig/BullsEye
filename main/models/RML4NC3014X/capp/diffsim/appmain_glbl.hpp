@@ -54,8 +54,8 @@ struct GlobalContextDUTHistory {
     PCHistory*                                  PC;    
 
     MMIOReadHistory*                            MMIORead;
-
     MMIOWriteHistory*                           MMIOWrite;
+    MMIOReadWriteHistory*                       MMIOReadWrite;
 };
 
 struct GlobalContextDUT {
@@ -121,6 +121,27 @@ struct GlobalConfigDump1 {
     bool                                    muteUnread;
 };
 
+struct GlobalConfigDump2 {
+
+    bool                                    enabled;
+
+    unsigned int                            depth;
+};
+
+struct GlobalConfigDump3 {
+
+    bool                                    enabled;
+
+    unsigned int                            depth;
+};
+
+struct GlobalConfigDump4 {
+
+    bool                                    enabled;
+
+    unsigned int                            depth;
+};
+
 
 struct GlobalConfig {
 
@@ -130,6 +151,9 @@ struct GlobalConfig {
     //
     GlobalConfigDump0                       dump0;
     GlobalConfigDump1                       dump1;
+    GlobalConfigDump2                       dump2;
+    GlobalConfigDump3                       dump3;
+    GlobalConfigDump4                       dump4;
 };
 
 
@@ -142,12 +166,22 @@ struct GlobalError {
 
 
 //
+struct GlobalErrorCaptureMMU {
+
+    MMUErrorCapture*                        ref;
+
+    MMUErrorCapture*                        dut;
+};
+
 struct GlobalErrorCapture {
 
     //
     PeripheralErrorCapture*                 peripheral;
 
     DifferentialVerifierErrorCapture*       verifier;
+
+    //
+    GlobalErrorCaptureMMU                   mmu;
 };
 
 

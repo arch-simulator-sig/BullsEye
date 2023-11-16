@@ -12,6 +12,11 @@
 #include "appmain_verifier.hpp"
 
 
+#include "autoinclude.h"
+
+#include AUTOINC_BE_N1_SOC_LA32(mmu_event.hpp)
+
+
 class PeripheralErrorCapture {
 public:
     class Builder;
@@ -155,3 +160,86 @@ public:
     //
     DifferentialVerifierErrorCapture* Build() noexcept;
 };
+
+
+
+class MMUErrorCapture {
+public:
+    class Builder;
+
+private:
+    std::string     source;
+
+    CapturedErrors* capturedTo;
+
+    unsigned int    errorEventBusId;
+    int             errorEventPriority;
+
+protected:
+    friend class Builder;
+    MMUErrorCapture(const char* source, CapturedErrors* capturedTo, unsigned int errorEventBusId, int errorEventPriority) noexcept;
+
+protected:
+    std::string     GetListenerName(const char* listener_name) const noexcept;
+    void            RegisterListeners() noexcept;
+    void            UnregisterListeners() noexcept;
+
+protected:
+    void            OnMMUPostReadPostEvent(BullsEye::NSCSCCSingle::NSCSCC2023MMUPostReadPostEvent& event) noexcept;
+    void            OnMMUPostWritePostEvent(BullsEye::NSCSCCSingle::NSCSCC2023MMUPostWritePostEvent& event) noexcept;
+
+public:
+    ~MMUErrorCapture() noexcept;
+
+    MMUErrorCapture(const MMUErrorCapture&) = delete;
+    MMUErrorCapture(MMUErrorCapture&&) = delete;
+
+    std::string             GetSource() const noexcept;
+
+    CapturedErrors*         GetCapturedTo() noexcept;
+    const CapturedErrors*   GetCapturedTo() const noexcept;
+    void                    SetCapturedTo(CapturedErrors* capturedTo) noexcept;
+
+    unsigned int            GetErrorEventBusId() const noexcept;
+    int                     GetErrorEventPriority() const noexcept;
+
+    void                    operator=(const MMUErrorCapture&) = delete;
+    void                    operator=(MMUErrorCapture&&) = delete;
+};
+
+class MMUErrorCapture::Builder {
+private:
+    std::string     source;
+
+    CapturedErrors* capturedTo;
+
+    unsigned int    errorEventBusId;
+    int             errorEventPriority;
+
+public:
+    Builder() noexcept;
+
+    //
+    Builder&                Source(const char* source) noexcept;
+    Builder&                CapturedTo(CapturedErrors* capturedTo) noexcept;
+    Builder&                ErrorEventBusId(unsigned int errorEventBusId) noexcept;
+    Builder&                ErrorEventPriority(int errorEventPriority) noexcept;
+
+    //
+    std::string             GetSource() const noexcept;
+    void                    SetSource(const char* source) noexcept;
+
+    CapturedErrors*         GetCapturedTo() noexcept;
+    const CapturedErrors*   GetCapturedTo() const noexcept;
+    void                    SetCapturedTo(CapturedErrors* capturedTo) noexcept;
+
+    unsigned int            GetErrorEventBusId() const noexcept;
+    void                    SetErrorEventBusId(unsigned int errorEventBusId) noexcept;
+
+    int                     GetErrorEventPriority() const noexcept;
+    void                    SetErrorEventPriority(int errorEventPriority) noexcept;
+
+    //
+    MMUErrorCapture*        Build() noexcept;
+};
+

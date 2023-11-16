@@ -494,20 +494,78 @@ static inline std::string dump_trace_incomplete_at(Jasse::addr_t address)
 
 
 //
+static inline std::string dump_mmio_target(Jasse::LA32MOPPath path, Jasse::addr_t address)
+{
+    switch (path)
+    {
+        case Jasse::LA32MOPPath::MOP_DATA: {
+
+            if (BullsEye::NSCSCCSingle::NSCSCC2023MMU::IsBaseRAM(address))
+                return "BaseRAM";
+
+            if (BullsEye::NSCSCCSingle::NSCSCC2023MMU::IsExtRAM(address))
+                return "ExtRAM";
+
+            if (BullsEye::NSCSCCSingle::NSCSCC2023MMU::IsSerial(address))
+            {
+                if (BullsEye::NSCSCCSingle::NSCSCC2023MMU::IsSerialData(address))
+                    return "SerialData";
+
+                if (BullsEye::NSCSCCSingle::NSCSCC2023MMU::IsSerialStat(address))
+                    return "SerialStat";
+            }
+
+            if (BullsEye::NSCSCCSingle::NSCSCC2023MMU::IsClockCounter(address))
+                return "ClockCounter";
+
+            break;
+        }
+
+        case Jasse::LA32MOPPath::MOP_INSN: {
+
+            if (BullsEye::NSCSCCSingle::NSCSCC2023MMU::IsBaseRAM(address))
+                return "BaseRAM";
+
+            if (BullsEye::NSCSCCSingle::NSCSCC2023MMU::IsExtRAM(address))
+                return "ExtRAM";
+
+            break;
+        }
+
+        default:
+            break;
+    }
+
+    std::ostringstream unkoss;
+    unkoss << "<unknown(path=";
+    unkoss << std::dec << uint64_t(path);
+    unkoss << ",address=0x";
+    unkoss << std::hex << std::setw(8) << std::setfill('0') << address;
+    unkoss << ")>";
+    return unkoss.str();
+}
+
+
+//
 void dump(bool pause)
 {
     dump0(pause);
     dump1(pause);
+    dump2();
+    dump3();
 }
 
 
 //
 void dump0(bool pause)
 {
+    if (!glbl.cfg.dump0.enabled)
+        return;
+
     std::cout << "\033[1;33mEmulation dumped\033[0m from reference (dump #0: program memory)" << std::endl;
     std::cout << "Program stopped at: " << std::endl;
 
-    int j = (uint32_t) std::min(glbl.ctx.commitCount, uint64_t(glbl.cfg.dump0.upperCount));
+    int j = std::min(int32_t(glbl.ctx.commitCount) - 1, int32_t(glbl.cfg.dump0.upperCount));
     for (; j > 0; j--)
     {
     //  std::cout << _COLOR_CORRECT;
@@ -535,10 +593,13 @@ void dump0(bool pause)
 //
 void dump1(bool pause)
 {
+    if (!glbl.cfg.dump1.enabled)
+        return;
+
     std::cout << "\033[1;33mEmulation dumped\033[0m from reference (dump #1: program execution trace)" << std::endl;
     std::cout << "Program stopped at: " << std::endl;
 
-    int j = (uint32_t) std::min(glbl.ctx.commitCount, uint64_t(glbl.cfg.dump1.upperCount));
+    int j = std::min(int32_t(glbl.ctx.commitCount) - 1, int32_t(glbl.cfg.dump1.upperCount));
     for (; j > 0; j--)
     {
         std::cout << _COLOR_CORRECT;
@@ -576,4 +637,201 @@ void dump1(bool pause)
     }
 
     std::cout << "--------------------------------" << std::endl;
+}
+
+
+//
+void dump2()
+{
+    if (!glbl.cfg.dump2.enabled)
+        return;
+
+    std::cout << "\033[1;33mEmulation dumped\033[0m from reference (dump #2: DUT memory access)" << std::endl;
+
+    int j = std::min(int32_t(glbl.ctx.dut.history.MMIOReadWrite->GetCount()), int32_t(glbl.cfg.dump2.depth)) - 1;
+    for (; j >= 0; j--)
+    {
+        std::ostringstream oss;
+
+        //
+        const MMIOHistory::Entry& entry = glbl.ctx.dut.history.MMIOReadWrite->Get(j);
+
+        if (entry.GetOutcome().status == Jasse::LA32MOPStatus::MOP_SUCCESS)
+            oss << _COLOR_CORRECT;
+        else
+            oss << _COLOR_ERROR;
+
+        //
+        oss << "  [MMU ";
+        if (entry.GetType() == MMIOHistory::Entry::Type::READ)
+            oss << "<- ";
+        else
+            oss << "-> ";
+
+        std::string target = dump_mmio_target(entry.GetPath(), entry.GetAddress());
+        oss << target;
+        for (int i = target.length(); i < 12; i++)
+            oss << " ";
+        oss << "] ";
+
+        //
+        if (entry.GetType() == MMIOHistory::Entry::Type::READ)
+            oss << "Read  ";
+        else
+            oss << "Write ";
+        oss << "at ";
+
+        //
+        oss << "0x" << std::hex << std::setw(8) << std::setfill('0') << entry.GetAddress() << " ";
+
+        //
+        if (entry.GetType() == MMIOHistory::Entry::Type::READ)
+            oss << "=> ";
+        else
+            oss << "<= ";
+
+        oss << _COLOR_COMMENT;
+        oss << "(" << std::dec << entry.GetWidth().length << " byte(s)) ";
+
+        if (entry.GetOutcome().status == Jasse::LA32MOPStatus::MOP_SUCCESS)
+        {
+            switch (entry.GetWidth().length)
+            {
+                case 1:
+                    oss << _COLOR_COMMENT;
+                    oss << "000000";
+                    oss << _COLOR_CORRECT;
+                    oss << std::hex << std::setw(2) << std::setfill('0') << uint32_t(entry.GetData().data8);
+                    break;
+
+                case 2:
+                    oss << _COLOR_COMMENT;
+                    oss << "0000";
+                    oss << _COLOR_CORRECT;
+                    oss << std::hex << std::setw(4) << std::setfill('0') << uint32_t(entry.GetData().data16);
+                    break;
+
+                case 4:
+                    oss << _COLOR_CORRECT;
+                    oss << std::hex << std::setw(8) << std::setfill('0') << uint32_t(entry.GetData().data32);
+                    break;
+
+                default:
+                    oss << std::hex << std::setw(8) << std::setfill('0') << uint32_t(entry.GetData().data32);
+            }
+        }
+        else
+            oss << "00000000";
+
+
+        //
+        oss << _COLOR_RESET << std::endl;
+
+        //
+        std::cout << oss.str();
+    }
+
+    std::cout << "--------------------------------" << std::endl;
+}
+
+
+// 
+void dump3()
+{
+    if (!glbl.cfg.dump3.enabled)
+        return;
+
+    std::cout << "\033[1;33mEmulation dumped\033[0m from reference (dump #3: Reference memory access)" << std::endl;
+
+    int j = std::min(int32_t(glbl.ctx.dut.history.MMIOReadWrite->GetCount()), int32_t(glbl.cfg.dump2.depth)) - 1;
+    for (; j >= 0; j--)
+    {
+        std::ostringstream oss;
+
+        //
+        const MMIOHistory::Entry& entry = glbl.ctx.dut.history.MMIOReadWrite->Get(j);
+
+        if (entry.GetOutcome().status == Jasse::LA32MOPStatus::MOP_SUCCESS)
+            oss << _COLOR_CORRECT;
+        else
+            oss << _COLOR_ERROR;
+
+        //
+        oss << "  [MMU ";
+        if (entry.GetType() == MMIOHistory::Entry::Type::READ)
+            oss << "<- ";
+        else
+            oss << "-> ";
+
+        std::string target = dump_mmio_target(entry.GetPath(), entry.GetAddress());
+        oss << target;
+        for (int i = target.length(); i < 12; i++)
+            oss << " ";
+        oss << "] ";
+
+        //
+        if (entry.GetType() == MMIOHistory::Entry::Type::READ)
+            oss << "Read  ";
+        else
+            oss << "Write ";
+        oss << "at ";
+
+        //
+        oss << "0x" << std::hex << std::setw(8) << std::setfill('0') << entry.GetAddress() << " ";
+
+        //
+        if (entry.GetType() == MMIOHistory::Entry::Type::READ)
+            oss << "=> ";
+        else
+            oss << "<= ";
+
+        oss << _COLOR_COMMENT;
+        oss << "(" << std::dec << entry.GetWidth().length << " byte(s)) ";
+
+        if (entry.GetOutcome().status == Jasse::LA32MOPStatus::MOP_SUCCESS)
+        {
+            switch (entry.GetWidth().length)
+            {
+                case 1:
+                    oss << _COLOR_COMMENT;
+                    oss << "000000";
+                    oss << _COLOR_CORRECT;
+                    oss << std::hex << std::setw(2) << std::setfill('0') << uint32_t(entry.GetData().data8);
+                    break;
+
+                case 2:
+                    oss << _COLOR_COMMENT;
+                    oss << "0000";
+                    oss << _COLOR_CORRECT;
+                    oss << std::hex << std::setw(4) << std::setfill('0') << uint32_t(entry.GetData().data16);
+                    break;
+
+                case 4:
+                    oss << _COLOR_CORRECT;
+                    oss << std::hex << std::setw(8) << std::setfill('0') << uint32_t(entry.GetData().data32);
+                    break;
+
+                default:
+                    oss << std::hex << std::setw(8) << std::setfill('0') << uint32_t(entry.GetData().data32);
+            }
+        }
+        else
+            oss << "00000000";
+
+
+        //
+        oss << _COLOR_RESET << std::endl;
+
+        //
+        std::cout << oss.str();
+    }
+
+    std::cout << "--------------------------------" << std::endl;
+}
+
+
+//
+void dump4()
+{
+    
 }

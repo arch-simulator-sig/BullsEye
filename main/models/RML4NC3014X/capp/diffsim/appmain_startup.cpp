@@ -289,6 +289,18 @@ int startup()
     std::cout << "Enabled error capture of differential verifier." << std::endl;
 
 
+    glbl.errcapt.mmu.dut = MMUErrorCapture::Builder()
+        .Source         ("DUT")
+        .CapturedTo     (&glbl.err.captured)
+        .ErrorEventBusId(glbl.ctx.dut.eventBusId)
+        .Build();
+
+    glbl.errcapt.mmu.ref = MMUErrorCapture::Builder()
+        .Source         ("reference")
+        .CapturedTo     (&glbl.err.captured)
+        .ErrorEventBusId(glbl.ctx.ref.eventBusId)
+        .Build();
+
     //
 
 
@@ -303,6 +315,9 @@ int startup()
         .EventBusId(glbl.ctx.dut.eventBusId)
         .Build();
 
+    glbl.ctx.dut.history.MMIOReadWrite = MMIOReadWriteHistory::Builder()
+        .EventBusId(glbl.ctx.dut.eventBusId)
+        .Build();
 
     //
     return 0;
@@ -311,6 +326,12 @@ int startup()
 
 int shutdown()
 {
+    if (glbl.ctx.dut.history.MMIOReadWrite)
+    {
+        delete glbl.ctx.dut.history.MMIOReadWrite;
+        glbl.ctx.dut.history.MMIOReadWrite = nullptr;
+    }
+
     if (glbl.ctx.dut.history.MMIOWrite)
     {
         delete glbl.ctx.dut.history.MMIOWrite;
@@ -329,6 +350,19 @@ int shutdown()
         glbl.ctx.dut.history.PC = nullptr;
     }
 
+
+
+    if (glbl.errcapt.mmu.ref)
+    {
+        delete glbl.errcapt.mmu.ref;
+        glbl.errcapt.mmu.ref = nullptr;
+    }
+
+    if (glbl.errcapt.mmu.dut)
+    {
+        delete glbl.errcapt.mmu.dut;
+        glbl.errcapt.mmu.dut = nullptr;
+    }
 
     if (glbl.errcapt.verifier)
     {

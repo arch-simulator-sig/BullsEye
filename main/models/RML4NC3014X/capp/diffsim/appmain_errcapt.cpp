@@ -265,3 +265,162 @@ DifferentialVerifierErrorCapture* DifferentialVerifierErrorCapture::Builder::Bui
 {
     return new DifferentialVerifierErrorCapture(capturedTo, errorEventBusId, errorEventPriority);
 }
+
+
+
+
+// Implementation of: class MMUErrorCapture
+/*
+std::string     source;
+
+CapturedErrors* capturedTo;
+
+unsigned int    errorEventBusId;
+int             errorEventPriority;
+*/
+
+MMUErrorCapture::MMUErrorCapture(const char* source, CapturedErrors* capturedTo, unsigned int errorEventBusId, int errorEventPriority) noexcept
+    : source                (source)
+    , capturedTo            (capturedTo)
+    , errorEventBusId       (errorEventBusId)
+    , errorEventPriority    (errorEventPriority)
+{
+    RegisterListeners();
+}
+
+MMUErrorCapture::~MMUErrorCapture() noexcept
+{
+    UnregisterListeners();
+}
+
+std::string MMUErrorCapture::GetListenerName(const char* listener_name) const noexcept
+{
+    std::ostringstream oss;
+    oss << "MMUErrorCapture[";
+    oss << std::hex << std::setw(16) << std::setfill('0') << uintptr_t(this);
+    oss << "]::" << listener_name;
+    return oss.str();
+}
+
+std::string MMUErrorCapture::GetSource() const noexcept
+{
+    return source;
+}
+
+CapturedErrors* MMUErrorCapture::GetCapturedTo() noexcept
+{
+    return capturedTo;
+}
+
+const CapturedErrors* MMUErrorCapture::GetCapturedTo() const noexcept
+{
+    return capturedTo;
+}
+
+void MMUErrorCapture::SetCapturedTo(CapturedErrors* capturedTo) noexcept
+{
+    this->capturedTo = capturedTo;
+}
+
+unsigned int MMUErrorCapture::GetErrorEventBusId() const noexcept
+{
+    return errorEventBusId;
+}
+
+int MMUErrorCapture::GetErrorEventPriority() const noexcept
+{
+    return errorEventPriority;
+}
+
+
+
+// Implementation of: class MMUErrorCapture::Builder
+/*
+std::string     source;
+
+CapturedErrors* capturedTo;
+
+unsigned int    errorEventBusId;
+int             errorEventPriority;
+*/
+
+MMUErrorCapture::Builder::Builder() noexcept
+    : source                ()
+    , capturedTo            (nullptr)
+    , errorEventBusId       (0)
+    , errorEventPriority    (0)
+{ }
+
+MMUErrorCapture::Builder& MMUErrorCapture::Builder::Source(const char* source) noexcept
+{
+    this->source = source;
+    return *this;
+}
+
+MMUErrorCapture::Builder& MMUErrorCapture::Builder::CapturedTo(CapturedErrors* capturedTo) noexcept
+{
+    this->capturedTo = capturedTo;
+    return *this;
+}
+
+MMUErrorCapture::Builder& MMUErrorCapture::Builder::ErrorEventBusId(unsigned int errorEventBusId) noexcept
+{
+    this->errorEventBusId = errorEventBusId;
+    return *this;
+}
+
+MMUErrorCapture::Builder& MMUErrorCapture::Builder::ErrorEventPriority(int errorEventPriority) noexcept
+{
+    this->errorEventPriority = errorEventPriority;
+    return *this;
+}
+
+std::string MMUErrorCapture::Builder::GetSource() const noexcept
+{
+    return source;
+}
+
+void MMUErrorCapture::Builder::SetSource(const char* source) noexcept
+{
+    this->source = source;
+}
+
+CapturedErrors* MMUErrorCapture::Builder::GetCapturedTo() noexcept
+{
+    return capturedTo;
+}
+
+const CapturedErrors* MMUErrorCapture::Builder::GetCapturedTo() const noexcept
+{
+    return capturedTo;
+}
+
+void MMUErrorCapture::Builder::SetCapturedTo(CapturedErrors* capturedTo) noexcept
+{
+    this->capturedTo = capturedTo;
+}
+
+unsigned int MMUErrorCapture::Builder::GetErrorEventBusId() const noexcept
+{
+    return errorEventBusId;
+}
+
+void MMUErrorCapture::Builder::SetErrorEventBusId(unsigned int errorEventBusId) noexcept
+{
+    this->errorEventBusId = errorEventBusId;
+}
+
+int MMUErrorCapture::Builder::GetErrorEventPriority() const noexcept
+{
+    return errorEventPriority;
+}
+
+void MMUErrorCapture::Builder::SetErrorEventPriority(int errorEventPriority) noexcept
+{
+    this->errorEventPriority = errorEventPriority;
+}
+
+MMUErrorCapture* MMUErrorCapture::Builder::Build() noexcept
+{
+    return new MMUErrorCapture(source.c_str(), capturedTo, errorEventBusId, errorEventPriority);
+}

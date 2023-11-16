@@ -50,6 +50,24 @@ int config(int argc, char* argv[])
     glbl.cfg.dump1.muteUnread = true;
 
 
+    // dump 2
+    glbl.cfg.dump2.enabled = true;
+
+    glbl.cfg.dump2.depth = 7;
+
+
+    // dump 3
+    glbl.cfg.dump3.enabled = false;
+
+    glbl.cfg.dump3.depth = 7;
+
+
+    // dump 4
+    glbl.cfg.dump4.enabled = true;
+
+    glbl.cfg.dump4.depth = 7;
+
+
     //
 
     return 0;
