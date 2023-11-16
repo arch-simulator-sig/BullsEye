@@ -505,3 +505,599 @@ namespace BullsEye::Draconids3014 {
         , SoCAXIBridgeDataWriteResponseChannelS2MPostEventBase  (bundle)
     { }
 }
+
+
+
+
+// Implementation of: class SoCAXIBridgeMMUPreWritePreEventBase
+namespace BullsEye::Draconids3014 {
+    /*
+    addr_t&         address;
+    LA32MOPWidth&   width;
+    memdata_t&      data;
+    */
+
+    SoCAXIBridgeMMUPreWritePreEventBase::SoCAXIBridgeMMUPreWritePreEventBase(
+        addr_t&                                 address, 
+        LA32MOPWidth&                           width, 
+        memdata_t&                              data) noexcept
+        : address   (address)
+        , width     (width)
+        , data      (data)
+    { }
+
+    addr_t SoCAXIBridgeMMUPreWritePreEventBase::GetAddress() const noexcept
+    {
+        return address;
+    }
+
+    LA32MOPWidth SoCAXIBridgeMMUPreWritePreEventBase::GetWidth() const noexcept
+    {
+        return width;
+    }
+
+    memdata_t SoCAXIBridgeMMUPreWritePreEventBase::GetData() const noexcept
+    {
+        return data;
+    }
+
+    void SoCAXIBridgeMMUPreWritePreEventBase::SetAddress(addr_t address) noexcept
+    {
+        this->address = address;
+    }
+
+    void SoCAXIBridgeMMUPreWritePreEventBase::SetWidth(LA32MOPWidth width) noexcept
+    {
+        this->width = width;
+    }
+
+    void SoCAXIBridgeMMUPreWritePreEventBase::SetData(memdata_t data) noexcept
+    {
+        this->data = data;
+    }
+}
+
+// Implementation of: class SoCAXIBridgeMMUPreWritePostEventBase
+namespace BullsEye::Draconids3014 {
+    /*
+    addr_t          address;
+    LA32MOPWidth    width;
+    memdata_t       data;
+    */
+
+    SoCAXIBridgeMMUPreWritePostEventBase::SoCAXIBridgeMMUPreWritePostEventBase(
+        addr_t                                  address, 
+        LA32MOPWidth                            width, 
+        memdata_t                               data) noexcept
+        : address   (address)
+        , width     (width)
+        , data      (data)
+    { }
+
+    addr_t SoCAXIBridgeMMUPreWritePostEventBase::GetAddress() const noexcept
+    {
+        return address;
+    }
+
+    LA32MOPWidth SoCAXIBridgeMMUPreWritePostEventBase::GetWidth() const noexcept
+    {
+        return width;
+    }
+
+    memdata_t SoCAXIBridgeMMUPreWritePostEventBase::GetData() const noexcept
+    {
+        return data;
+    }
+}
+
+// Implementation of: class SoCAXIBridgeMMUPostWritePreEventBase
+namespace BullsEye::Draconids3014 {
+    /*
+    addr_t          address;
+    LA32MOPWidth    width;
+    memdata_t       data;
+    LA32MOPOutcome& outcome;
+    */
+
+    SoCAXIBridgeMMUPostWritePreEventBase::SoCAXIBridgeMMUPostWritePreEventBase(
+        addr_t                                  address, 
+        LA32MOPWidth                            width, 
+        memdata_t                               data, 
+        LA32MOPOutcome&                         outcome) noexcept
+        : address   (address)
+        , width     (width)
+        , data      (data)
+        , outcome   (outcome)
+    { }
+
+    addr_t SoCAXIBridgeMMUPostWritePreEventBase::GetAddress() const noexcept
+    {
+        return address;
+    }
+
+    LA32MOPWidth SoCAXIBridgeMMUPostWritePreEventBase::GetWidth() const noexcept
+    {
+        return width;
+    }
+
+    memdata_t SoCAXIBridgeMMUPostWritePreEventBase::GetData() const noexcept
+    {
+        return data;
+    }
+
+    LA32MOPOutcome SoCAXIBridgeMMUPostWritePreEventBase::GetOutcome() const noexcept
+    {
+        return outcome;
+    }
+
+    void SoCAXIBridgeMMUPostWritePreEventBase::SetOutcome(LA32MOPOutcome outcome) noexcept
+    {
+        this->outcome = outcome;
+    }
+}
+
+// Implementation of: class SoCAXIBridgeMMUPostWritePostEventBase
+namespace BullsEye::Draconids3014 {
+    /*
+    addr_t          address;
+    LA32MOPWidth    width;
+    memdata_t       data;
+    LA32MOPOutcome  outcome;
+    */
+
+    SoCAXIBridgeMMUPostWritePostEventBase::SoCAXIBridgeMMUPostWritePostEventBase(
+        addr_t                                  address, 
+        LA32MOPWidth                            width, 
+        memdata_t                               data, 
+        LA32MOPOutcome                          outcome) noexcept
+        : address   (address)
+        , width     (width)
+        , data      (data)
+        , outcome   (outcome)
+    { }
+
+    addr_t SoCAXIBridgeMMUPostWritePostEventBase::GetAddress() const noexcept
+    {
+        return address;
+    }
+
+    LA32MOPWidth SoCAXIBridgeMMUPostWritePostEventBase::GetWidth() const noexcept
+    {
+        return width;
+    }
+
+    memdata_t SoCAXIBridgeMMUPostWritePostEventBase::GetData() const noexcept
+    {
+        return data;
+    }
+
+    LA32MOPOutcome SoCAXIBridgeMMUPostWritePostEventBase::GetOutcome() const noexcept
+    {
+        return outcome;
+    }
+}
+
+
+// Implementation of: class SoCAXIBridgeMMUPreReadPreEventBase
+namespace BullsEye::Draconids3014 {
+    /*
+    addr_t&         address;
+    LA32MOPWidth&   width;
+    */
+
+    SoCAXIBridgeMMUPreReadPreEventBase::SoCAXIBridgeMMUPreReadPreEventBase(
+        addr_t&                                 address, 
+        LA32MOPWidth&                           width) noexcept
+        : address   (address)
+        , width     (width)
+    { }
+
+    addr_t SoCAXIBridgeMMUPreReadPreEventBase::GetAddress() const noexcept
+    {
+        return address;
+    }
+
+    LA32MOPWidth SoCAXIBridgeMMUPreReadPreEventBase::GetWidth() const noexcept
+    {
+        return width;
+    }
+
+    void SoCAXIBridgeMMUPreReadPreEventBase::SetAddress(addr_t address) noexcept
+    {
+        this->address = address;
+    }
+
+    void SoCAXIBridgeMMUPreReadPreEventBase::SetWidth(LA32MOPWidth width) noexcept
+    {
+        this->width = width;
+    }
+}
+
+// Implementation of: class SoCAXIBridgeMMUPreReadPostEventBase
+namespace BullsEye::Draconids3014 {
+    /*
+    addr_t          address;
+    LA32MOPWidth    width;
+    */
+
+    SoCAXIBridgeMMUPreReadPostEventBase::SoCAXIBridgeMMUPreReadPostEventBase(
+        addr_t                                  address, 
+        LA32MOPWidth                            width) noexcept
+        : address   (address)
+        , width     (width)
+    { }
+
+    addr_t SoCAXIBridgeMMUPreReadPostEventBase::GetAddress() const noexcept
+    {
+        return address;
+    }
+
+    LA32MOPWidth SoCAXIBridgeMMUPreReadPostEventBase::GetWidth() const noexcept
+    {
+        return width;
+    }
+}
+
+// Implementation of: class SoCAXIBridgeMMUPostReadPreEventBase
+namespace BullsEye::Draconids3014 {
+    /*
+    addr_t          address;
+    LA32MOPWidth    width;
+    memdata_t&      data;
+    LA32MOPOutcome& outcome;
+    */
+
+    SoCAXIBridgeMMUPostReadPreEventBase::SoCAXIBridgeMMUPostReadPreEventBase(
+        addr_t                                  address, 
+        LA32MOPWidth                            width, 
+        memdata_t&                              data, 
+        LA32MOPOutcome&                         outcome) noexcept
+        : address   (address)
+        , width     (width)
+        , data      (data)
+        , outcome   (outcome)
+    { }
+
+    addr_t SoCAXIBridgeMMUPostReadPreEventBase::GetAddress() const noexcept
+    {
+        return address;
+    }
+
+    LA32MOPWidth SoCAXIBridgeMMUPostReadPreEventBase::GetWidth() const noexcept
+    {
+        return width;
+    }
+
+    memdata_t SoCAXIBridgeMMUPostReadPreEventBase::GetData() const noexcept
+    {
+        return data;
+    }
+
+    LA32MOPOutcome SoCAXIBridgeMMUPostReadPreEventBase::GetOutcome() const noexcept
+    {
+        return outcome;
+    }
+
+    void SoCAXIBridgeMMUPostReadPreEventBase::SetOutcome(LA32MOPOutcome outcome) noexcept
+    {
+        this->outcome = outcome;
+    }
+
+    void SoCAXIBridgeMMUPostReadPreEventBase::SetData(memdata_t data) noexcept
+    {
+        this->data = data;
+    }
+}
+
+// Implementation of: class SoCAXIBridgeMMUPostReadPostEventBase
+namespace BullsEye::Draconids3014 {
+    /*
+    addr_t          address;
+    LA32MOPWidth    width;
+    memdata_t       data;
+    LA32MOPOutcome  outcome;
+    */
+
+    SoCAXIBridgeMMUPostReadPostEventBase::SoCAXIBridgeMMUPostReadPostEventBase(
+        addr_t                                  address, 
+        LA32MOPWidth                            width, 
+        memdata_t                               data, 
+        LA32MOPOutcome                          outcome) noexcept
+        : address   (address)
+        , width     (width)
+        , data      (data)
+        , outcome   (outcome)
+    { }
+
+    addr_t SoCAXIBridgeMMUPostReadPostEventBase::GetAddress() const noexcept
+    {
+        return address;
+    }
+
+    LA32MOPWidth SoCAXIBridgeMMUPostReadPostEventBase::GetWidth() const noexcept
+    {
+        return width;
+    }
+
+    memdata_t SoCAXIBridgeMMUPostReadPostEventBase::GetData() const noexcept
+    {
+        return data;
+    }
+
+    LA32MOPOutcome SoCAXIBridgeMMUPostReadPostEventBase::GetOutcome() const noexcept
+    {
+        return outcome;
+    }
+}
+
+
+
+// Implementation of: class SoCAXIBridgeFetchMMUPreWritePreEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeFetchMMUPreWritePreEvent::SoCAXIBridgeFetchMMUPreWritePreEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t&         address, 
+        LA32MOPWidth&   width, 
+        memdata_t&      data) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPreWritePreEventBase   (address, width, data)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeFetchMMUPreWritePostEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeFetchMMUPreWritePostEvent::SoCAXIBridgeFetchMMUPreWritePostEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t       data) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPreWritePostEventBase  (address, width, data)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeFetchMMUPostWritePreEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeFetchMMUPostWritePreEvent::SoCAXIBridgeFetchMMUPostWritePreEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t       data, 
+        LA32MOPOutcome& outcome) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPostWritePreEventBase  (address, width, data, outcome)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeFetchMMUPostWritePostEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeFetchMMUPostWritePostEvent::SoCAXIBridgeFetchMMUPostWritePostEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t       data, 
+        LA32MOPOutcome  outcome) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPostWritePostEventBase (address, width, data, outcome)
+    { }
+}
+
+
+// Implementation of: class SoCAXIBridgeFetchMMUPreReadPreEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeFetchMMUPreReadPreEvent::SoCAXIBridgeFetchMMUPreReadPreEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t&         address, 
+        LA32MOPWidth&   width) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPreReadPreEventBase    (address, width)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeFetchMMUPreReadPostEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeFetchMMUPreReadPostEvent::SoCAXIBridgeFetchMMUPreReadPostEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPreReadPostEventBase   (address, width)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeFetchMMUPostReadPreEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeFetchMMUPostReadPreEvent::SoCAXIBridgeFetchMMUPostReadPreEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t&      data, 
+        LA32MOPOutcome& outcome) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPostReadPreEventBase   (address, width, data, outcome)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeFetchMMUPostReadPostEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeFetchMMUPostReadPostEvent::SoCAXIBridgeFetchMMUPostReadPostEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t       data, 
+        LA32MOPOutcome  outcome) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPostReadPostEventBase  (address, width, data, outcome)
+    { }
+}
+
+
+
+// Implementation of: class SoCAXIBridgeDataMMUPreWritePreEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeDataMMUPreWritePreEvent::SoCAXIBridgeDataMMUPreWritePreEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t&         address, 
+        LA32MOPWidth&   width, 
+        memdata_t&      data) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPreWritePreEventBase   (address, width, data)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeDataMMUPreWritePostEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeDataMMUPreWritePostEvent::SoCAXIBridgeDataMMUPreWritePostEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t       data) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPreWritePostEventBase  (address, width, data)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeDataMMUPostWritePreEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeDataMMUPostWritePreEvent::SoCAXIBridgeDataMMUPostWritePreEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t       data, 
+        LA32MOPOutcome& outcome) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPostWritePreEventBase  (address, width, data, outcome)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeDataMMUPostWritePostEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeDataMMUPostWritePostEvent::SoCAXIBridgeDataMMUPostWritePostEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t       data, 
+        LA32MOPOutcome  outcome) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPostWritePostEventBase (address, width, data, outcome)
+    { }
+}
+
+
+// Implementation of: class SoCAXIBridgeDataMMUPreReadPreEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeDataMMUPreReadPreEvent::SoCAXIBridgeDataMMUPreReadPreEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t&         address, 
+        LA32MOPWidth&   width) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPreReadPreEventBase    (address, width)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeDataMMUPreReadPostEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeDataMMUPreReadPostEvent::SoCAXIBridgeDataMMUPreReadPostEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPreReadPostEventBase   (address, width)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeDataMMUPostReadPreEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeDataMMUPostReadPreEvent::SoCAXIBridgeDataMMUPostReadPreEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t&      data, 
+        LA32MOPOutcome& outcome) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPostReadPreEventBase   (address, width, data, outcome)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeDataMMUPostReadPostEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeDataMMUPostReadPostEvent::SoCAXIBridgeDataMMUPostReadPostEvent(
+        SoCAXIBridge*   soc_axi, 
+        addr_t          address, 
+        LA32MOPWidth    width, 
+        memdata_t       data, 
+        LA32MOPOutcome  outcome) noexcept
+        : SoCAXIBridgeEventBase                 (soc_axi)
+        , SoCAXIBridgeMMUPostReadPostEventBase  (address, width, data, outcome)
+    { }
+}
+
+
+
+
+// Implementation of: class SoCAXIBridgeErrorEventBase
+namespace BullsEye::Draconids3014 {
+    /*
+    uint4_t     transaction_id;
+    ErrorType   type;
+    */
+
+    SoCAXIBridgeErrorEventBase::SoCAXIBridgeErrorEventBase(
+        uint4_t     transaction_id, 
+        ErrorType   type) noexcept
+        : transaction_id    (transaction_id)
+        , type              (type)
+    { }
+
+    uint4_t SoCAXIBridgeErrorEventBase::GetTransactionID() const noexcept
+    {
+        return transaction_id;
+    }
+
+    SoCAXIBridgeErrorEventBase::ErrorType SoCAXIBridgeErrorEventBase::GetType() const noexcept
+    {
+        return type;
+    }
+}
+
+
+
+// Implementation of: class SoCAXIBridgeFetchErrorEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeFetchErrorEvent::SoCAXIBridgeFetchErrorEvent(
+        SoCAXIBridge*   soc_axi, 
+        uint4_t         transaction_id, 
+        ErrorType       type) noexcept
+        : SoCAXIBridgeEventBase     (soc_axi)
+        , SoCAXIBridgeErrorEventBase(transaction_id, type)
+    { }
+}
+
+// Implementation of: class SoCAXIBridgeDataErrorEvent
+namespace BullsEye::Draconids3014 {
+
+    SoCAXIBridgeDataErrorEvent::SoCAXIBridgeDataErrorEvent(
+        SoCAXIBridge*   soc_axi, 
+        uint4_t         transaction_id, 
+        ErrorType       type) noexcept
+        : SoCAXIBridgeEventBase     (soc_axi)
+        , SoCAXIBridgeErrorEventBase(transaction_id, type)
+    { }
+}

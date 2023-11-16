@@ -686,13 +686,34 @@ namespace BullsEye::Draconids3014 {
                         fetch_read_trans_clock_divider = bus_clock_divider;
 
                     // bus read to buffer
+                    addr_t       real_address = fetch_read_trans_addr;
+                    LA32MOPWidth real_width   = fetch_read_width;
+
+                    if (SoCAXIBridgeFetchMMUPreReadPreEvent(this, real_address, real_width)
+                        .Fire(eventBusId).IsCancelled())
+                        break;
+
+                    SoCAXIBridgeFetchMMUPreReadPostEvent(this, real_address, real_width)
+                        .Fire(eventBusId);
+
                     memdata_t memdata;
                     LA32MOPOutcome mopoutcome 
-                        = soc->MMU().ReadInsn(fetch_read_trans_addr, fetch_read_width, &memdata);
+                        = soc->MMU().ReadInsn(real_address, real_width, &memdata);
                     
+                    if (SoCAXIBridgeFetchMMUPostReadPreEvent(this, real_address, real_width, memdata, mopoutcome)
+                        .Fire(eventBusId).IsCancelled())
+                        break;
+
+                    SoCAXIBridgeFetchMMUPostReadPostEvent(this, real_address, real_width, memdata, mopoutcome)
+                        .Fire(eventBusId);
+
                     if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
                     {
                         // bus read fault
+                        SoCAXIBridgeFetchErrorEvent(this, fetch_read_id,
+                        SoCAXIBridgeFetchErrorEvent::ErrorType::READ_MOP_NOT_SUCCESS)
+                            .Fire(eventBusId);
+
                         fetch_read_state_next = ReadState::AXI_READ_ERROR;
                         break;
                     }
@@ -872,15 +893,27 @@ namespace BullsEye::Draconids3014 {
                         if (data_write_trans_received > data_write_length) [[unlikely]]
                         {
                             // bus write transaction overflow
-                            // TODO
+                            SoCAXIBridgeDataErrorEvent(this, data_write_id, 
+                            SoCAXIBridgeDataErrorEvent::ErrorType::WRITE_OVERFLOW)
+                                .Fire(eventBusId);
+
+                            data_write_state_next = WriteState::AXI_WRITE_ERROR;
+
+                            break;
                         }
 
-                        SoCAXIBridgeDataWriteDataAcceptedPreEvent (this, data_i_axi4w).Fire(eventBusId);
+                        SoCAXIBridgeDataWriteDataAcceptedPreEvent(this, data_i_axi4w).Fire(eventBusId);
 
                         if (data_i_axi4w.wlast && data_write_trans_received < data_write_length) [[unlikely]]
                         {
                             // bus write transaction underflow
-                            // TODO
+                            SoCAXIBridgeDataErrorEvent(this, data_write_id,
+                            SoCAXIBridgeDataErrorEvent::ErrorType::WRITE_UNDERFLOW)
+                                .Fire(eventBusId);
+
+                            data_write_state_next = WriteState::AXI_WRITE_ERROR;
+
+                            break;
                         }
 
                         SoCAXIBridgeDataWriteDataAcceptedPostEvent(this, data_i_axi4w).Fire(eventBusId);
@@ -953,13 +986,34 @@ namespace BullsEye::Draconids3014 {
                     else
                         data_write_trans_clock_divider = bus_clock_divider;
 
-                    memdata_t memdata = data_write_trans_buffer[data_write_trans_written];
+                    addr_t       real_address = data_write_trans_waddr;
+                    LA32MOPWidth real_width   = data_write_width;
+                    memdata_t    real_data    = data_write_trans_buffer[data_write_trans_written];
+
+                    if (SoCAXIBridgeDataMMUPreWritePreEvent(this, real_address, real_width, real_data)
+                        .Fire(eventBusId).IsCancelled())
+                        break;
+
+                    SoCAXIBridgeDataMMUPreWritePostEvent(this, real_address, real_width, real_data)
+                        .Fire(eventBusId);
+
                     LA32MOPOutcome mopoutcome 
-                        = soc->MMU().WriteData(data_write_trans_waddr, data_write_width, memdata);
+                        = soc->MMU().WriteData(real_address, real_width, real_data);
+
+                    if (SoCAXIBridgeDataMMUPostWritePreEvent(this, real_address, real_width, real_data, mopoutcome)
+                        .Fire(eventBusId).IsCancelled())
+                        break;
+
+                    SoCAXIBridgeDataMMUPostWritePostEvent(this, real_address, real_width, real_data, mopoutcome)
+                        .Fire(eventBusId);
 
                     if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
                     {
                         // bus write fault
+                        SoCAXIBridgeDataErrorEvent(this, data_write_id,
+                        SoCAXIBridgeDataErrorEvent::ErrorType::WRITE_MOP_NOT_SUCCESS)
+                            .Fire(eventBusId);
+
                         data_write_state_next = WriteState::AXI_WRITE_ERROR;
                         break;
                     }
@@ -1086,7 +1140,7 @@ namespace BullsEye::Draconids3014 {
             default: break;
         }
 
-        // data read data channe logic
+        // data read data channel logic
         if (data_write_state == WriteState::AXI_WRITE_ERROR
         ||  data_read_state  == ReadState::AXI_READ_ERROR) [[unlikely]]
         {
@@ -1172,13 +1226,34 @@ namespace BullsEye::Draconids3014 {
                         data_read_trans_clock_divider = bus_clock_divider;
 
                     // bus read to buffer
+                    addr_t       real_address = data_read_trans_addr;
+                    LA32MOPWidth real_width   = data_read_width;
+
+                    if (SoCAXIBridgeDataMMUPreReadPreEvent(this, real_address, real_width)
+                        .Fire(eventBusId).IsCancelled())
+                        break;
+
+                    SoCAXIBridgeDataMMUPreReadPostEvent(this, real_address, real_width)
+                        .Fire(eventBusId);
+
                     memdata_t memdata;
                     LA32MOPOutcome mopoutcome 
                         = soc->MMU().ReadData(data_read_trans_addr, data_read_width, &memdata);
                     
+                    if (SoCAXIBridgeDataMMUPostReadPreEvent(this, real_address, real_width, memdata, mopoutcome)
+                        .Fire(eventBusId).IsCancelled())
+                        break;
+
+                    SoCAXIBridgeDataMMUPostReadPostEvent(this, real_address, real_width, memdata, mopoutcome)
+                        .Fire(eventBusId);
+
                     if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
                     {
                         // bus read fault
+                        SoCAXIBridgeDataErrorEvent(this, data_read_id,
+                        SoCAXIBridgeDataErrorEvent::ErrorType::READ_MOP_NOT_SUCCESS)
+                            .Fire(eventBusId);
+
                         data_read_state_next = ReadState::AXI_READ_ERROR;
                         break;
                     }

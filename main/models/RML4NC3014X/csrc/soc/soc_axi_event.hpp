@@ -573,6 +573,343 @@ namespace BullsEye::Draconids3014 {
     public:
         SoCAXIBridgeDataWriteResponseAcceptedPostEvent(SoCAXIBridge*, const DataAXI4WriteResponseChannelS2M& bundle) noexcept;
     };
+
+
+
+    // SoC AXI Bridge MMU Pre Write Pre Event Base
+    class SoCAXIBridgeMMUPreWritePreEventBase {
+    private:
+        addr_t&         address;
+        LA32MOPWidth&   width;
+        memdata_t&      data;
+
+    public:
+        SoCAXIBridgeMMUPreWritePreEventBase(addr_t& address, LA32MOPWidth& width, memdata_t& data) noexcept;
+
+        addr_t          GetAddress() const noexcept;
+        LA32MOPWidth    GetWidth() const noexcept;
+        memdata_t       GetData() const noexcept;
+
+        void            SetAddress(addr_t addr) noexcept;
+        void            SetWidth(LA32MOPWidth width) noexcept;
+        void            SetData(memdata_t data) noexcept;
+    };
+
+    // SoC AXI Bridge MMU Pre Write Post Event Base
+    class SoCAXIBridgeMMUPreWritePostEventBase {
+    private:
+        addr_t          address;
+        LA32MOPWidth    width;
+        memdata_t       data;
+
+    public:
+        SoCAXIBridgeMMUPreWritePostEventBase(addr_t address, LA32MOPWidth width, memdata_t data) noexcept;
+
+        addr_t          GetAddress() const noexcept;
+        LA32MOPWidth    GetWidth() const noexcept;
+        memdata_t       GetData() const noexcept;
+    };
+
+    // SoC AXI Bridge MMU Post Write Pre Event Base
+    class SoCAXIBridgeMMUPostWritePreEventBase {
+    private:
+        addr_t          address;
+        LA32MOPWidth    width;
+        memdata_t       data;
+        LA32MOPOutcome& outcome;
+
+    public:
+        SoCAXIBridgeMMUPostWritePreEventBase(addr_t address, LA32MOPWidth width, memdata_t data, LA32MOPOutcome& outcome) noexcept;
+
+        addr_t          GetAddress() const noexcept;
+        LA32MOPWidth    GetWidth() const noexcept;
+        memdata_t       GetData() const noexcept;
+        LA32MOPOutcome  GetOutcome() const noexcept;
+
+        void            SetOutcome(LA32MOPOutcome outcome) noexcept;
+    };
+
+    // SoC AXI Bridge MMU Post Write Post Event Base
+    class SoCAXIBridgeMMUPostWritePostEventBase {
+    private:
+        addr_t          address;
+        LA32MOPWidth    width;
+        memdata_t       data;
+        LA32MOPOutcome  outcome;
+
+    public:
+        SoCAXIBridgeMMUPostWritePostEventBase(addr_t address, LA32MOPWidth width, memdata_t data, LA32MOPOutcome outcome) noexcept;
+
+        addr_t          GetAddress() const noexcept;
+        LA32MOPWidth    GetWidth() const noexcept;
+        memdata_t       GetData() const noexcept;
+        LA32MOPOutcome  GetOutcome() const noexcept;
+    };
+
+
+    // SoC AXI Bridge MMU Pre Read Pre Event Base
+    class SoCAXIBridgeMMUPreReadPreEventBase {
+    private:
+        addr_t&         address;
+        LA32MOPWidth&   width;
+
+    public:
+        SoCAXIBridgeMMUPreReadPreEventBase(addr_t& address, LA32MOPWidth& width) noexcept;
+
+        addr_t          GetAddress() const noexcept;
+        LA32MOPWidth    GetWidth() const noexcept;
+
+        void            SetAddress(addr_t addr) noexcept;
+        void            SetWidth(LA32MOPWidth width) noexcept;
+    };
+
+    // SoC AXI Bridge MMU Pre Read Post Event Base
+    class SoCAXIBridgeMMUPreReadPostEventBase {
+    private:
+        addr_t          address;
+        LA32MOPWidth    width;
+
+    public:
+        SoCAXIBridgeMMUPreReadPostEventBase(addr_t address, LA32MOPWidth width) noexcept;
+
+        addr_t          GetAddress() const noexcept;
+        LA32MOPWidth    GetWidth() const noexcept;
+    };
+
+    // SoC AXI Bridge MMU Post Read Pre Event Base
+    class SoCAXIBridgeMMUPostReadPreEventBase {
+    private:
+        addr_t          address;
+        LA32MOPWidth    width;
+        memdata_t&      data;
+        LA32MOPOutcome& outcome;
+
+    public:
+        SoCAXIBridgeMMUPostReadPreEventBase(addr_t address, LA32MOPWidth width, memdata_t& data, LA32MOPOutcome& outcome) noexcept;
+
+        addr_t          GetAddress() const noexcept;
+        LA32MOPWidth    GetWidth() const noexcept;
+        memdata_t       GetData() const noexcept;
+        LA32MOPOutcome  GetOutcome() const noexcept;
+
+        void            SetData(memdata_t data) noexcept;
+        void            SetOutcome(LA32MOPOutcome outcome) noexcept;
+    };
+
+    // SoC AXI Bridge MMU Post Read Post Event Base
+    class SoCAXIBridgeMMUPostReadPostEventBase {
+    private:
+        addr_t          address;
+        LA32MOPWidth    width;
+        memdata_t       data;
+        LA32MOPOutcome  outcome;
+
+    public:
+        SoCAXIBridgeMMUPostReadPostEventBase(addr_t address, LA32MOPWidth width, memdata_t data, LA32MOPOutcome outcome) noexcept;
+
+        addr_t          GetAddress() const noexcept;
+        LA32MOPWidth    GetWidth() const noexcept;
+        memdata_t       GetData() const noexcept;
+        LA32MOPOutcome  GetOutcome() const noexcept;
+    };
+
+
+    // SoC AXI Bridge Fetch MMU Pre Write Pre Event
+    class SoCAXIBridgeFetchMMUPreWritePreEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPreWritePreEventBase
+        , public Event<SoCAXIBridgeFetchMMUPreWritePreEvent>
+        , public CancellableEvent {
+    public:
+        SoCAXIBridgeFetchMMUPreWritePreEvent(SoCAXIBridge*, addr_t& address, LA32MOPWidth& width, memdata_t& data) noexcept;
+    };
+
+    // SoC AXI Bridge Fetch MMU Pre Write Post Event
+    class SoCAXIBridgeFetchMMUPreWritePostEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPreWritePostEventBase
+        , public Event<SoCAXIBridgeFetchMMUPreWritePostEvent> {
+    public:
+        SoCAXIBridgeFetchMMUPreWritePostEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width, memdata_t data) noexcept;
+    };
+
+    // SoC AXI Bridge Fetch MMU Post Write Pre Event
+    class SoCAXIBridgeFetchMMUPostWritePreEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPostWritePreEventBase
+        , public Event<SoCAXIBridgeFetchMMUPostWritePreEvent>
+        , public CancellableEvent {
+    public:
+        SoCAXIBridgeFetchMMUPostWritePreEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width, memdata_t data, LA32MOPOutcome& outcome) noexcept;
+    };
+
+    // SoC AXI Bridge Fetch MMU Post Write Post Event
+    class SoCAXIBridgeFetchMMUPostWritePostEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPostWritePostEventBase
+        , public Event<SoCAXIBridgeFetchMMUPostWritePostEvent> {
+    public:
+        SoCAXIBridgeFetchMMUPostWritePostEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width, memdata_t data, LA32MOPOutcome outcome) noexcept;
+    };
+
+
+    // SoC AXI Bridge Fetch MMU Pre Read Pre Event
+    class SoCAXIBridgeFetchMMUPreReadPreEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPreReadPreEventBase
+        , public Event<SoCAXIBridgeFetchMMUPreReadPreEvent>
+        , public CancellableEvent {
+    public:
+        SoCAXIBridgeFetchMMUPreReadPreEvent(SoCAXIBridge*, addr_t& address, LA32MOPWidth& width) noexcept;
+    };
+
+    // SoC AXI Bridge Fetch MMU Pre Read Post Event
+    class SoCAXIBridgeFetchMMUPreReadPostEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPreReadPostEventBase
+        , public Event<SoCAXIBridgeFetchMMUPreReadPostEvent> {
+    public:
+        SoCAXIBridgeFetchMMUPreReadPostEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width) noexcept;
+    };
+
+    // SoC AXI Bridge Fetch MMU Post Read Pre Event
+    class SoCAXIBridgeFetchMMUPostReadPreEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPostReadPreEventBase
+        , public Event<SoCAXIBridgeFetchMMUPostReadPreEvent>
+        , public CancellableEvent {
+    public:
+        SoCAXIBridgeFetchMMUPostReadPreEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width, memdata_t& data, LA32MOPOutcome& outcome) noexcept;
+    };
+
+    // SoC AXI Bridge Fetch MMU Post Read Post Event
+    class SoCAXIBridgeFetchMMUPostReadPostEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPostReadPostEventBase
+        , public Event<SoCAXIBridgeFetchMMUPostReadPostEvent> {
+    public:
+        SoCAXIBridgeFetchMMUPostReadPostEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width, memdata_t data, LA32MOPOutcome outcome) noexcept;
+    };
+
+
+    // SoC AXI Bridge Data MMU Pre Write Pre Event
+    class SoCAXIBridgeDataMMUPreWritePreEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPreWritePreEventBase
+        , public Event<SoCAXIBridgeDataMMUPreWritePreEvent>
+        , public CancellableEvent {
+    public:
+        SoCAXIBridgeDataMMUPreWritePreEvent(SoCAXIBridge*, addr_t& address, LA32MOPWidth& width, memdata_t& data) noexcept;
+    };
+
+    // SoC AXI Bridge Data MMU Pre Write Post Event
+    class SoCAXIBridgeDataMMUPreWritePostEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPreWritePostEventBase
+        , public Event<SoCAXIBridgeDataMMUPreWritePostEvent> {
+    public:
+        SoCAXIBridgeDataMMUPreWritePostEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width, memdata_t data) noexcept;
+    };
+
+    // SoC AXI Bridge Data MMU Post Write Pre Event
+    class SoCAXIBridgeDataMMUPostWritePreEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPostWritePreEventBase
+        , public Event<SoCAXIBridgeDataMMUPostWritePreEvent>
+        , public CancellableEvent {
+    public:
+        SoCAXIBridgeDataMMUPostWritePreEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width, memdata_t data, LA32MOPOutcome& outcome) noexcept;
+    };
+
+    // SoC AXI Bridge Data MMU Post Write Post Event
+    class SoCAXIBridgeDataMMUPostWritePostEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPostWritePostEventBase
+        , public Event<SoCAXIBridgeDataMMUPostWritePostEvent> {
+    public:
+        SoCAXIBridgeDataMMUPostWritePostEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width, memdata_t data, LA32MOPOutcome outcome) noexcept;
+    };
+
+
+    // SoC AXI Bridge Data MMU Pre Read Pre Event
+    class SoCAXIBridgeDataMMUPreReadPreEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPreReadPreEventBase
+        , public Event<SoCAXIBridgeDataMMUPreReadPreEvent>
+        , public CancellableEvent {
+    public:
+        SoCAXIBridgeDataMMUPreReadPreEvent(SoCAXIBridge*, addr_t& address, LA32MOPWidth& width) noexcept;
+    };
+
+    // SoC AXI Bridge Data MMU Pre Read Post Event
+    class SoCAXIBridgeDataMMUPreReadPostEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPreReadPostEventBase
+        , public Event<SoCAXIBridgeDataMMUPreReadPostEvent> {
+    public:
+        SoCAXIBridgeDataMMUPreReadPostEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width) noexcept;
+    };
+
+    // SoC AXI Bridge Data MMU Post Read Pre Event
+    class SoCAXIBridgeDataMMUPostReadPreEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPostReadPreEventBase
+        , public Event<SoCAXIBridgeDataMMUPostReadPreEvent>
+        , public CancellableEvent {
+    public:
+        SoCAXIBridgeDataMMUPostReadPreEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width, memdata_t& data, LA32MOPOutcome& outcome) noexcept;
+    };
+
+    // SoC AXI Bridge Data MMU Post Read Post Event
+    class SoCAXIBridgeDataMMUPostReadPostEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeMMUPostReadPostEventBase
+        , public Event<SoCAXIBridgeDataMMUPostReadPostEvent> {
+    public:
+        SoCAXIBridgeDataMMUPostReadPostEvent(SoCAXIBridge*, addr_t address, LA32MOPWidth width, memdata_t data, LA32MOPOutcome outcome) noexcept;
+    };
+
+
+
+    // SoC AXI Bridge Error Event Base
+    class SoCAXIBridgeErrorEventBase {
+    public:
+        enum class ErrorType {
+            READ_MOP_NOT_SUCCESS = 0,
+            WRITE_MOP_NOT_SUCCESS,
+            WRITE_OVERFLOW,
+            WRITE_UNDERFLOW
+        };
+
+    private:
+        uint4_t     transaction_id;
+        ErrorType   type;
+
+    public:
+        SoCAXIBridgeErrorEventBase(uint4_t transaction_id, ErrorType type) noexcept;
+
+        uint4_t     GetTransactionID() const noexcept;
+        ErrorType   GetType() const noexcept;
+    };
+
+
+    // SoC AXI Bridge Fetch Error Event
+    class SoCAXIBridgeFetchErrorEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeErrorEventBase
+        , public Event<SoCAXIBridgeFetchErrorEvent> {
+    public:
+        SoCAXIBridgeFetchErrorEvent(SoCAXIBridge*, uint4_t transaction_id, ErrorType type) noexcept;
+    };
+
+    // SoC AXI Bridge Data Error Event
+    class SoCAXIBridgeDataErrorEvent
+        : public SoCAXIBridgeEventBase
+        , public SoCAXIBridgeErrorEventBase
+        , public Event<SoCAXIBridgeDataErrorEvent> {
+    public:
+        SoCAXIBridgeDataErrorEvent(SoCAXIBridge*, uint4_t transaction_id, ErrorType type) noexcept;
+    };
 }
 
 
