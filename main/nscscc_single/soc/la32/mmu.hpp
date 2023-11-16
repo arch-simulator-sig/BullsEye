@@ -54,7 +54,19 @@ namespace BullsEye::NSCSCCSingle {
         LA32MOPOutcome              _MMIO_WriteClockCounter(addr_t address, LA32MOPWidth width, memdata_t src) noexcept;
 
     public:
-        static bool                 IsSerial(addr_t address) noexcept;
+        static addr_t               GetPhysicalAddress(addr_t vaddress) noexcept;
+
+        static addr_t               GetBaseRAMAddress(addr_t vaddress) noexcept;
+        static addr_t               GetExtRAMAddress(addr_t vaddress) noexcept;
+
+        static bool                 IsBaseRAM(addr_t vaddress) noexcept;
+        static bool                 IsExtRAM(addr_t vaddress) noexcept;
+
+        static bool                 IsSerial(addr_t vaddress) noexcept;
+        static bool                 IsSerialData(addr_t vaddress) noexcept;
+        static bool                 IsSerialStat(addr_t vaddress) noexcept;
+
+        static bool                 IsClockCounter(addr_t vaddress) noexcept;
 
     public:
         NSCSCC2023MMU(unsigned int      eventBusId,
