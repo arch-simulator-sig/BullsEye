@@ -14,6 +14,7 @@
 
 #include "appmain_historypc.hpp"
 #include "appmain_historymem.hpp"
+#include "appmain_historyaxi.hpp"
 
 
 #include "../../csrc/core/ds232_verilated.hpp"
@@ -56,6 +57,8 @@ struct GlobalContextDUTHistory {
     MMIOReadHistory*                            MMIORead;
     MMIOWriteHistory*                           MMIOWrite;
     MMIOReadWriteHistory*                       MMIOReadWrite;
+
+    AXIBusHistory*                              busAXI;
 };
 
 struct GlobalContextDUT {

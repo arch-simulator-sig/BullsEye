@@ -319,6 +319,10 @@ int startup()
         .EventBusId(glbl.ctx.dut.eventBusId)
         .Build();
 
+    glbl.ctx.dut.history.busAXI = AXIBusHistory::Builder()
+        .EventBusId(glbl.ctx.dut.eventBusId)
+        .Build();
+
     //
     return 0;
 }
@@ -326,6 +330,12 @@ int startup()
 
 int shutdown()
 {
+    if (glbl.ctx.dut.history.busAXI)
+    {
+        delete glbl.ctx.dut.history.busAXI;
+        glbl.ctx.dut.history.busAXI = nullptr;
+    }
+
     if (glbl.ctx.dut.history.MMIOReadWrite)
     {
         delete glbl.ctx.dut.history.MMIOReadWrite;
