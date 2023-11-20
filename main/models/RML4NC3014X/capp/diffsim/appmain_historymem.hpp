@@ -12,9 +12,6 @@
 #include AUTOINC_BE_N1_SOC_LA32(mmu_event.hpp)
 
 
-#define MMIO_HISTORY_DEPTH      32
-
-
 class MMIOHistory {
 public:
     class Entry {
@@ -49,9 +46,10 @@ public:
     };
 
 public:
-    static constexpr size_t     MAX_SIZE    = MMIO_HISTORY_DEPTH;
+    static constexpr size_t     DEFAULT_DEPTH   = 32;
 
 private:
+    size_t              depth;
     std::deque<Entry>   history;
 
 public:
@@ -59,7 +57,11 @@ public:
     using const_iterator    = std::deque<Entry>::const_iterator;
 
 public:
-    MMIOHistory() noexcept;
+    MMIOHistory(size_t depth = DEFAULT_DEPTH) noexcept;
+
+    //
+    size_t              GetDepth() const noexcept;
+    void                SetDepth(size_t depth) noexcept;
 
     //
     void                Push(const Entry& entry) noexcept;
@@ -93,7 +95,7 @@ public:
 
 private:
     unsigned int    eventBusId;
-    unsigned int    eventPriority;
+    int             eventPriority;
 
 protected:
     std::string     GetListenerName(const char* name) const noexcept;
@@ -104,7 +106,7 @@ protected:
     void            OnMMUPostReadPostEvent(BullsEye::NSCSCCSingle::NSCSCC2023MMUPostReadPostEvent& event) noexcept;
 
 protected:
-    MMIOReadHistory(unsigned int eventBusId, int eventPriority) noexcept;
+    MMIOReadHistory(size_t depth, unsigned int eventBusId, int eventPriority) noexcept;
 
 public:
     ~MMIOReadHistory() noexcept;
@@ -122,6 +124,7 @@ public:
 
 class MMIOReadHistory::Builder {
 private:
+    size_t          depth;
     unsigned int    eventBusId;
     int             eventPriority;
 
@@ -129,10 +132,14 @@ public:
     Builder() noexcept;
 
     //
+    Builder&        Depth(size_t depth) noexcept;
     Builder&        EventBusId(unsigned int eventBusId) noexcept;
     Builder&        EventPriority(int eventPriority) noexcept;
 
     //
+    size_t          GetDepth() const noexcept;
+    void            SetDepth(size_t depth) noexcept;
+
     unsigned int    GetEventBusId() const noexcept;
     void            SetEventBusId(unsigned int eventBusId) noexcept;
 
@@ -163,7 +170,7 @@ protected:
     void            OnMMUPostWritePostEvent(BullsEye::NSCSCCSingle::NSCSCC2023MMUPostWritePostEvent& event) noexcept;
 
 protected:
-    MMIOWriteHistory(unsigned int eventBusId, int eventPriority) noexcept;
+    MMIOWriteHistory(size_t depth, unsigned int eventBusId, int eventPriority) noexcept;
 
 public:
     ~MMIOWriteHistory() noexcept;
@@ -181,6 +188,7 @@ public:
 
 class MMIOWriteHistory::Builder {
 private:
+    size_t          depth;
     unsigned int    eventBusId;
     int             eventPriority;
 
@@ -188,10 +196,14 @@ public:
     Builder() noexcept;
 
     //
+    Builder&        Depth(size_t depth) noexcept;
     Builder&        EventBusId(unsigned int eventBusId) noexcept;
     Builder&        EventPriority(int eventPriority) noexcept;
 
     //
+    size_t          GetDepth() const noexcept;
+    void            SetDepth(size_t depth) noexcept;
+
     unsigned int    GetEventBusId() const noexcept;
     void            SetEventBusId(unsigned int eventBusId) noexcept;
 
@@ -223,7 +235,7 @@ protected:
     void            OnMMUPostWritePostEvent(BullsEye::NSCSCCSingle::NSCSCC2023MMUPostWritePostEvent& event) noexcept;
 
 protected:
-    MMIOReadWriteHistory(unsigned int eventBusId, int eventPriority) noexcept;
+    MMIOReadWriteHistory(size_t depth, unsigned int eventBusId, int eventPriority) noexcept;
 
 public:
     ~MMIOReadWriteHistory() noexcept;
@@ -241,6 +253,7 @@ public:
 
 class MMIOReadWriteHistory::Builder {
 private:
+    size_t          depth;
     unsigned int    eventBusId;
     int             eventPriority;
 
@@ -248,10 +261,14 @@ public:
     Builder() noexcept;
 
     //
+    Builder&        Depth(size_t depth) noexcept;
     Builder&        EventBusId(unsigned int eventBusId) noexcept;
     Builder&        EventPriority(int eventPriority) noexcept;
 
     //
+    size_t          GetDepth() const noexcept;
+    void            SetDepth(size_t depth) noexcept;
+
     unsigned int    GetEventBusId() const noexcept;
     void            SetEventBusId(unsigned int eventBusId) noexcept;
 

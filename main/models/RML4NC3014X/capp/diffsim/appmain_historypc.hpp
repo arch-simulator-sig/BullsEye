@@ -12,14 +12,12 @@
 #include AUTOINC_BE_JASSE2_LA32(base/la32def.hpp)
 
 
-#define PC_HISTORY_DEPTH      32
-
-
 class PCHistory {
 public:
-    static constexpr size_t     MAX_SIZE    = PC_HISTORY_DEPTH;
+    static constexpr size_t     DEFAULT_DEPTH   = 32;
 
 private:
+    size_t                  depth;
     std::deque<Jasse::pc_t> history;
 
 public:
@@ -27,7 +25,11 @@ public:
     using const_iterator    = std::deque<Jasse::pc_t>::const_iterator;
 
 public:
-    PCHistory() noexcept;
+    PCHistory(size_t depth = DEFAULT_DEPTH) noexcept;
+
+    //
+    size_t              GetDepth() const noexcept;
+    void                SetDepth(size_t depth) noexcept;
 
     //
     void                Push(Jasse::pc_t pc) noexcept;

@@ -7,17 +7,32 @@
 
 // Implementation of: class PCTrace
 /*
+size_t                  depth;
 std::deque<Jasse::pc_t> history;
 */
 
-PCHistory::PCHistory() noexcept
+PCHistory::PCHistory(size_t depth) noexcept
+    : depth(depth)
 { }
+
+size_t PCHistory::GetDepth() const noexcept
+{
+    return depth;
+}
+
+void PCHistory::SetDepth(size_t depth) noexcept
+{
+    this->depth = depth;
+
+    while (history.size() > depth)
+        history.pop_back();
+}
 
 void PCHistory::Push(Jasse::pc_t pc) noexcept
 {
     history.push_front(pc);
 
-    while (history.size() > MAX_SIZE)
+    while (history.size() > depth)
         history.pop_back();
 }
 

@@ -21,15 +21,15 @@ BullsEye::AXI4::attr_bresp_t    bresp;
 uint1_t                         last;
 */
 
-AXIBusHistory::Transmission::Transmission() noexcept :
-    type    (),
-    path    (),
-    id      (),
-    data    (),
-    wstrb   (),
-    rresp   (),
-    bresp   (),
-    last    ()
+AXIBusHistory::Transmission::Transmission() noexcept 
+    : type  ()
+    , path  ()
+    , id    ()
+    , data  ()
+    , wstrb ()
+    , rresp ()
+    , bresp ()
+    , last  ()
 { }
 
 AXIBusHistory::Transmission::Type AXIBusHistory::Transmission::GetType() const noexcept
@@ -129,16 +129,16 @@ uint1_t                         uncached;
 std::vector<Transmission>       tranmissions;
 */
 
-AXIBusHistory::Transaction::Transaction() noexcept :
-    type            (),
-    path            (),
-    id              (),
-    address         (),
-    length          (),
-    size            (),
-    burst           (),
-    uncached        (),
-    tranmissions    ()
+AXIBusHistory::Transaction::Transaction() noexcept
+    : type          ()
+    , path          ()
+    , id            ()
+    , address       ()
+    , length        ()
+    , size          ()
+    , burst         ()
+    , uncached      ()
+    , tranmissions  ()
 { }
 
 AXIBusHistory::Transaction::Type AXIBusHistory::Transaction::GetType() const noexcept
@@ -234,14 +234,22 @@ const std::vector<AXIBusHistory::Transmission>& AXIBusHistory::Transaction::GetT
 
 // Implementation of: class AXIBusHistory::Builder
 /*
+size_t          depth;
 unsigned int    eventBusId;
 int             eventPriority;
 */
 
-AXIBusHistory::Builder::Builder() noexcept :
-    eventBusId      (0),
-    eventPriority   (0)
+AXIBusHistory::Builder::Builder() noexcept 
+    : depth         (DEFAULT_DEPTH)
+    , eventBusId    (0)
+    , eventPriority (0)
 { }
+
+AXIBusHistory::Builder& AXIBusHistory::Builder::Depth(size_t depth) noexcept
+{
+    this->depth = depth;
+    return *this;
+}
 
 AXIBusHistory::Builder& AXIBusHistory::Builder::EventBusId(unsigned int eventBusId) noexcept
 {
@@ -253,6 +261,16 @@ AXIBusHistory::Builder& AXIBusHistory::Builder::EventPriority(int eventPriority)
 {
     this->eventPriority = eventPriority;
     return *this;
+}
+
+size_t AXIBusHistory::Builder::GetDepth() const noexcept
+{
+    return depth;
+}
+
+void AXIBusHistory::Builder::SetDepth(size_t depth) noexcept
+{
+    this->depth = depth;
 }
 
 unsigned int AXIBusHistory::Builder::GetEventBusId() const noexcept
@@ -277,7 +295,7 @@ void AXIBusHistory::Builder::SetEventPriority(int eventPriority) noexcept
 
 AXIBusHistory* AXIBusHistory::Builder::Build() noexcept
 {
-    return new AXIBusHistory(eventBusId, eventPriority);
+    return new AXIBusHistory(depth, eventBusId, eventPriority);
 }
 
 
@@ -286,13 +304,15 @@ AXIBusHistory* AXIBusHistory::Builder::Build() noexcept
 unsigned int            eventBusId;
 int                     eventPriority;
 
+size_t                  depth;
 std::deque<Transaction> history;
 */
 
-AXIBusHistory::AXIBusHistory(unsigned int eventBusId, int eventPriority) noexcept :
-    eventBusId      (eventBusId),
-    eventPriority   (eventPriority),
-    history         ()
+AXIBusHistory::AXIBusHistory(size_t depth, unsigned int eventBusId, int eventPriority) noexcept 
+    : depth         (depth)
+    , eventBusId    (eventBusId)
+    , eventPriority (eventPriority)
+    , history       ()
 {
     RegisterListeners();
 }
@@ -300,6 +320,19 @@ AXIBusHistory::AXIBusHistory(unsigned int eventBusId, int eventPriority) noexcep
 AXIBusHistory::~AXIBusHistory() noexcept
 {
     UnregisterListeners();
+}
+
+size_t AXIBusHistory::GetDepth() const noexcept
+{
+    return depth;
+}
+
+void AXIBusHistory::SetDepth(size_t depth) noexcept
+{
+    this->depth = depth;
+
+    while (history.size() > depth)
+        history.pop_front();
 }
 
 unsigned int AXIBusHistory::GetEventBusId() const noexcept
@@ -314,6 +347,9 @@ int AXIBusHistory::GetEventPriority() const noexcept
 
 AXIBusHistory::Transaction& AXIBusHistory::Push() noexcept
 {
+    while (history.size() >= depth)
+        history.pop_front();
+
     return history.emplace_back();
 }
 

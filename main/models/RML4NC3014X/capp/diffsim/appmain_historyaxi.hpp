@@ -20,6 +20,9 @@
 
 class AXIBusHistory {
 public:
+    static constexpr size_t     DEFAULT_DEPTH   = 32;
+
+public:
     class Builder;
 
     class Transmission {
@@ -126,6 +129,7 @@ private:
     unsigned int            eventBusId;
     int                     eventPriority;
 
+    size_t                  depth;
     std::deque<Transaction> history;
 
 public:
@@ -149,11 +153,16 @@ protected:
     void            OnDataWriteResponseAccepted(BullsEye::Draconids3014::SoCAXIBridgeDataWriteResponseAcceptedPostEvent& event) noexcept;
 
 protected:
-    AXIBusHistory(unsigned int eventBusId, int eventPriority) noexcept;
+    AXIBusHistory(size_t depth, unsigned int eventBusId, int eventPriority) noexcept;
 
 public:
     ~AXIBusHistory() noexcept;
 
+    //
+    size_t              GetDepth() const noexcept;
+    void                SetDepth(size_t depth) noexcept;
+
+    //
     unsigned int        GetEventBusId() const noexcept;
     int                 GetEventPriority() const noexcept;
 
@@ -182,6 +191,7 @@ public:
 
 class AXIBusHistory::Builder {
 private:
+    size_t          depth;
     unsigned int    eventBusId;
     int             eventPriority;
 
@@ -189,10 +199,14 @@ public:
     Builder() noexcept;
 
     //
+    Builder&        Depth(size_t depth) noexcept;
     Builder&        EventBusId(unsigned int eventBusId) noexcept;
     Builder&        EventPriority(int eventPriority) noexcept;
 
     //
+    size_t          GetDepth() const noexcept;
+    void            SetDepth(size_t depth) noexcept;
+
     unsigned int    GetEventBusId() const noexcept;
     void            SetEventBusId(unsigned int eventBusId) noexcept;
 

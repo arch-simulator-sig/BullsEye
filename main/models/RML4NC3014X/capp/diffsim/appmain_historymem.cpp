@@ -70,18 +70,33 @@ Jasse::LA32MOPOutcome MMIOHistory::Entry::GetOutcome() const noexcept
 
 // Implementation of: class MMIOHistory
 /*
+size_T              depth;
 std::deque<Entry>   history;
 */
 
-MMIOHistory::MMIOHistory() noexcept
-    : history   ()
+MMIOHistory::MMIOHistory(size_t depth) noexcept
+    : depth     (depth)
+    , history   ()
 { }
+
+size_t MMIOHistory::GetDepth() const noexcept
+{
+    return depth;
+}
+
+void MMIOHistory::SetDepth(size_t depth) noexcept
+{
+    this->depth = depth;
+
+    while (history.size() > depth)
+        history.pop_back();
+}
 
 void MMIOHistory::Push(const Entry& entry) noexcept
 {
     history.push_front(entry);
 
-    while (history.size() > MAX_SIZE)
+    while (history.size() > depth)
         history.pop_back();
 }
 
@@ -94,7 +109,7 @@ void MMIOHistory::Emplace(Entry::Type           type,
 {
     history.emplace_front(type, path, address, width, data, outcome);
 
-    while (history.size() > MAX_SIZE)
+    while (history.size() > depth)
         history.pop_back();
 }
 
@@ -141,8 +156,9 @@ unsigned int    eventBusId;
 int             eventPriority;
 */
 
-MMIOReadHistory::MMIOReadHistory(unsigned int eventBusId, int eventPriority) noexcept
-    : eventBusId    (eventBusId)
+MMIOReadHistory::MMIOReadHistory(size_t depth, unsigned int eventBusId, int eventPriority) noexcept
+    : MMIOHistory   (depth)
+    , eventBusId    (eventBusId)
     , eventPriority (eventPriority)
 { 
     RegisterListeners();
@@ -209,14 +225,22 @@ void MMIOReadHistory::OnMMUPostReadPostEvent(BullsEye::NSCSCCSingle::NSCSCC2023M
 
 // Implementation of: class MMIOReadHistory::Builder
 /*
+size_t          depth;
 unsigned int    eventBusId;
 int             eventPriority;
 */
 
 MMIOReadHistory::Builder::Builder() noexcept
-    : eventBusId    (0)
+    : depth         (DEFAULT_DEPTH)
+    , eventBusId    (0)
     , eventPriority (0)
 { }
+
+MMIOReadHistory::Builder& MMIOReadHistory::Builder::Depth(size_t depth) noexcept
+{
+    this->depth = depth;
+    return *this;
+}
 
 MMIOReadHistory::Builder& MMIOReadHistory::Builder::EventBusId(unsigned int eventBusId) noexcept
 {
@@ -228,6 +252,16 @@ MMIOReadHistory::Builder& MMIOReadHistory::Builder::EventPriority(int eventPrior
 {
     this->eventPriority = eventPriority;
     return *this;
+}
+
+size_t MMIOReadHistory::Builder::GetDepth() const noexcept
+{
+    return depth;
+}
+
+void MMIOReadHistory::Builder::SetDepth(size_t depth) noexcept
+{
+    this->depth = depth;
 }
 
 unsigned int MMIOReadHistory::Builder::GetEventBusId() const noexcept
@@ -252,7 +286,7 @@ void MMIOReadHistory::Builder::SetEventPriority(int eventPriority) noexcept
 
 MMIOReadHistory* MMIOReadHistory::Builder::Build() noexcept
 {
-    return new MMIOReadHistory(eventBusId, eventPriority);
+    return new MMIOReadHistory(depth, eventBusId, eventPriority);
 }
 
 
@@ -263,8 +297,9 @@ unsigned int    eventBusId;
 int             eventPriority;
 */
 
-MMIOWriteHistory::MMIOWriteHistory(unsigned int eventBusId, int eventPriority) noexcept
-    : eventBusId    (eventBusId)
+MMIOWriteHistory::MMIOWriteHistory(size_t depth, unsigned int eventBusId, int eventPriority) noexcept
+    : MMIOHistory   (depth)
+    , eventBusId    (eventBusId)
     , eventPriority (eventPriority)
 { 
     RegisterListeners();
@@ -331,14 +366,22 @@ void MMIOWriteHistory::OnMMUPostWritePostEvent(BullsEye::NSCSCCSingle::NSCSCC202
 
 // Implementation of: class MMIOWriteHistory::Builder
 /*
+size_t          depth;
 unsigned int    eventBusId;
 int             eventPriority;
 */
 
 MMIOWriteHistory::Builder::Builder() noexcept
-    : eventBusId    (0)
+    : depth         (DEFAULT_DEPTH)
+    , eventBusId    (0)
     , eventPriority (0)
 { }
+
+MMIOWriteHistory::Builder& MMIOWriteHistory::Builder::Depth(size_t depth) noexcept
+{
+    this->depth = depth;
+    return *this;
+}
 
 MMIOWriteHistory::Builder& MMIOWriteHistory::Builder::EventBusId(unsigned int eventBusId) noexcept
 {
@@ -350,6 +393,16 @@ MMIOWriteHistory::Builder& MMIOWriteHistory::Builder::EventPriority(int eventPri
 {
     this->eventPriority = eventPriority;
     return *this;
+}
+
+size_t MMIOWriteHistory::Builder::GetDepth() const noexcept
+{
+    return depth;
+}
+
+void MMIOWriteHistory::Builder::SetDepth(size_t depth) noexcept
+{
+    this->depth = depth;
 }
 
 unsigned int MMIOWriteHistory::Builder::GetEventBusId() const noexcept
@@ -374,7 +427,7 @@ void MMIOWriteHistory::Builder::SetEventPriority(int eventPriority) noexcept
 
 MMIOWriteHistory* MMIOWriteHistory::Builder::Build() noexcept
 {
-    return new MMIOWriteHistory(eventBusId, eventPriority);
+    return new MMIOWriteHistory(depth, eventBusId, eventPriority);
 }
 
 
@@ -385,8 +438,9 @@ unsigned int    eventBusId;
 int             eventPriority;
 */
 
-MMIOReadWriteHistory::MMIOReadWriteHistory(unsigned int eventBusId, int eventPriority) noexcept
-    : eventBusId    (eventBusId)
+MMIOReadWriteHistory::MMIOReadWriteHistory(size_t depth, unsigned int eventBusId, int eventPriority) noexcept
+    : MMIOHistory   (depth)
+    , eventBusId    (eventBusId)
     , eventPriority (eventPriority)
 { 
     RegisterListeners();
@@ -481,14 +535,22 @@ void MMIOReadWriteHistory::OnMMUPostWritePostEvent(BullsEye::NSCSCCSingle::NSCSC
 
 // Implementation of: class MMIOReadWriteHistory::Builder
 /*
+size_t          depth;
 unsigned int    eventBusId;
 int             eventPriority;
 */
 
 MMIOReadWriteHistory::Builder::Builder() noexcept
-    : eventBusId    (0)
+    : depth         (DEFAULT_DEPTH)
+    , eventBusId    (0)
     , eventPriority (0)
 { }
+
+MMIOReadWriteHistory::Builder& MMIOReadWriteHistory::Builder::Depth(size_t depth) noexcept
+{
+    this->depth = depth;
+    return *this;
+}
 
 MMIOReadWriteHistory::Builder& MMIOReadWriteHistory::Builder::EventBusId(unsigned int eventBusId) noexcept
 {
@@ -500,6 +562,16 @@ MMIOReadWriteHistory::Builder& MMIOReadWriteHistory::Builder::EventPriority(int 
 {
     this->eventPriority = eventPriority;
     return *this;
+}
+
+size_t MMIOReadWriteHistory::Builder::GetDepth() const noexcept
+{
+    return depth;
+}
+
+void MMIOReadWriteHistory::Builder::SetDepth(size_t depth) noexcept
+{
+    this->depth = depth;
 }
 
 unsigned int MMIOReadWriteHistory::Builder::GetEventBusId() const noexcept
@@ -524,5 +596,5 @@ void MMIOReadWriteHistory::Builder::SetEventPriority(int eventPriority) noexcept
 
 MMIOReadWriteHistory* MMIOReadWriteHistory::Builder::Build() noexcept
 {
-    return new MMIOReadWriteHistory(eventBusId, eventPriority);
+    return new MMIOReadWriteHistory(depth, eventBusId, eventPriority);
 }
