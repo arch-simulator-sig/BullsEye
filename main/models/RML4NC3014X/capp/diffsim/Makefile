@@ -6,6 +6,8 @@ LD := $(GCCPREFIX)ld
 CC := $(GCCPREFIX)g++
 AR := $(GCCPREFIX)ar
 
+CCACHE := ccache
+
 OBJDIR := .obj
 ARCDIR := .build
 
@@ -55,7 +57,7 @@ endif
 
 $(MAIN_OBJ): $(MAIN_OBJDIR)/%.o : $(MAIN_SRCDIR)/%.cpp
 	@test -d $(dir $@) || mkdir -p $(dir $@)
-	$(CC) $(CFLAG) -o $@ $< -fPIE -c -I. $(GLOBAL_INC)
+	$(CCACHE) $(CC) $(CFLAG) -o $@ $< -fPIE -c -I. $(GLOBAL_INC)
 
 
 $(MAIN): $(ARCDIR) $(MAIN_OBJ)
