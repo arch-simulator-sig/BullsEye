@@ -7,7 +7,9 @@
 #include <cstdint>
 
 
+/*
 namespace BullsEye {
+    */
 
     //
     typedef     unsigned char       uchar;
@@ -417,11 +419,16 @@ namespace BullsEye {
         constexpr operator      _Tsv() const noexcept;
         explicit constexpr operator bool() const noexcept;
     };
+
+    /*
 }
+*/
 
 
 // Implementation of: struct _truncated_uint_base
+/*
 namespace BullsEye {
+    */
     //
     // _Tuv    val;
     //
@@ -690,11 +697,15 @@ namespace BullsEye {
     {
         return (val & MASK) != 0;
     }
+    /*
 }
+*/
 
 
 // Implementation of: struct truncated_int_base
+/*
 namespace BullsEye {
+    */
     //
     // _Tsv    val;
     //
@@ -963,4 +974,6 @@ namespace BullsEye {
     {
         return (val & MASK) != 0;
     }
+    /*
 }
+*/
