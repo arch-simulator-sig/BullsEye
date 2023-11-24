@@ -424,3 +424,186 @@ MMUErrorCapture* MMUErrorCapture::Builder::Build() noexcept
 {
     return new MMUErrorCapture(source.c_str(), capturedTo, errorEventBusId, errorEventPriority);
 }
+
+
+
+
+// Implementation of: class AXIBridgeErrorCapture
+/*
+std::string         source;
+
+CapturedErrors*     capturedTo;
+
+unsigned int        errorEventBusId;
+int                 errorEventPriority;
+
+unsigned int        traceDepth;
+std::deque<Trace>   traces;
+*/
+
+AXIBridgeErrorCapture::AXIBridgeErrorCapture(const char* source, CapturedErrors* capturedTo, unsigned int errorEventBusId, int errorEventPriority, unsigned int traceDepth) noexcept
+    : source                (source)
+    , capturedTo            (capturedTo)
+    , errorEventBusId       (errorEventBusId)
+    , errorEventPriority    (errorEventPriority)
+    , traceDepth            (traceDepth)
+    , traces                ()
+{
+    RegisterListeners();
+}
+
+AXIBridgeErrorCapture::~AXIBridgeErrorCapture() noexcept
+{
+    UnregisterListeners();
+}
+
+std::string AXIBridgeErrorCapture::GetListenerName(const char* listener_name) const noexcept
+{
+    std::ostringstream oss;
+    oss << "AXIBridgeErrorCapture[";
+    oss << std::hex << std::setw(16) << std::setfill('0') << uintptr_t(this);
+    oss << "]::" << listener_name;
+    return oss.str();
+}
+
+std::string AXIBridgeErrorCapture::GetSource() const noexcept
+{
+    return source;
+}
+
+CapturedErrors* AXIBridgeErrorCapture::GetCapturedTo() noexcept
+{
+    return capturedTo;
+}
+
+const CapturedErrors* AXIBridgeErrorCapture::GetCapturedTo() const noexcept
+{
+    return capturedTo;
+}
+
+void AXIBridgeErrorCapture::SetCapturedTo(CapturedErrors* capturedTo) noexcept
+{
+    this->capturedTo = capturedTo;
+}
+
+unsigned int AXIBridgeErrorCapture::GetErrorEventBusId() const noexcept
+{
+    return errorEventBusId;
+}
+
+int AXIBridgeErrorCapture::GetErrorEventPriority() const noexcept
+{
+    return errorEventPriority;
+}
+
+
+
+// Implementation of: class AXIBridgeErrorCapture::Builder
+/*
+std::string     source;
+
+CapturedErrors* capturedTo;
+
+unsigned int    errorEventBusId;
+int             errorEventPriority;
+
+unsigned int    traceDepth;
+*/
+
+AXIBridgeErrorCapture::Builder::Builder() noexcept
+    : source                ()
+    , capturedTo            (nullptr)
+    , errorEventBusId       (0)
+    , errorEventPriority    (0)
+    , traceDepth            (32)
+{ }
+
+AXIBridgeErrorCapture::Builder& AXIBridgeErrorCapture::Builder::Source(const char* source) noexcept
+{
+    this->source = source;
+    return *this;
+}
+
+AXIBridgeErrorCapture::Builder& AXIBridgeErrorCapture::Builder::CapturedTo(CapturedErrors* capturedTo) noexcept
+{
+    this->capturedTo = capturedTo;
+    return *this;
+}
+
+AXIBridgeErrorCapture::Builder& AXIBridgeErrorCapture::Builder::ErrorEventBusId(unsigned int errorEventBusId) noexcept
+{
+    this->errorEventBusId = errorEventBusId;
+    return *this;
+}
+
+AXIBridgeErrorCapture::Builder& AXIBridgeErrorCapture::Builder::ErrorEventPriority(int errorEventPriority) noexcept
+{
+    this->errorEventPriority = errorEventPriority;
+    return *this;
+}
+
+AXIBridgeErrorCapture::Builder& AXIBridgeErrorCapture::Builder::TraceDepth(unsigned int traceDepth) noexcept
+{
+    this->traceDepth = traceDepth;
+    return *this;
+}
+
+std::string AXIBridgeErrorCapture::Builder::GetSource() const noexcept
+{
+    return source;
+}
+
+void AXIBridgeErrorCapture::Builder::SetSource(const char* source) noexcept
+{
+    this->source = source;
+}
+
+CapturedErrors* AXIBridgeErrorCapture::Builder::GetCapturedTo() noexcept
+{
+    return capturedTo;
+}
+
+const CapturedErrors* AXIBridgeErrorCapture::Builder::GetCapturedTo() const noexcept
+{
+    return capturedTo;
+}
+
+void AXIBridgeErrorCapture::Builder::SetCapturedTo(CapturedErrors* capturedTo) noexcept
+{
+    this->capturedTo = capturedTo;
+}
+
+unsigned int AXIBridgeErrorCapture::Builder::GetErrorEventBusId() const noexcept
+{
+    return errorEventBusId;
+}
+
+void AXIBridgeErrorCapture::Builder::SetErrorEventBusId(unsigned int errorEventBusId) noexcept
+{
+    this->errorEventBusId = errorEventBusId;
+}
+
+int AXIBridgeErrorCapture::Builder::GetErrorEventPriority() const noexcept
+{
+    return errorEventPriority;
+}
+
+void AXIBridgeErrorCapture::Builder::SetErrorEventPriority(int errorEventPriority) noexcept
+{
+    this->errorEventPriority = errorEventPriority;
+}
+
+unsigned int AXIBridgeErrorCapture::Builder::GetTraceDepth() const noexcept
+{
+    return traceDepth;
+}
+
+void AXIBridgeErrorCapture::Builder::SetTraceDepth(unsigned int traceDepth) noexcept
+{
+    this->traceDepth = traceDepth;
+}
+
+AXIBridgeErrorCapture* AXIBridgeErrorCapture::Builder::Build() noexcept
+{
+    return new AXIBridgeErrorCapture(source.c_str(), capturedTo, errorEventBusId, errorEventPriority, traceDepth);
+}

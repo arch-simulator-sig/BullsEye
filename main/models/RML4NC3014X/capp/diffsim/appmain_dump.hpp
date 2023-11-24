@@ -27,4 +27,4 @@ void dump3();
 
 // Dump #4: DUT AXI bus history
 // - Dumping AXI bus operation history from DUT
-void Dump4();
+void dump4();

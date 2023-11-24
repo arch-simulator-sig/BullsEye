@@ -183,6 +183,8 @@ struct GlobalErrorCapture {
 
     DifferentialVerifierErrorCapture*       verifier;
 
+    AXIBridgeErrorCapture*                  axi;
+
     //
     GlobalErrorCaptureMMU                   mmu;
 };

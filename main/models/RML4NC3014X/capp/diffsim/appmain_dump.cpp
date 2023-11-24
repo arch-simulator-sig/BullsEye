@@ -26,6 +26,8 @@ static constexpr const char* _COLOR_ERROR       = "\033[1;31m";
 
 static constexpr const char* _COLOR_PAUSE       = "\033[33m";
 
+static constexpr const char* _COLOR_SPECIAL     = "\033[1;33m";
+
 static constexpr const char* _COLOR_COMMENT     = "\033[1;30m";
 
 static constexpr const char* _COLOR_RESET       = "\033[0m";
@@ -553,6 +555,7 @@ void dump(bool pause)
     dump1(pause);
     dump2();
     dump3();
+    dump4();
 }
 
 
@@ -833,5 +836,310 @@ void dump3()
 //
 void dump4()
 {
-    
+    if (!glbl.cfg.dump4.enabled)
+        return;
+
+    std::cout << "\033[1;33mEmulation dumped\033[0m from reference (dump #4: DUT AXI transactions)" << std::endl;
+
+    int j = std::min(int32_t(glbl.ctx.dut.history.busAXI->GetCount()), int32_t(glbl.cfg.dump4.depth));
+
+    for (; j >= 0; j--)
+    {
+        auto& transaction = glbl.ctx.dut.history.busAXI->Get(j);
+        auto& transmissions = transaction.GetTransmissions();
+
+        //
+        std::ostringstream oss;
+        
+        //
+        oss << "  ";
+
+        if (transaction.GetType() == AXIBusHistory::Transaction::Type::READ)
+        {
+            if ((uint32_t(transaction.GetLength()) + 1) != transmissions.size())
+                oss << _COLOR_PAUSE;
+            else
+            {
+                auto& last_trans = transmissions.back();
+
+                if (last_trans.GetType() != AXIBusHistory::Transmission::Type::DATA_READ)
+                    oss << _COLOR_ERROR;
+                else if (!last_trans.GetLast())
+                    oss << _COLOR_ERROR;
+                else if (last_trans.GetReadResponse() != BullsEye::AXI4::Attributes::RRESP_OKAY)
+                    oss << _COLOR_ERROR;
+                else
+                    oss << _COLOR_CORRECT;
+            }
+        }
+        else if (transaction.GetType() == AXIBusHistory::Transaction::Type::WRITE)
+        {
+            if ((uint32_t(transaction.GetLength()) + 2) != transmissions.size())
+                oss << _COLOR_PAUSE;
+            else
+            {
+                auto& last_trans = transmissions.back();
+
+                if (last_trans.GetType() != AXIBusHistory::Transmission::Type::RESPONSE_WRITE)
+                    oss <<  _COLOR_ERROR;
+                else if (last_trans.GetWriteResponse() != BullsEye::AXI4::Attributes::BRESP_OKAY)
+                    oss << _COLOR_ERROR;
+                else
+                    oss << _COLOR_CORRECT;
+            }
+        }
+        else
+            oss << _COLOR_COMMENT;
+
+        oss << "[";
+        switch (transaction.GetPath())
+        {
+            case AXIBusHistory::Transaction::Path::INSN:
+                oss << "Fetch";
+                break;
+
+            case AXIBusHistory::Transaction::Path::DATA:
+                oss << "Data";
+                break;
+
+            default:
+                oss << "Unknown";
+                break;
+        }
+
+        oss << " ";
+        switch (transaction.GetType())
+        {
+            case AXIBusHistory::Transaction::Type::READ:
+                oss << "Read ";
+                break;
+
+            case AXIBusHistory::Transaction::Type::WRITE:
+                oss << "Write";
+                break;
+
+            default:
+                oss << "Action";
+                break;
+        }
+        oss << "] ";
+
+        oss << "[id = ";
+        oss <<  std::dec << std::setw(2) << uint32_t(transaction.GetId());
+        oss << "] ";
+
+        oss << "Address = 0x";
+        oss << std::hex << std::setw(8) << std::setfill('0') << transaction.GetAddress();
+        oss << ", ";
+
+        oss << "Burst = ";
+        switch (transaction.GetBurst())
+        {
+            case BullsEye::AXI4::Attributes::AXBURST_FIXED: oss << "FIXED";     break;
+            case BullsEye::AXI4::Attributes::AXBURST_INCR:  oss << "INCR ";      break;
+            case BullsEye::AXI4::Attributes::AXBURST_WRAP:  oss << "WRAP ";      break;
+
+            default:
+                oss << "<unknown(burst=";
+                oss << uint32_t(transaction.GetBurst());
+                oss << ")>";
+        }
+        oss << ", ";
+
+        oss << "Size = ";
+        switch (transaction.GetSize())
+        {
+            case BullsEye::AXI4::Attributes::AXSIZE_1B:     oss << "1B  ";    break;
+            case BullsEye::AXI4::Attributes::AXSIZE_2B:     oss << "2B  ";    break;
+            case BullsEye::AXI4::Attributes::AXSIZE_4B:     oss << "4B  ";    break;
+            case BullsEye::AXI4::Attributes::AXSIZE_8B:     oss << "8B  ";    break;
+            case BullsEye::AXI4::Attributes::AXSIZE_16B:    oss << "16B ";   break;
+            case BullsEye::AXI4::Attributes::AXSIZE_32B:    oss << "32B ";   break;
+            case BullsEye::AXI4::Attributes::AXSIZE_64B:    oss << "64B ";   break;
+            case BullsEye::AXI4::Attributes::AXSIZE_128B:   oss << "128B";  break;
+
+            default:
+                oss << "<unknown(size=";
+                oss << uint32_t(transaction.GetSize());
+                oss << ")>";
+        }
+        oss << ", ";
+
+        oss << "Length = ";
+        oss << std::dec << (uint32_t(transaction.GetLength()) + 1);
+        oss << " ";
+
+        oss << _COLOR_COMMENT;
+        oss << "(";
+        oss << std::dec << uint32_t(transmissions.size());
+        oss << " of ";
+        switch (transaction.GetType())
+        {
+            case AXIBusHistory::Transaction::Type::WRITE:
+                oss << std::dec << uint32_t(uint32_t(transaction.GetLength()) + 2);
+                break;
+
+            default:
+                oss << std::dec << uint32_t(uint32_t(transaction.GetLength()) + 1);
+                break;
+        }
+        oss << ")";
+        
+        std::cout << oss.str() << _COLOR_RESET << std::endl;
+
+        //
+        for (auto& transmission : transmissions)
+        {
+            //
+            oss = std::ostringstream();
+            oss << "    ";
+
+            //
+            oss << "[";
+            switch (transmission.GetType())
+            {
+                case AXIBusHistory::Transmission::Type::DATA_READ:
+                    oss << "M <- S] [R] ";
+                    
+                    oss << "Data = 0x";
+                    switch (transaction.GetSize())
+                    {
+                        case BullsEye::AXI4::Attributes::AXSIZE_1B:
+                            switch (transaction.GetAddress() & 0x00000003)
+                            {
+                                case 0:
+                                    oss << _COLOR_COMMENT << std::hex << std::setw(6) << std::setfill('0') << ((transmission.GetData() & 0xFFFFFF00) >> 8 );
+                                    oss << _COLOR_RESET   << std::hex << std::setw(2) << std::setfill('0') << ((transmission.GetData() & 0x000000FF));
+                                    break;
+
+                                case 1:
+                                    oss << _COLOR_COMMENT << std::hex << std::setw(4) << std::setfill('0') << ((transmission.GetData() & 0xFFFF0000) >> 16);
+                                    oss << _COLOR_RESET   << std::hex << std::setw(2) << std::setfill('0') << ((transmission.GetData() & 0x0000FF00) >> 8 );
+                                    oss << _COLOR_COMMENT << std::hex << std::setw(2) << std::setfill('0') << ((transmission.GetData() & 0x000000FF));
+                                    break;
+
+                                case 2:
+                                    oss << _COLOR_COMMENT << std::hex << std::setw(2) << std::setfill('0') << ((transmission.GetData() & 0xFF000000) >> 24);
+                                    oss << _COLOR_RESET   << std::hex << std::setw(2) << std::setfill('0') << ((transmission.GetData() & 0x00FF0000) >> 16);
+                                    oss << _COLOR_COMMENT << std::hex << std::setw(4) << std::setfill('0') << ((transmission.GetData() & 0x0000FFFF));
+                                    break;
+
+                                case 3:
+                                    oss << _COLOR_RESET   << std::hex << std::setw(2) << std::setfill('0') << ((transmission.GetData() & 0xFF000000) >> 24);
+                                    oss << _COLOR_COMMENT << std::hex << std::setw(6) << std::setfill('0') << ((transmission.GetData() & 0x00FFFFFF));
+                                    break;
+
+                                default:
+                                    break;
+                            }
+
+                            break;
+
+                        case BullsEye::AXI4::Attributes::AXSIZE_2B:
+                            switch (transaction.GetAddress() & 0x00000002)
+                            {
+                                case 0:
+                                    oss << _COLOR_COMMENT << std::hex << std::setw(4) << std::setfill('0') << ((transmission.GetData() & 0xFFFF0000) >> 16);
+                                    oss << _COLOR_RESET   << std::hex << std::setw(4) << std::setfill('0') << ((transmission.GetData() & 0x0000FFFF));
+                                    break;
+
+                                case 2:
+                                    oss << _COLOR_RESET   << std::hex << std::setw(4) << std::setfill('0') << ((transmission.GetData() & 0xFFFF0000) >> 16);
+                                    oss << _COLOR_COMMENT << std::hex << std::setw(4) << std::setfill('0') << ((transmission.GetData() & 0x0000FFFF));
+
+                                default:
+                                    break;
+                            }
+
+                            break;
+
+                        default:
+                            oss << std::hex << std::setw(8) << std::setfill('0') << transmission.GetData();
+                            break;
+                    }
+
+
+                    if (transmission.GetLast())
+                    {
+                        oss << ", " << _COLOR_SPECIAL << "Last" << _COLOR_RESET;
+
+                        oss << ", " << "Resp = ";
+                        switch (transmission.GetReadResponse())
+                        {
+                            case BullsEye::AXI4::Attributes::RRESP_OKAY:        oss << _COLOR_CORRECT << "OKAY";     break;
+                            case BullsEye::AXI4::Attributes::RRESP_EXOKAY:      oss << _COLOR_SPECIAL << "EXOKAY";   break;
+                            case BullsEye::AXI4::Attributes::RRESP_SLVERR:      oss << _COLOR_ERROR   << "SLVERR";   break;
+                            case BullsEye::AXI4::Attributes::RRESP_DECERR:      oss << _COLOR_ERROR   << "DECERR";   break;
+                            case BullsEye::AXI4::Attributes::RRESP_PREFETCHED:  oss << _COLOR_SPECIAL << "PREFETCHED"; break;
+                            case BullsEye::AXI4::Attributes::RRESP_TRANSFAULT:  oss << _COLOR_ERROR   << "TRANSFAULT"; break;
+                            case BullsEye::AXI4::Attributes::RRESP_OKAYDIRTY:   oss << _COLOR_SPECIAL << "OKAYDIRTY"; break;
+
+                            default:
+                                oss << "<unknown(rresp=0x";
+                                oss << std::hex << transmission.GetReadResponse();
+                                oss << ")>";
+                        }
+                    }
+
+                    break;
+
+                case AXIBusHistory::Transmission::Type::DATA_WRITE:
+                    oss << "M -> S] [W] ";
+
+                    oss << "Data = 0x";
+                    for (int i = 3; i >= 0; i--)
+                    {
+                        oss << (transmission.GetWriteStrobe()[i] ? _COLOR_RESET : _COLOR_COMMENT);
+                        oss << std::hex << std::setw(2) << std::setfill('0') << (transmission.GetData() >> (8 * i));
+                    }
+                    /*
+                    oss << ", ";
+
+                    oss << "Strobe = 0b";
+                    for (int i = 3; i >= 0; i--)
+                    {
+                        oss << (transmission.GetWriteStrobe()[i] ? "1" : "0");
+                    }
+                    */
+                    
+                    if (transmission.GetLast())
+                    {
+                        oss << ", " << _COLOR_SPECIAL << "Last" << _COLOR_RESET;
+                    }
+
+                    break;
+
+                case AXIBusHistory::Transmission::Type::RESPONSE_WRITE:
+                    oss << "M <- S] [B] ";
+
+                    oss << "Resp = ";
+                    switch (transmission.GetWriteResponse())
+                    {
+                        case BullsEye::AXI4::Attributes::BRESP_OKAY:        oss << _COLOR_CORRECT << "OKAY";        break;
+                        case BullsEye::AXI4::Attributes::BRESP_EXOKAY:      oss << _COLOR_SPECIAL << "EXOKAY";      break;
+                        case BullsEye::AXI4::Attributes::BRESP_SLVERR:      oss << _COLOR_ERROR   << "SLVERR";      break;
+                        case BullsEye::AXI4::Attributes::BRESP_DECERR:      oss << _COLOR_ERROR   << "DECERR";      break;
+                        case BullsEye::AXI4::Attributes::BRESP_DEFER:       oss << _COLOR_SPECIAL << "DEFER";       break;
+                        case BullsEye::AXI4::Attributes::BRESP_TRANSFAULT:  oss << _COLOR_ERROR   << "TRANSFAULT";  break;
+                        case BullsEye::AXI4::Attributes::BRESP_UNSUPPORTED: oss << _COLOR_ERROR   << "UNSUPPORTED"; break;
+
+                        default:
+                            oss << "<unknown(rresp=0x";
+                            oss << std::hex << transmission.GetWriteResponse();
+                            oss << ")>";
+                    }
+
+                    break;
+
+                default:
+                    oss << "? -> ?] unknown";
+                    break;
+            }
+
+            //
+            std::cout << oss.str() << _COLOR_RESET << std::endl;
+        }
+    }
+
+    std::cout << "--------------------------------" << std::endl;
 }

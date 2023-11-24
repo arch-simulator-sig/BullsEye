@@ -289,39 +289,63 @@ int startup()
     std::cout << "Enabled error capture of differential verifier." << std::endl;
 
 
+    glbl.errcapt.axi = AXIBridgeErrorCapture::Builder()
+        .CapturedTo     (&glbl.err.captured)
+        .ErrorEventBusId(glbl.ctx.dut.eventBusId)
+        .Build();
+    std::cout << "Enabled error capture of SoC AXI bridge." << std::endl;
+
+
     glbl.errcapt.mmu.dut = MMUErrorCapture::Builder()
         .Source         ("DUT")
         .CapturedTo     (&glbl.err.captured)
         .ErrorEventBusId(glbl.ctx.dut.eventBusId)
         .Build();
+    std::cout << "Enabled error capture of DUT MMU." << std::endl;
 
     glbl.errcapt.mmu.ref = MMUErrorCapture::Builder()
         .Source         ("reference")
         .CapturedTo     (&glbl.err.captured)
         .ErrorEventBusId(glbl.ctx.ref.eventBusId)
         .Build();
+    std::cout << "Enabled error capture of reference MMU." << std::endl;
 
     //
 
 
     // History collection
     glbl.ctx.dut.history.PC = new PCHistory;
+    std::cout << "Enabled DUT PC history capture (depth = ";
+    std::cout << glbl.ctx.dut.history.PC->GetDepth();
+    std::cout << ")." << std::endl;
 
     glbl.ctx.dut.history.MMIORead = MMIOReadHistory::Builder()
         .EventBusId(glbl.ctx.dut.eventBusId)
         .Build();
+    std::cout << "Enabled DUT MMIO Read history capture (depth = ";
+    std::cout << glbl.ctx.dut.history.MMIORead->GetDepth();
+    std::cout << ")." << std::endl;
 
     glbl.ctx.dut.history.MMIOWrite = MMIOWriteHistory::Builder()
         .EventBusId(glbl.ctx.dut.eventBusId)
         .Build();
+    std::cout << "Enabled DUT MMIO Write history capture (depth = ";
+    std::cout << glbl.ctx.dut.history.MMIOWrite->GetDepth();
+    std::cout << ")." << std::endl;
 
     glbl.ctx.dut.history.MMIOReadWrite = MMIOReadWriteHistory::Builder()
         .EventBusId(glbl.ctx.dut.eventBusId)
         .Build();
+    std::cout << "Enabled DUT MMIO Read/Write history capture (depth = ";
+    std::cout << glbl.ctx.dut.history.MMIOReadWrite->GetDepth();
+    std::cout << ")." << std::endl;
 
     glbl.ctx.dut.history.busAXI = AXIBusHistory::Builder()
         .EventBusId(glbl.ctx.dut.eventBusId)
         .Build();
+    std::cout << "Enabled DUT AXI Bus history capture (depth = ";
+    std::cout << glbl.ctx.dut.history.busAXI->GetDepth();
+    std::cout << ")." << std::endl;
 
     //
     return 0;
@@ -372,6 +396,12 @@ int shutdown()
     {
         delete glbl.errcapt.mmu.dut;
         glbl.errcapt.mmu.dut = nullptr;
+    }
+
+    if (glbl.errcapt.axi)
+    {
+        delete glbl.errcapt.axi;
+        glbl.errcapt.axi = nullptr;
     }
 
     if (glbl.errcapt.verifier)

@@ -332,7 +332,7 @@ void AXIBusHistory::SetDepth(size_t depth) noexcept
     this->depth = depth;
 
     while (history.size() > depth)
-        history.pop_front();
+        history.pop_back();
 }
 
 unsigned int AXIBusHistory::GetEventBusId() const noexcept
@@ -348,9 +348,9 @@ int AXIBusHistory::GetEventPriority() const noexcept
 AXIBusHistory::Transaction& AXIBusHistory::Push() noexcept
 {
     while (history.size() >= depth)
-        history.pop_front();
+        history.pop_back();
 
-    return history.emplace_back();
+    return history.emplace_front();
 }
 
 size_t AXIBusHistory::GetCount() const noexcept
@@ -675,7 +675,7 @@ void AXIBusHistory::OnDataWriteResponseAccepted(BullsEye::Draconids3014::SoCAXIB
             //
             Transmission& transmission = transaction.GetTransmissions().emplace_back();
 
-            transmission.SetType(Transmission::Type::DATA_WRITE);
+            transmission.SetType(Transmission::Type::RESPONSE_WRITE);
             transmission.SetPath(Transmission::Path::DATA);
 
             transmission.SetId              (bundle.bid);
