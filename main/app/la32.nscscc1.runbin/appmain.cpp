@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
     uint32_t    start_pc    = 0x80000000;
     uint32_t    finish_pc   = 0xFFFFFFFF;
 
-    uint32_t    systick_interval = 50000;
+    uint32_t    systick_interval = 50;
 
     char* endptr = NULL;
 
@@ -132,6 +132,8 @@ int main(int argc, char* argv[])
 
 
     // Initialize serial
+    std::ostringstream sbuff;
+
     SerialInterface* serial;
     if (serial_server)
     {
@@ -174,7 +176,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        SerialWriteOnlyConsole* lserial = new SerialWriteOnlyConsole;
+        SerialWriteOnlyConsole* lserial = new SerialWriteOnlyConsole(sbuff);
 
         serial = lserial;
     }
@@ -244,7 +246,8 @@ int main(int argc, char* argv[])
     //
     auto start = std::chrono::system_clock::now();
 
-    int systick_counter = 0;
+    uint64_t systick_total   = 0;
+    uint32_t systick_counter = 0;
 
     unsigned long long step = 0;
 
@@ -262,18 +265,29 @@ int main(int argc, char* argv[])
         auto update_console_emuinfo = [&]() -> void {
             std::ostringstream oss;
 
-            oss << "\n--------------------------------" << std::endl;
-            oss << "Emulation speed   : \033[1;33m";
+            oss << "\033[K" << std::endl;
+            oss << "\033[K--------------------------------" << std::endl;
+            oss << "\033[KEmulation speed   : \033[1;33m";
             oss << std::setw(12) << std::setfill(' ') << cps;
             oss << "\033[0m cycles/second";
             oss << "  ";
             oss << ANIMATE_INF_PROGRESS_BAR[counter_progressbar] << std::endl;
-            oss << "Last commit PC    : \033[1;33m0x" << std::hex << std::setw(8) << std::setfill('0') << instance->Arch().PC() << "\033[0m" << std::endl;
+            oss << "\033[KLast commit PC    : \033[1;33m0x" << std::hex << std::setw(8) << std::setfill('0') << instance->Arch().PC() << "\033[0m" << std::endl;
             oss << "\033[4A";
 
             counter_progressbar = ++counter_progressbar % ANIMATE_INF_PROGRESS_BAR_SIZE;
 
             std::cout << oss.str();
+
+            if (!sbuff.view().empty())
+            {
+                for (char c : sbuff.view())
+                    std::cout << "\033[K" << c;
+
+                std::size_t pos = sbuff.view().find_last_of("\n");
+                if (pos != std::string::npos)
+                    sbuff.str(sbuff.str().substr(pos + 1));
+            }
         };
 
         if (counter_interval == 600000 
@@ -309,7 +323,7 @@ int main(int argc, char* argv[])
             std::cout << "--------------------------------" << std::endl;
 
             std::cout << "\033[0;36mHIT FINISH TRAP!\033[0m" << std::endl;
-            std::cout << "System tick elapsed: " << systick_counter << std::endl;
+            std::cout << "System tick elapsed: " << systick_total << std::endl;
 
             //
             auto end = std::chrono::system_clock::now();
@@ -322,9 +336,10 @@ int main(int argc, char* argv[])
         LA32ExecOutcome outcome = instance->Eval();
         step++;
 
-        if (++systick_counter == systick_interval)
+        if (++systick_counter == (systick_interval - 1))
         {
             systick_counter = 0;
+            systick_total++;
             
             soc->CounterClock().IncreaseCounter();
         }
