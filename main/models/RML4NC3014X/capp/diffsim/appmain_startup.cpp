@@ -149,40 +149,42 @@ int startup()
 
 
     // Initialize Serial Interface
-#ifdef SERIAL_SERVER
-    // Initialize serial tcp
-    std::cout << "Initialize serial TCP server ..." << std::endl;
-
-    SerialTCPServer* serial = new SerialTCPServer;
-
-    glbl.ctx.ref.serial = nullptr;
-    glbl.ctx.dut.serial = serial;
-
-    const char* ip      = "127.0.0.1";
-    uint64_t    port    = 5001;
-
-    if (!serial->OpenServer(ip, port))
+    if (glbl.cfg.serial.serverEnabled)
     {
-        std::cout << "[\033[1;31mERROR\033[0m] Cannot open serial TCP server on " << ip << ":" << port << std::endl;
-        return 1;
+        // Initialize serial tcp
+        std::cout << "Initialize serial TCP server ..." << std::endl;
+
+        SerialTCPServer* serial = new SerialTCPServer;
+
+        glbl.ctx.ref.serial = nullptr;
+        glbl.ctx.dut.serial = serial;
+
+        const char* ip      = glbl.cfg.serial.serverAddress.c_str();
+        uint64_t    port    = glbl.cfg.serial.serverPort;
+
+        if (!serial->OpenServer(ip, port))
+        {
+            std::cout << "[\033[1;31mERROR\033[0m] Cannot open serial TCP server on " << ip << ":" << port << std::endl;
+            return 1;
+        }
+
+        serial->AcceptConnection();
+
+        printf("\033[1;33mOpened serial TCP server on %s:%d\033[0m\n", ip, (uint32_t) port);
+
+        //
+        printf("Press ENTER to continue...\n");
+        std::cin.get();
+        std::cout << "--------------------------------" << std::endl;
     }
+    else
+    {
+        // Initialize serial
+        glbl.ctx.ref.serial = nullptr;
+        glbl.ctx.dut.serial = new SerialWriteOnlyConsole(glbl.oss);
 
-    serial->AcceptConnection();
-
-    printf("\033[1;33mOpened serial TCP server on %s:%d\033[0m\n", ip, (uint32_t) port);
-
-    //
-    printf("Press ENTER to continue...\n");
-    std::cin.get();
-    std::cout << "--------------------------------" << std::endl;
-
-#else
-    // Initialize serial
-    glbl.ctx.ref.serial = nullptr;
-    glbl.ctx.dut.serial = new SerialWriteOnlyConsole;
-
-    printf("\033[1;33mOpened serial console (serial write-only).\033[0m\n");
-#endif
+        printf("\033[1;33mOpened serial console (serial write-only).\033[0m\n");
+    }
 
     
     // Instantiate SoC
@@ -207,15 +209,15 @@ int startup()
     std::cout << "Reference model emulator EventBus ID: " << glbl.ctx.ref.eventBusId << std::endl;
 
     glbl.ctx.ref.emu = LA32Instance::Builder()
-        .StartupPC  (0x80000000)
+        .StartupPC  (glbl.cfg.startupPC)
         .Decoder    (Decoder::LA32R_NSCSCC)
         .Memory     (&glbl.ctx.ref.soc->MMU())
         .EventBusId (glbl.ctx.ref.eventBusId)
-        .EnableTrace            (32, 32)
-        .EnablePCTracer         (32)
-        .EnableGPRTracer        (32)
-        .EnableFetchTracer      (32)
-        .EnableExecutionTracer  (32)
+        .EnableTrace            (1024, 1024)
+        .EnablePCTracer         (256)
+        .EnableGPRTracer        (256)
+        .EnableFetchTracer      (256)
+        .EnableExecutionTracer  (256)
         .Build();
     
     std::cout << "Instantiated reference model emulator." << std::endl;
@@ -314,12 +316,13 @@ int startup()
 
 
     // History collection
-    glbl.ctx.dut.history.PC = new PCHistory;
+    glbl.ctx.dut.history.PC = new PCHistory(256);
     std::cout << "Enabled DUT PC history capture (depth = ";
     std::cout << glbl.ctx.dut.history.PC->GetDepth();
     std::cout << ")." << std::endl;
 
     glbl.ctx.dut.history.MMIORead = MMIOReadHistory::Builder()
+        .Depth(256)
         .EventBusId(glbl.ctx.dut.eventBusId)
         .Build();
     std::cout << "Enabled DUT MMIO Read history capture (depth = ";
@@ -327,6 +330,7 @@ int startup()
     std::cout << ")." << std::endl;
 
     glbl.ctx.dut.history.MMIOWrite = MMIOWriteHistory::Builder()
+        .Depth(256)
         .EventBusId(glbl.ctx.dut.eventBusId)
         .Build();
     std::cout << "Enabled DUT MMIO Write history capture (depth = ";
@@ -334,6 +338,7 @@ int startup()
     std::cout << ")." << std::endl;
 
     glbl.ctx.dut.history.MMIOReadWrite = MMIOReadWriteHistory::Builder()
+        .Depth(256)
         .EventBusId(glbl.ctx.dut.eventBusId)
         .Build();
     std::cout << "Enabled DUT MMIO Read/Write history capture (depth = ";
@@ -341,6 +346,7 @@ int startup()
     std::cout << ")." << std::endl;
 
     glbl.ctx.dut.history.busAXI = AXIBusHistory::Builder()
+        .Depth(256)
         .EventBusId(glbl.ctx.dut.eventBusId)
         .Build();
     std::cout << "Enabled DUT AXI Bus history capture (depth = ";

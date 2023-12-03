@@ -5,6 +5,7 @@
 //
 
 #include <string>
+#include <sstream>
 
 
 #include "appmain_periph.hpp"
@@ -101,6 +102,15 @@ struct GlobalContext {
 };
 
 
+// 
+struct GlobalConfigSerial {
+
+    bool                                    serverEnabled;
+    std::string                             serverAddress;
+    uint16_t                                serverPort;
+};
+
+
 //
 struct GlobalConfigDump0 {
 
@@ -149,7 +159,16 @@ struct GlobalConfigDump4 {
 struct GlobalConfig {
 
     //
+    uint32_t                                startupPC;
+    
+    uint32_t                                finishTrapPC;
+    uint32_t                                finishTrapMargin;
+
+    //
     std::string                             binaryFileName;
+
+    //
+    GlobalConfigSerial                      serial;
 
     //
     GlobalConfigDump0                       dump0;
@@ -193,6 +212,11 @@ struct GlobalErrorCapture {
 //
 struct Global {
 
+    //
+    std::ostringstream  oss;
+
+
+    //
     GlobalContext       ctx;
 
     GlobalConfig        cfg;
