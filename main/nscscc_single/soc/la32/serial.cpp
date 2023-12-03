@@ -11,16 +11,24 @@
 
 // Implementation of: class SerialWriteOnlyConsole
 namespace BullsEye {
+    /*
+    std::ostream&       os;
+    */
 
-    SerialWriteOnlyConsole::SerialWriteOnlyConsole()
+    SerialWriteOnlyConsole::SerialWriteOnlyConsole() noexcept
+        : os    (std::cout)
     { }
 
-    SerialWriteOnlyConsole::~SerialWriteOnlyConsole()
+    SerialWriteOnlyConsole::SerialWriteOnlyConsole(std::ostream& os) noexcept
+        : os    (os)
+    { }
+
+    SerialWriteOnlyConsole::~SerialWriteOnlyConsole() noexcept
     { }
 
     void SerialWriteOnlyConsole::Write(uint8_t data) noexcept
     {
-        std::cout << "\033[K" << (char) data << std::flush;
+        os << (char) data;
     }
 
     bool SerialWriteOnlyConsole::IsWriteAvailable() const noexcept

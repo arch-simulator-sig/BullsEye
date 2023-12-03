@@ -45,9 +45,16 @@ namespace BullsEye {
 
     // Write-only Serial Console
     class SerialWriteOnlyConsole : public SerialInterface {
+    private:
+        std::ostream&       os;
+
     public:
-        SerialWriteOnlyConsole();
-        virtual ~SerialWriteOnlyConsole();
+        SerialWriteOnlyConsole() noexcept;
+        SerialWriteOnlyConsole(std::ostream& os) noexcept;
+        virtual ~SerialWriteOnlyConsole() noexcept;
+
+        std::ostream&       GetOutputStream() noexcept;
+        void                SetOutputStream(std::ostream& os) noexcept;
 
         virtual void        Write(uint8_t data) noexcept override;
         virtual bool        IsWriteAvailable() const noexcept override;
