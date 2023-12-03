@@ -110,6 +110,10 @@ protected:
     void            OnDUTSerialRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOSerialPostReadPostEvent& event) noexcept;
     void            OnDUTSerialWrite(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOSerialPostWritePostEvent& event) noexcept;
 
+    void            OnRefClockCounterRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOClockCounterPreReadPreEvent& event) noexcept;
+
+    void            OnDUTClockCounterRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOClockCounterPostReadPostEvent& event) noexcept;
+
     void            OnDUTMemoryStore(BullsEye::Draconids3014::DS232StoreCommitEvent& event) noexcept;
 
 public:

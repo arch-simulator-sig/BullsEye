@@ -100,6 +100,28 @@ void PeripheralInjector::RegisterListeners() noexcept
     //
     BullsEye::RegisterListener(
         BullsEye::MakeListener(
+            GetListenerName("OnRefClockCounterRead"),
+            refEventPriority,
+            &PeripheralInjector::OnRefClockCounterRead,
+            this
+        ),
+        refEventBusId
+    );
+
+    //
+    BullsEye::RegisterListener(
+        BullsEye::MakeListener(
+            GetListenerName("OnDUTClockCounterRead"),
+            dutEventPriority,
+            &PeripheralInjector::OnDUTClockCounterRead,
+            this
+        ),
+        dutEventBusId
+    );
+
+    //
+    BullsEye::RegisterListener(
+        BullsEye::MakeListener(
             GetListenerName("OnDUTMemoryStore"),
             dutEventPriority,
             &PeripheralInjector::OnDUTMemoryStore,
@@ -134,6 +156,20 @@ void PeripheralInjector::UnregisterListeners() noexcept
     BullsEye::UnregisterListener(
         GetListenerName("OnDUTSerialWrite"),
         &PeripheralInjector::OnDUTSerialWrite,
+        dutEventBusId
+    );
+
+    //
+    BullsEye::UnregisterListener(
+        GetListenerName("OnRefClockCounterRead"),
+        &PeripheralInjector::OnRefClockCounterRead,
+        refEventBusId
+    );
+
+    //
+    BullsEye::UnregisterListener(
+        GetListenerName("OnDUTClockCounterRead"),
+        &PeripheralInjector::OnDUTClockCounterRead,
         dutEventBusId
     );
 
@@ -269,6 +305,57 @@ void PeripheralInjector::OnDUTSerialWrite(BullsEye::NSCSCCSingle::NSCSCC2023MMUM
 
     //
     injectionsAfter.pop_front();
+}
+
+
+void PeripheralInjector::OnRefClockCounterRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOClockCounterPreReadPreEvent& event) noexcept
+{
+    Element target(
+        Element::Source::REF,
+        Element::Type::LOAD,
+        event.GetAddress(),
+        event.GetWidth(),
+        { 0 });
+
+    // check injection
+    if (injections.empty())
+    {
+        NojectedEvent(target).Fire(thisEventBusId);
+        return;
+    }
+
+    Element& inject = injections.front();
+
+    if (inject.GetType()    != Element::Type::LOAD
+    ||  inject.GetAddress() != target.GetAddress()
+    ||  inject.GetWidth()   != target.GetWidth())
+    {
+        RejectedEvent(inject, target).Fire(thisEventBusId);
+        return;
+    }
+
+    // inject
+    event.SetProxy(true, [&](
+            Jasse::LA32MOPPath, Jasse::addr_t, Jasse::LA32MOPWidth, 
+            Jasse::memdata_t*   data) -> Jasse::LA32MOPOutcome {
+        *data = inject.GetData();
+        return { Jasse::LA32MOPStatus::MOP_SUCCESS };
+    });
+
+    InjectedEvent(inject).Fire(thisEventBusId);
+
+    //
+    injections.pop_front();
+}
+
+void PeripheralInjector::OnDUTClockCounterRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMappedIOClockCounterPostReadPostEvent& event) noexcept
+{
+    injections.emplace_back(
+        Element::Source::DUT,
+        Element::Type::LOAD,
+        event.GetAddress(),
+        event.GetWidth(),
+        event.GetData());
 }
 
 
