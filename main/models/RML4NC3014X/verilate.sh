@@ -16,26 +16,30 @@ VERILATED_PATH="$SCRIPT_DIR/.verilated"
 
 VTOP_FILE="$VPROJECT_PATH/thinpad_verilated.v"
 
-VERILATOR_ARGS="--trace -O3 --threads 4 -j `nproc`"
+# *NOTE: It runs better with multi-thread disabled while VCD trace disabled
+VERILATOR_ARGS="--trace -O3 -j `nproc`" 
+
 COMPILE_ARGS="-std=c++20 -flto -fwhole-program"
 
 
 #
 USAGE="\
-Usage: verilate.sh [-c] [-v <path>] [-H]\n\
+Usage: verilate.sh [-c] [-v <path>] [-T <thread>] [-H]\n\
 -c: Clean the build path before verilate.\n\
 -v: Specify the Verilog Project path.\n\
+-T: Specify the number of verilated threads to use (Single threaded by default).\n\
 -H: Generate CPP header files only.\n"
 
 
 BUILD_HEADER_SWITCH="--build --lib-create vltdm"
 
 OPTIND=
-while getopts 'hcv:H' OPT; do
+while getopts 'hcv:T:H' OPT; do
     case $OPT in
         h) echo -e "$USAGE"; return 0;;
         c) CLEAN="true";;
         v) VPROJECT_PATH="$OPTARG";;
+        T) VERILATOR_ARGS="$VERILATOR_ARGS --threads $OPTARG";;
         H) BUILD_HEADER_SWITCH="";;
         ?) echo -e "$USAGE"; return 1;;
     esac

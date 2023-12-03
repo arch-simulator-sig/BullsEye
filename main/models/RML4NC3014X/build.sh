@@ -34,10 +34,11 @@ USAGE="\
 Usage: build.sh [-c] [-r] [-j <count>] [-v <path>] [-t <target>] [-T <file>] [-R] [-a <params>] [-s <options>]\n\
 -c: Clean the verilated build path before build.\n\
 -v: Specify the Verilog Project path.\n\
+-T: Specify the number of verilated threads to use (Single threaded by default).\n\
 -r: Clean and rebuild the C-app and dependencies output.\n\
 -j: Specify the number of jobs to run simultaneously on build.\n\
 -t: Specify the C-app target.\n\
--T: Re-specify the C-app LD archive target.\n\
+-l: Re-specify the C-app LD archive target.\n\
 -R: Run the specified C-app.\n\
 -a: Specify the arguments to pass to the C-app. Example: -a \"1 2 3 ...\"\n\
 -s: Skip specified procedure in overall build.\n\
@@ -60,6 +61,7 @@ SKIP_BUILD=
 
 VERILATE_ARG_C=
 VERILATE_ARG_V=
+VERILATE_ARG_T=
 
 BUILD_ARG_C=
 BUILD_ARG_J=
@@ -77,15 +79,16 @@ CAPP_LD_FILE=
 CAPP_RUN_ARGS=
 
 OPTIND=
-while getopts 'hcv:rj:t:T:Ra:s:' OPT; do
+while getopts 'hcv:T:rj:t:l:Ra:s:' OPT; do
     case $OPT in
         h) echo -e "$USAGE"; exit 0;;
         c) VERILATE_ARG_C="-c";;
         v) VERILATE_ARG_V="-v \"$OPTARG\"";;
+        T) VERILATE_ARG_T="-T \"$OPTARG\"";;
         r) BUILD_ARG_C="-c";;
         j) BUILD_ARG_J="-j $OPTARG";;
         t) CAPP_TARGET="$OPTARG";;
-        T) CAPP_LD_TARGET="$OPTARG";;
+        l) CAPP_LD_TARGET="$OPTARG";;
         R) CAPP_RUN="true";;
         a) CAPP_RUN_ARGS="$OPTARG";;
         s) SKIP_BUILD="$OPTARG";;
@@ -312,7 +315,7 @@ verilate () {
 
     echo -e "\033[33mEntering verilator make task.\033[0m"
 
-    eval "./verilate.sh $VERILATE_ARG_C >.log/verilate.out.log 2>.log/verilate.err.log"
+    eval "./verilate.sh $VERILATE_ARG_C $VERILATE_ARG_V $VERILATE_ARG_T >.log/verilate.out.log 2>.log/verilate.err.log"
 
     if [ $? -ne 0 ]; then
         echo -e "%\033[1;31mError\033[0m: \033[1;31mFailed at verilator make task.\033[0m"
