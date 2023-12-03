@@ -899,7 +899,7 @@ void dump4()
                 break;
 
             case AXIBusHistory::Transaction::Path::DATA:
-                oss << "Data";
+                oss << "Data ";
                 break;
 
             default:
@@ -1078,6 +1078,7 @@ void dump4()
                                 oss << "<unknown(rresp=0x";
                                 oss << std::hex << transmission.GetReadResponse();
                                 oss << ")>";
+                                break;
                         }
                     }
 
@@ -1090,7 +1091,7 @@ void dump4()
                     for (int i = 3; i >= 0; i--)
                     {
                         oss << (transmission.GetWriteStrobe()[i] ? _COLOR_RESET : _COLOR_COMMENT);
-                        oss << std::hex << std::setw(2) << std::setfill('0') << (transmission.GetData() >> (8 * i));
+                        oss << std::hex << std::setw(2) << std::setfill('0') << ((transmission.GetData() >> (8 * i)) & 0xFF);
                     }
                     /*
                     oss << ", ";
