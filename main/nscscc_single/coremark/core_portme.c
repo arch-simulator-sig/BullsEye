@@ -18,7 +18,9 @@ Original Author: Shay Gal-on
 #include "coremark.h"
 #include "core_portme.h"
 
-#define ITERATIONS          2000
+#ifndef ITERATIONS
+#define ITERATIONS          2000            // Default for 2000 iterations
+#endif
 
 #if VALIDATION_RUN
 volatile ee_s32 seed1_volatile = 0x3415;
@@ -71,10 +73,15 @@ barebones_clock()
         */
 #define GETMYTIME(_t)              (*_t = barebones_clock())
 #define MYTIMEDIFF(fin, ini)       ((fin) - (ini))
-#define CLOCKS_PER_SEC             1000
+#define CLOCKS_PER_SEC             1000000
 #define TIMER_RES_DIVIDER          1
 #define SAMPLE_TIME_IMPLEMENTATION 1
+
+#define EE_TICKS_PER_SEC           1000000              // (1M tps by default)
+
+#ifndef EE_TICKS_PER_SEC
 #define EE_TICKS_PER_SEC           (CLOCKS_PER_SEC / TIMER_RES_DIVIDER)
+#endif
 
 /** Define Host specific (POSIX), or target specific global time variables. */
 static CORETIMETYPE start_time_val, stop_time_val;
@@ -146,7 +153,7 @@ portable_init(core_portable *p, int *argc, char *argv[])
 {
     // nothing else to be done for BullsEye here
     //
-    ee_printf("CoreMark(R) for MIPS32/LA32 NSCSCC environment.\n");
+    ee_printf("CoreMark(R) for MIPS32/LA32R NSCSCC environment.\n");
 
     (void)argc; // prevent unused warning
     (void)argv; // prevent unused warning

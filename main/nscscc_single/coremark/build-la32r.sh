@@ -4,13 +4,30 @@ ASSEMBLER="loongarch32r-linux-gnusf-as"
 OBJCOPY="loongarch32r-linux-gnusf-objcopy"
 OBJDUMP="loongarch32r-linux-gnusf-objdump"
 
+
+#
+ITERATIONS=
+TICKS_PER_SEC=
+
+USAGE="Usage: $0 [-I ITERATIONS] [-T TICKS_PER_SEC]"
+
+while getopts "hI:T:" OPT; do
+    case $OPT in
+        h) echo $USAGE;;
+        I) ITERATIONS="-DITERATIONS=$OPTARG";;
+        T) TICKS_PER_SEC="-DEE_TICKS_PER_SEC=$OPTARG";;
+        ?) echo $USAGE; exit 1;;
+    esac
+done
+
+#
 BUILD_PATH="build-la32r"
 BUILD_FILE="coremark"
 
 BUILD_ARGS=" \
 -nostdlib -mabi=ilp32s -g -O3 \
 -fno-builtin -fno-tree-loop-distribute-patterns \
--DPERFORMANCE_RUN=1"
+-DPERFORMANCE_RUN=1 $ITERATIONS $TICKS_PER_SEC"
 
 BUILD_ARGS_PASSTHROUGH="$BUILD_ARGS \
 -DCOMPILER_FLAGS='\"$BUILD_ARGS\"' \
