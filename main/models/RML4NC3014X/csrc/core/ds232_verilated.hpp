@@ -4,6 +4,8 @@
 #define __HEADER_DS232__CORE_VERILATED
 
 
+#include <bitset>
+
 #include <verilated.h>
 #include <verilated_vcd_c.h>
 
@@ -24,6 +26,54 @@ namespace BullsEye::Draconids3014 {
     public:
         class Builder;
 
+    public:
+        // Performance Profiling Interface
+        class PPI {
+        public:
+            //
+            bool            fetch_brob_read0_en;
+            bool            fetch_brob_read0_bpmiss;
+
+            bool            fetch_brob_read1_en;
+            bool            fetch_brob_read1_bpmiss;
+
+            uint64_t        fetch_brob_commit_count;
+            uint64_t        fetch_brob_bpmiss_count;
+
+            //
+            std::bitset<6>  issue_iq0_pick_valid;
+            std::bitset<6>  issue_iq0_pick_en;
+
+            uint64_t        issue_iq0_pick_valid_counter    [6];
+            uint64_t        issue_iq0_pick_en_counter       [6];
+
+            //
+            std::bitset<6>  issue_iq1_pick_valid;
+            std::bitset<6>  issue_iq1_pick_en;
+
+            uint64_t        issue_iq1_pick_valid_counter    [6];
+            uint64_t        issue_iq1_pick_en_counter       [6];
+
+            //
+            std::bitset<6>  issue_iq2_pick_valid;
+            std::bitset<6>  issue_iq2_pick_en;
+
+            uint64_t        issue_iq2_pick_valid_counter    [6];
+            uint64_t        issue_iq2_pick_en_counter       [6];
+
+            //
+            std::bitset<6>  issue_iq3_pick_valid;
+            std::bitset<6>  issue_iq3_pick_en;
+
+            uint64_t        issue_iq3_pick_valid_counter    [6];
+            uint64_t        issue_iq3_pick_en_counter       [6];
+
+        public:
+            PPI() noexcept;
+
+            void            Reset() noexcept;
+        };  
+
     private:
         unsigned int                    eventBusId;
 
@@ -38,7 +88,9 @@ namespace BullsEye::Draconids3014 {
         bool                            next_reset;
 
         vluint64_t                      eval_time;
-    
+
+        PPI                             ppi;
+
     protected:
         friend class Builder;
 
@@ -55,6 +107,9 @@ namespace BullsEye::Draconids3014 {
         Thinpad(const Thinpad&) = delete;
 
         unsigned int                    GetEventBusId() const noexcept;
+
+        PPI&                            GetPPI() noexcept;
+        const PPI&                      GetPPI() const noexcept;
 
         VerilatedVcdC*                  GetVCD() noexcept;
         const VerilatedVcdC*            GetVCD() const noexcept;

@@ -1,6 +1,8 @@
 #include "ds232_verilated.hpp"
 
 
+#include <algorithm>
+
 #include "ds232_event.hpp"
 
 
@@ -19,6 +21,8 @@ namespace BullsEye::Draconids3014 {
     FetchIDTracker                  fid_tracker;
 
     vluint64_t                      eval_time;
+
+    PPI                             ppi;
     */
 
     Thinpad::Thinpad(unsigned int eventBusId, VerilatedVcdC* fp, NSCSCCSingle::NSCSCC2023SoC* soc) noexcept
@@ -57,6 +61,16 @@ namespace BullsEye::Draconids3014 {
     unsigned int Thinpad::GetEventBusId() const noexcept
     {
         return this->eventBusId;
+    }
+
+    Thinpad::PPI& Thinpad::GetPPI() noexcept
+    {
+        return this->ppi;
+    }
+
+    const Thinpad::PPI& Thinpad::GetPPI() const noexcept
+    {
+        return this->ppi;
     }
 
     VerilatedVcdC* Thinpad::GetVCD() noexcept
@@ -148,6 +162,9 @@ namespace BullsEye::Draconids3014 {
             // soc reset
             this->soc_axi->NextReset(true);
             this->soc_axi->Eval();
+
+            // ppi reset
+            this->ppi.Reset();
 
             //
             next_reset = false;
@@ -376,6 +393,70 @@ namespace BullsEye::Draconids3014 {
             }
 
 
+            // PPI 
+            this->ppi.fetch_brob_read0_en       = this->core->ppi_brob_read0_en;
+            this->ppi.fetch_brob_read0_bpmiss   = this->core->ppi_brob_read0_bpmiss;
+
+            this->ppi.fetch_brob_read1_en       = this->core->ppi_brob_read1_en;
+            this->ppi.fetch_brob_read1_bpmiss   = this->core->ppi_brob_read1_bpmiss;
+
+            if (ppi.fetch_brob_read0_en)
+            {
+                this->ppi.fetch_brob_commit_count++;
+
+                if (ppi.fetch_brob_read0_bpmiss)
+                    this->ppi.fetch_brob_bpmiss_count++;
+            }
+
+            if (ppi.fetch_brob_read1_en)
+            {
+                this->ppi.fetch_brob_commit_count++;
+
+                if (ppi.fetch_brob_read1_bpmiss)
+                    this->ppi.fetch_brob_bpmiss_count++;
+            }
+
+
+            this->ppi.issue_iq0_pick_en     = this->core->ppi_issue_iq0_pick_en;
+            this->ppi.issue_iq0_pick_valid  = this->core->ppi_issue_iq0_pick_valid;
+
+            this->ppi.issue_iq1_pick_en     = this->core->ppi_issue_iq1_pick_en;
+            this->ppi.issue_iq1_pick_valid  = this->core->ppi_issue_iq1_pick_valid;
+
+            this->ppi.issue_iq2_pick_en     = this->core->ppi_issue_iq2_pick_en;
+            this->ppi.issue_iq2_pick_valid  = this->core->ppi_issue_iq2_pick_valid;
+
+            this->ppi.issue_iq3_pick_en     = this->core->ppi_issue_iq3_pick_en;
+            this->ppi.issue_iq3_pick_valid  = this->core->ppi_issue_iq3_pick_valid;
+
+            for (int i = 0; i < 6; i++)
+            {
+                if (this->ppi.issue_iq0_pick_valid[i])
+                    this->ppi.issue_iq0_pick_valid_counter[i]++;
+
+                if (this->ppi.issue_iq0_pick_en[i])
+                    this->ppi.issue_iq0_pick_en_counter[i]++;
+
+                if (this->ppi.issue_iq1_pick_valid[i])
+                    this->ppi.issue_iq1_pick_valid_counter[i]++;
+
+                if (this->ppi.issue_iq1_pick_en[i])
+                    this->ppi.issue_iq1_pick_en_counter[i]++;
+
+                if (this->ppi.issue_iq2_pick_valid[i])
+                    this->ppi.issue_iq2_pick_valid_counter[i]++;
+
+                if (this->ppi.issue_iq2_pick_en[i])
+                    this->ppi.issue_iq2_pick_en_counter[i]++;
+
+                if (this->ppi.issue_iq3_pick_valid[i])
+                    this->ppi.issue_iq3_pick_valid_counter[i]++;
+
+                if (this->ppi.issue_iq3_pick_en[i])
+                    this->ppi.issue_iq3_pick_en_counter[i]++;
+            }
+
+
             // core eval
             _EvalCoreClockNegative();
             _EvalCoreClockPositive();
@@ -387,6 +468,113 @@ namespace BullsEye::Draconids3014 {
             //
             DS232PostEvalEvent(this->core).Fire(eventBusId);
         }
+    }
+}
+
+
+// Implementation of: class Thinpad::PPI
+namespace BullsEye::Draconids3014 {
+    /*
+    //
+    bool            fetch_brob_read0_en;
+    bool            fetch_brob_read0_bpmiss;
+
+    bool            fetch_brob_read1_en;
+    bool            fetch_brob_read1_bpmiss;
+
+    uint64_t        fetch_brob_commit_count;
+    uint64_t        fetch_brob_bpmiss_count;
+
+    //
+    std::bitset<6>  issue_iq0_pick_valid;
+    std::bitset<6>  issue_iq0_pick_en;
+
+    uint64_t        issue_iq0_pick_valid_counter    [6];
+    uint64_t        issue_iq0_pick_en_counter       [6];
+
+    //
+    std::bitset<6>  issue_iq1_pick_valid;
+    std::bitset<6>  issue_iq1_pick_en;
+
+    uint64_t        issue_iq1_pick_valid_counter    [6];
+    uint64_t        issue_iq1_pick_en_counter       [6];
+
+    //
+    std::bitset<6>  issue_iq2_pick_valid;
+    std::bitset<6>  issue_iq2_pick_en;
+
+    uint64_t        issue_iq2_pick_valid_counter    [6];
+    uint64_t        issue_iq2_pick_en_counter       [6];
+
+    //
+    std::bitset<6>  issue_iq3_pick_valid;
+    std::bitset<6>  issue_iq3_pick_en;
+
+    uint64_t        issue_iq3_pick_valid_counter    [6];
+    uint64_t        issue_iq3_pick_en_counter       [6];
+    */
+
+    Thinpad::PPI::PPI() noexcept
+        : fetch_brob_read0_en           ()
+        , fetch_brob_read0_bpmiss       ()
+        , fetch_brob_read1_en           ()
+        , fetch_brob_read1_bpmiss       ()
+        , fetch_brob_commit_count       ()
+        , fetch_brob_bpmiss_count       ()
+        , issue_iq0_pick_valid          ()
+        , issue_iq0_pick_en             ()
+        , issue_iq0_pick_valid_counter  ()
+        , issue_iq0_pick_en_counter     ()
+        , issue_iq1_pick_valid          ()
+        , issue_iq1_pick_en             ()
+        , issue_iq1_pick_valid_counter  ()
+        , issue_iq1_pick_en_counter     ()
+        , issue_iq2_pick_valid          ()
+        , issue_iq2_pick_en             ()
+        , issue_iq2_pick_valid_counter  ()
+        , issue_iq2_pick_en_counter     ()
+        , issue_iq3_pick_valid          ()
+        , issue_iq3_pick_en             ()
+        , issue_iq3_pick_valid_counter  ()
+        , issue_iq3_pick_en_counter     ()
+    {
+        Reset();
+    }
+
+    void Thinpad::PPI::Reset() noexcept
+    {
+        fetch_brob_read0_en     = false;
+        fetch_brob_read0_bpmiss = false;
+
+        fetch_brob_read1_en     = false;
+        fetch_brob_read1_bpmiss = false;
+
+        fetch_brob_commit_count = 0;
+        fetch_brob_bpmiss_count = 0;
+
+        issue_iq0_pick_valid.reset();
+        issue_iq0_pick_en.reset();
+
+        std::fill_n(issue_iq0_pick_valid_counter, 6, 0);
+        std::fill_n(issue_iq0_pick_en_counter, 6, 0);
+
+        issue_iq1_pick_valid.reset();
+        issue_iq1_pick_en.reset();
+
+        std::fill_n(issue_iq1_pick_valid_counter, 6, 0);
+        std::fill_n(issue_iq1_pick_en_counter, 6, 0);
+
+        issue_iq2_pick_valid.reset();
+        issue_iq2_pick_en.reset();
+
+        std::fill_n(issue_iq2_pick_valid_counter, 6, 0);
+        std::fill_n(issue_iq2_pick_en_counter, 6, 0);
+
+        issue_iq3_pick_valid.reset();
+        issue_iq3_pick_en.reset();
+
+        std::fill_n(issue_iq3_pick_valid_counter, 6, 0);
+        std::fill_n(issue_iq3_pick_en_counter, 6, 0);
     }
 }
 
