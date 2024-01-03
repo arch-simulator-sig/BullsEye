@@ -156,6 +156,17 @@ struct GlobalConfigDump4 {
 };
 
 
+//
+struct GlobalConfigPPInfo {
+
+    //
+    bool                                    branchPredictionEnabled;
+
+    bool                                    issueStageEnabled;
+};
+
+
+//
 struct GlobalConfig {
 
     //
@@ -176,6 +187,9 @@ struct GlobalConfig {
     GlobalConfigDump2                       dump2;
     GlobalConfigDump3                       dump3;
     GlobalConfigDump4                       dump4;
+
+    //
+    GlobalConfigPPInfo                      ppinfo;
 };
 
 
