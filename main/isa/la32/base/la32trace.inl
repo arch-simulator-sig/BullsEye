@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <utility>
 
 
 // Template implementation of: class LA32TraceEntity
