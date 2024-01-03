@@ -182,6 +182,12 @@ int config(int argc, char* argv[])
     glbl.cfg.dump4.depth = 7;
 
 
+    // ppinfo
+    glbl.cfg.ppinfo.branchPredictionEnabled = true;
+
+    glbl.cfg.ppinfo.issueStageEnabled = false;
+
+
     //
 
     return 0;

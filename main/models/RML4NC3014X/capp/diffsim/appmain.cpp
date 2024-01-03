@@ -51,6 +51,18 @@ int main(int argc, char* argv[])
 
 
     //
+    int con_linecount = 9; // basic info
+
+    con_linecount += 2; // PPInfo
+
+    if (glbl.cfg.ppinfo.branchPredictionEnabled)
+        con_linecount += 2;
+
+    if (glbl.cfg.ppinfo.issueStageEnabled)
+        con_linecount += 12;
+
+
+    //
     int counter_progressbar = 0;
 
     bool coninfo_first_time = true;
@@ -220,7 +232,8 @@ int main(int argc, char* argv[])
             if (coninfo_first_time)
                 coninfo_first_time = false;
             else
-                oss << "\033[1A\033[K\033[1A\033[K\033[1A\033[K\033[1A\033[K\033[1A\033[K\033[1A\033[K\033[1A\033[K\033[1A\033[K\033[1A\033[K";
+                for (int i = 0; i < con_linecount; i++)
+                    oss << "\033[1A\033[K";
 
             if (!glbl.oss.view().empty())
             {
@@ -253,6 +266,115 @@ int main(int argc, char* argv[])
             counter_progressbar = ++counter_progressbar % ANIMATE_INF_PROGRESS_BAR_SIZE;
 
             std::cout << oss.str();
+
+            // Performance Profiling Interface information
+            oss = std::ostringstream();
+
+            oss << "--------------------------------" << std::endl;
+            oss << "Performance Profiling Interface information " << std::endl;
+
+            if (glbl.cfg.ppinfo.branchPredictionEnabled)
+            {
+                oss << "Branch Prediction:" << std::endl;
+                oss << "  - accuracy        : \033[1;33m";
+                oss << std::fixed << std::setw(5) << std::setprecision(2);
+                oss << (100 - (double(glbl.ctx.dut.dut->GetPPI().fetch_brob_bpmiss_count * 100)
+                    / glbl.ctx.dut.dut->GetPPI().fetch_brob_commit_count));
+                oss << "\033[0m% " << std::endl;
+            }
+
+            if (glbl.cfg.ppinfo.issueStageEnabled)
+            {
+                oss << "Issue Queue \033[1;33m#0\033[0m (ALU/BRU):" << std::endl;
+                oss << "  - occupation rate : ";
+                for (int i = 5; i >= 0; i--)
+                {
+                    oss << "[ \033[1;33m";
+                    oss << std::fixed << std::setw(6) << std::setprecision(2);
+                    oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq0_pick_valid_counter[i] * 100) 
+                        / (glbl.ctx.dut.dut->GetEvalTime() >> 1));
+                    oss << "\033[0m% ] ";
+                }
+                oss << std::endl;
+                oss << "  - pick rate       : ";
+                for (int i = 5; i >= 0; i--)
+                {
+                    oss << "[ \033[1;33m";
+                    oss << std::fixed << std::setw(6) << std::setprecision(2);
+                    oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq0_pick_en_counter[i] * 100)
+                        / (glbl.ctx.dut.dut->GetEvalTime() >> 1));
+                    oss << "\033[0m% ] ";
+                }
+                oss << std::endl;
+
+                oss << "Issue Queue \033[1;33m#1\033[0m (ALU    ):" << std::endl;
+                oss << "  - occupation rate : ";
+                for (int i = 5; i >= 0; i--)
+                {
+                    oss << "[ \033[1;33m";
+                    oss << std::fixed << std::setw(6) << std::setprecision(2);
+                    oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq1_pick_valid_counter[i] * 100)
+                        / (glbl.ctx.dut.dut->GetEvalTime() >> 1));
+                    oss << "\033[0m% ] ";
+                }
+                oss << std::endl;
+                oss << "  - pick rate       : ";
+                for (int i = 5; i >= 0; i--)
+                {
+                    oss << "[ \033[1;33m";
+                    oss << std::fixed << std::setw(6) << std::setprecision(2);
+                    oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq1_pick_en_counter[i] * 100)
+                        / (glbl.ctx.dut.dut->GetEvalTime() >> 1));
+                    oss << "\033[0m% ] ";
+                }
+                oss << std::endl;
+
+                oss << "Issue Queue \033[1;33m#2\033[0m (MEM    ):" << std::endl;
+                oss << "  - occupation rate : ";
+                for (int i = 5; i >= 0; i--)
+                {
+                    oss << "[ \033[1;33m";
+                    oss << std::fixed << std::setw(6) << std::setprecision(2);
+                    oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq2_pick_valid_counter[i] * 100)
+                        / (glbl.ctx.dut.dut->GetEvalTime() >> 1));
+                    oss << "\033[0m% ] ";
+                }
+                oss << std::endl;
+                oss << "  - pick rate       : ";
+                for (int i = 5; i >= 0; i--)
+                {
+                    oss << "[ \033[1;33m";
+                    oss << std::fixed << std::setw(6) << std::setprecision(2);
+                    oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq2_pick_en_counter[i] * 100)
+                        / (glbl.ctx.dut.dut->GetEvalTime() >> 1));
+                    oss << "\033[0m% ] ";
+                }
+                oss << std::endl;
+
+                oss << "Issue Queue \033[1;33m#3\033[0m (MUL/DIV):" << std::endl;
+                oss << "  - occupation rate : ";
+                for (int i = 5; i >= 0; i--)
+                {
+                    oss << "[ \033[1;33m";
+                    oss << std::fixed << std::setw(6) << std::setprecision(2);
+                    oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq3_pick_valid_counter[i] * 100)
+                        / (glbl.ctx.dut.dut->GetEvalTime() >> 1));
+                    oss << "\033[0m% ] ";
+                }
+                oss << std::endl;
+                oss << "  - pick rate       : ";
+                for (int i = 5; i >= 0; i--)
+                {
+                    oss << "[ \033[1;33m";
+                    oss << std::fixed << std::setw(6) << std::setprecision(2);
+                    oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq3_pick_en_counter[i] * 100)
+                        / (glbl.ctx.dut.dut->GetEvalTime() >> 1));
+                    oss << "\033[0m% ] ";
+                }
+                oss << std::endl;
+            }
+
+            std::cout << oss.str();            
         }
 
         if (counter_interval == 18000)
