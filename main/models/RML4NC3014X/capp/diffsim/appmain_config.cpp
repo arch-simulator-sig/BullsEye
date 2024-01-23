@@ -185,7 +185,9 @@ int config(int argc, char* argv[])
     // ppinfo
     glbl.cfg.ppinfo.branchPredictionEnabled = true;
 
-    glbl.cfg.ppinfo.issueStageEnabled = false;
+    glbl.cfg.ppinfo.issueStageQueueOccupationEnabled = false;
+
+    glbl.cfg.ppinfo.issueStageForwardedSelectionEnabled = true;
 
 
     //
