@@ -9,7 +9,6 @@
 
 
 #include "../csrc/core/ds232_event.hpp"
-#include "../csrc/core/ds232_fetch.hpp"
 #include "../csrc/core/ds232_uop40.hpp"
 
 

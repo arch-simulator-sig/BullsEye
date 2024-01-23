@@ -16,6 +16,7 @@
 #include "appmain_historypc.hpp"
 #include "appmain_historymem.hpp"
 #include "appmain_historyaxi.hpp"
+#include "appmain_historycommit.hpp"
 
 
 #include "../../csrc/core/ds232_verilated.hpp"
@@ -60,6 +61,8 @@ struct GlobalContextDUTHistory {
     MMIOReadWriteHistory*                       MMIOReadWrite;
 
     AXIBusHistory*                              busAXI;
+
+    CommitHistory*                              commit;
 };
 
 struct GlobalContextDUT {
@@ -155,6 +158,13 @@ struct GlobalConfigDump4 {
     unsigned int                            depth;
 };
 
+struct GlobalConfigDump5 {
+
+    bool                                    enabled;
+
+    unsigned int                            depth;
+};
+
 
 //
 struct GlobalConfigPPInfo {
@@ -162,7 +172,9 @@ struct GlobalConfigPPInfo {
     //
     bool                                    branchPredictionEnabled;
 
-    bool                                    issueStageEnabled;
+    bool                                    issueStageQueueOccupationEnabled;
+
+    bool                                    issueStageForwardedSelectionEnabled;
 };
 
 
@@ -187,6 +199,7 @@ struct GlobalConfig {
     GlobalConfigDump2                       dump2;
     GlobalConfigDump3                       dump3;
     GlobalConfigDump4                       dump4;
+    GlobalConfigDump5                       dump5;
 
     //
     GlobalConfigPPInfo                      ppinfo;

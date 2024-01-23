@@ -353,6 +353,15 @@ int startup()
     std::cout << glbl.ctx.dut.history.busAXI->GetDepth();
     std::cout << ")." << std::endl;
 
+    glbl.ctx.dut.history.commit = CommitHistory::Builder()
+        .DUT(glbl.ctx.dut.dut)
+        .Depth(256)
+        .EventBusId(glbl.ctx.dut.eventBusId)
+        .Build();
+    std::cout << "Enabled commit history capture (depth = ";
+    std::cout << glbl.ctx.dut.history.commit->GetDepth();
+    std::cout << ")." << std::endl;
+
     //
     return 0;
 }
@@ -360,6 +369,12 @@ int startup()
 
 int shutdown()
 {
+    if (glbl.ctx.dut.history.commit)
+    {
+        delete glbl.ctx.dut.history.commit;
+        glbl.ctx.dut.history.commit = nullptr;
+    }
+
     if (glbl.ctx.dut.history.busAXI)
     {
         delete glbl.ctx.dut.history.busAXI;
