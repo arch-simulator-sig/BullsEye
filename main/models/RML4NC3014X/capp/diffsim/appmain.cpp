@@ -58,8 +58,11 @@ int main(int argc, char* argv[])
     if (glbl.cfg.ppinfo.branchPredictionEnabled)
         con_linecount += 2;
 
-    if (glbl.cfg.ppinfo.issueStageEnabled)
+    if (glbl.cfg.ppinfo.issueStageQueueOccupationEnabled)
         con_linecount += 12;
+
+    if (glbl.cfg.ppinfo.issueStageForwardedSelectionEnabled)
+        con_linecount += 8;
 
 
     //
@@ -151,6 +154,7 @@ int main(int argc, char* argv[])
                     std::cout << "Error reported in detail in follow-up." << std::endl;
 
                     oss << "\nLast commit PC: \033[1;33m0x" << std::hex << std::setw(8) << std::setfill('0') << last_pc << "\033[0m" << std::endl;
+                    oss << "Stopped at eval time: \033[1;33m" << std::dec << glbl.ctx.dut.dut->GetEvalTime() << "\033[0m" << std::endl;
                     std::cout << oss.str();
 
                     std::cout << "--------------------------------" << std::endl;
@@ -283,7 +287,7 @@ int main(int argc, char* argv[])
                 oss << "\033[0m% " << std::endl;
             }
 
-            if (glbl.cfg.ppinfo.issueStageEnabled)
+            if (glbl.cfg.ppinfo.issueStageQueueOccupationEnabled)
             {
                 oss << "Issue Queue \033[1;33m#0\033[0m (ALU/BRU):" << std::endl;
                 oss << "  - occupation rate : ";
@@ -371,6 +375,45 @@ int main(int argc, char* argv[])
                         / (glbl.ctx.dut.dut->GetEvalTime() >> 1));
                     oss << "\033[0m% ] ";
                 }
+                oss << std::endl;
+            }
+
+            if (glbl.cfg.ppinfo.issueStageForwardedSelectionEnabled)
+            {
+                oss << "Issue Queue \033[1;33m#0\033[0m (ALU/BRU):" << std::endl;
+                oss << "  - forward rate    : ";
+                oss << "[ \033[1;33m";
+                oss << std::fixed << std::setw(6) << std::setprecision(2);
+                oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq0_pick_on_forward_counter * 100)
+                    / (glbl.ctx.dut.dut->GetPPI().issue_iq0_pick_counter));
+                oss << "\033[0m% ] ";
+                oss << std::endl;
+
+                oss << "Issue Queue \033[1;33m#1\033[0m (ALU    ):" << std::endl;
+                oss << "  - forward rate    : ";
+                oss << "[ \033[1;33m";
+                oss << std::fixed << std::setw(6) << std::setprecision(2);
+                oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq1_pick_on_forward_counter * 100)
+                    / (glbl.ctx.dut.dut->GetPPI().issue_iq1_pick_counter));
+                oss << "\033[0m% ] ";
+                oss << std::endl;
+
+                oss << "Issue Queue \033[1;33m#2\033[0m (MEM    ):" << std::endl;
+                oss << "  - forward rate    : ";
+                oss << "[ \033[1;33m";
+                oss << std::fixed << std::setw(6) << std::setprecision(2);
+                oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq2_pick_on_forward_counter * 100)
+                    / (glbl.ctx.dut.dut->GetPPI().issue_iq2_pick_counter));
+                oss << "\033[0m% ] ";
+                oss << std::endl;
+
+                oss << "Issue Queue \033[1;33m#3\033[0m (MUL/DIV):" << std::endl;
+                oss << "  - forward rate    : ";
+                oss << "[ \033[1;33m";
+                oss << std::fixed << std::setw(6) << std::setprecision(2);
+                oss << (double(glbl.ctx.dut.dut->GetPPI().issue_iq3_pick_on_forward_counter * 100)
+                    / (glbl.ctx.dut.dut->GetPPI().issue_iq3_pick_counter));
+                oss << "\033[0m% ] ";
                 oss << std::endl;
             }
 
