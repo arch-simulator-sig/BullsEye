@@ -328,6 +328,7 @@ namespace Jasse {
     LA32TracerContainer::~LA32TracerContainer() noexcept
     {
         DestroyPCTracer();
+        DestroyFetchTracer();
         DestroyExecutionTracer();
         DestroyGPRTracer();
         DestroyMemoryTracer();
