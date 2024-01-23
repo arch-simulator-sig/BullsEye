@@ -555,9 +555,11 @@ namespace BullsEye {
     {
         for (ChunkMetadata* metadata : chunks_info)
             delete metadata;
+        chunks_info.clear();
 
         for (Chunk* block : chunks)
             delete block;
+        chunks.clear();
     }
 
     template<class _TObject, class _TInitializer, class _TFinalizer>
