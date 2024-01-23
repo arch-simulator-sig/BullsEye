@@ -2,3 +2,9 @@
 .build/
 .verilated/
 .log/
+novas*
+*.fsdb
+*.vcd
+*.rc
+verdi*/
+vfast*/
