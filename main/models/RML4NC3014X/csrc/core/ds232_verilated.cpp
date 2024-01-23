@@ -417,17 +417,21 @@ namespace BullsEye::Draconids3014 {
             }
 
 
-            this->ppi.issue_iq0_pick_en     = this->core->ppi_issue_iq0_pick_en;
-            this->ppi.issue_iq0_pick_valid  = this->core->ppi_issue_iq0_pick_valid;
+            this->ppi.issue_iq0_pick_en         = this->core->ppi_issue_iq0_pick_en;
+            this->ppi.issue_iq0_pick_valid      = this->core->ppi_issue_iq0_pick_valid;
+            this->ppi.issue_iq0_pick_on_forward = this->core->ppi_issue_iq0_pick_on_forward;
 
-            this->ppi.issue_iq1_pick_en     = this->core->ppi_issue_iq1_pick_en;
-            this->ppi.issue_iq1_pick_valid  = this->core->ppi_issue_iq1_pick_valid;
+            this->ppi.issue_iq1_pick_en         = this->core->ppi_issue_iq1_pick_en;
+            this->ppi.issue_iq1_pick_valid      = this->core->ppi_issue_iq1_pick_valid;
+            this->ppi.issue_iq1_pick_on_forward = this->core->ppi_issue_iq1_pick_on_forward;
 
-            this->ppi.issue_iq2_pick_en     = this->core->ppi_issue_iq2_pick_en;
-            this->ppi.issue_iq2_pick_valid  = this->core->ppi_issue_iq2_pick_valid;
+            this->ppi.issue_iq2_pick_en         = this->core->ppi_issue_iq2_pick_en;
+            this->ppi.issue_iq2_pick_valid      = this->core->ppi_issue_iq2_pick_valid;
+            this->ppi.issue_iq2_pick_on_forward = this->core->ppi_issue_iq2_pick_on_forward;
 
-            this->ppi.issue_iq3_pick_en     = this->core->ppi_issue_iq3_pick_en;
-            this->ppi.issue_iq3_pick_valid  = this->core->ppi_issue_iq3_pick_valid;
+            this->ppi.issue_iq3_pick_en         = this->core->ppi_issue_iq3_pick_en;
+            this->ppi.issue_iq3_pick_valid      = this->core->ppi_issue_iq3_pick_valid;
+            this->ppi.issue_iq3_pick_on_forward = this->core->ppi_issue_iq3_pick_on_forward;
 
             for (int i = 0; i < 6; i++)
             {
@@ -435,25 +439,49 @@ namespace BullsEye::Draconids3014 {
                     this->ppi.issue_iq0_pick_valid_counter[i]++;
 
                 if (this->ppi.issue_iq0_pick_en[i])
+                {
                     this->ppi.issue_iq0_pick_en_counter[i]++;
+                    this->ppi.issue_iq0_pick_counter++;
+
+                    if (this->ppi.issue_iq0_pick_on_forward[i])
+                        this->ppi.issue_iq0_pick_on_forward_counter++;
+                }
 
                 if (this->ppi.issue_iq1_pick_valid[i])
                     this->ppi.issue_iq1_pick_valid_counter[i]++;
 
                 if (this->ppi.issue_iq1_pick_en[i])
+                {
                     this->ppi.issue_iq1_pick_en_counter[i]++;
+                    this->ppi.issue_iq1_pick_counter++;
+
+                    if (this->ppi.issue_iq1_pick_on_forward[i])
+                        this->ppi.issue_iq1_pick_on_forward_counter++;
+                }
 
                 if (this->ppi.issue_iq2_pick_valid[i])
                     this->ppi.issue_iq2_pick_valid_counter[i]++;
 
                 if (this->ppi.issue_iq2_pick_en[i])
+                {
                     this->ppi.issue_iq2_pick_en_counter[i]++;
+                    this->ppi.issue_iq2_pick_counter++;
+
+                    if (this->ppi.issue_iq2_pick_on_forward[i])
+                        this->ppi.issue_iq2_pick_on_forward_counter++;
+                }
 
                 if (this->ppi.issue_iq3_pick_valid[i])
                     this->ppi.issue_iq3_pick_valid_counter[i]++;
 
                 if (this->ppi.issue_iq3_pick_en[i])
+                {
                     this->ppi.issue_iq3_pick_en_counter[i]++;
+                    this->ppi.issue_iq3_pick_counter++;
+
+                    if (this->ppi.issue_iq3_pick_on_forward[i])
+                        this->ppi.issue_iq3_pick_on_forward_counter++;
+                }
             }
 
 
@@ -489,54 +517,86 @@ namespace BullsEye::Draconids3014 {
     std::bitset<6>  issue_iq0_pick_valid;
     std::bitset<6>  issue_iq0_pick_en;
 
+    std::bitset<6>  issue_iq0_pick_on_forward;
+
     uint64_t        issue_iq0_pick_valid_counter    [6];
     uint64_t        issue_iq0_pick_en_counter       [6];
+
+    uint64_t        issue_iq0_pick_counter;
+    uint64_t        issue_iq0_pick_on_forward_counter;
 
     //
     std::bitset<6>  issue_iq1_pick_valid;
     std::bitset<6>  issue_iq1_pick_en;
 
+    std::bitset<6>  issue_iq1_pick_on_forward;
+
     uint64_t        issue_iq1_pick_valid_counter    [6];
     uint64_t        issue_iq1_pick_en_counter       [6];
+
+    uint64_t        issue_iq1_pick_counter;
+    uint64_t        issue_iq1_pick_on_forward_counter;
 
     //
     std::bitset<6>  issue_iq2_pick_valid;
     std::bitset<6>  issue_iq2_pick_en;
 
+    std::bitset<6>  issue_iq2_pick_on_forward;
+
     uint64_t        issue_iq2_pick_valid_counter    [6];
     uint64_t        issue_iq2_pick_en_counter       [6];
+
+    uint64_t        issue_iq2_pick_counter;
+    uint64_t        issue_iq2_pick_on_forward_counter;
 
     //
     std::bitset<6>  issue_iq3_pick_valid;
     std::bitset<6>  issue_iq3_pick_en;
 
+    std::bitset<6>  issue_iq3_pick_on_forward;
+
     uint64_t        issue_iq3_pick_valid_counter    [6];
     uint64_t        issue_iq3_pick_en_counter       [6];
+
+    uint64_t        issue_iq3_pick_counter;
+    uint64_t        issue_iq3_pick_on_forward_counter;
     */
 
     Thinpad::PPI::PPI() noexcept
-        : fetch_brob_read0_en           ()
-        , fetch_brob_read0_bpmiss       ()
-        , fetch_brob_read1_en           ()
-        , fetch_brob_read1_bpmiss       ()
-        , fetch_brob_commit_count       ()
-        , fetch_brob_bpmiss_count       ()
-        , issue_iq0_pick_valid          ()
-        , issue_iq0_pick_en             ()
-        , issue_iq0_pick_valid_counter  ()
-        , issue_iq0_pick_en_counter     ()
-        , issue_iq1_pick_valid          ()
-        , issue_iq1_pick_en             ()
-        , issue_iq1_pick_valid_counter  ()
-        , issue_iq1_pick_en_counter     ()
-        , issue_iq2_pick_valid          ()
-        , issue_iq2_pick_en             ()
-        , issue_iq2_pick_valid_counter  ()
-        , issue_iq2_pick_en_counter     ()
-        , issue_iq3_pick_valid          ()
-        , issue_iq3_pick_en             ()
-        , issue_iq3_pick_valid_counter  ()
-        , issue_iq3_pick_en_counter     ()
+        : fetch_brob_read0_en               ()
+        , fetch_brob_read0_bpmiss           ()
+        , fetch_brob_read1_en               ()
+        , fetch_brob_read1_bpmiss           ()
+        , fetch_brob_commit_count           ()
+        , fetch_brob_bpmiss_count           ()
+        , issue_iq0_pick_valid              ()
+        , issue_iq0_pick_en                 ()
+        , issue_iq0_pick_on_forward         ()
+        , issue_iq0_pick_valid_counter      ()
+        , issue_iq0_pick_en_counter         ()
+        , issue_iq0_pick_counter            ()
+        , issue_iq0_pick_on_forward_counter ()
+        , issue_iq1_pick_valid              ()
+        , issue_iq1_pick_en                 ()
+        , issue_iq1_pick_on_forward         ()
+        , issue_iq1_pick_valid_counter      ()
+        , issue_iq1_pick_en_counter         ()
+        , issue_iq1_pick_counter            ()
+        , issue_iq1_pick_on_forward_counter ()
+        , issue_iq2_pick_valid              ()
+        , issue_iq2_pick_en                 ()
+        , issue_iq2_pick_on_forward         ()
+        , issue_iq2_pick_valid_counter      ()
+        , issue_iq2_pick_en_counter         ()
+        , issue_iq2_pick_counter            ()
+        , issue_iq2_pick_on_forward_counter ()
+        , issue_iq3_pick_valid              ()
+        , issue_iq3_pick_en                 ()
+        , issue_iq3_pick_on_forward         ()
+        , issue_iq3_pick_valid_counter      ()
+        , issue_iq3_pick_en_counter         ()
+        , issue_iq3_pick_counter            ()
+        , issue_iq3_pick_on_forward_counter ()
     {
         Reset();
     }
@@ -554,27 +614,43 @@ namespace BullsEye::Draconids3014 {
 
         issue_iq0_pick_valid.reset();
         issue_iq0_pick_en.reset();
+        issue_iq0_pick_on_forward.reset();
 
         std::fill_n(issue_iq0_pick_valid_counter, 6, 0);
         std::fill_n(issue_iq0_pick_en_counter, 6, 0);
 
+        issue_iq0_pick_counter = 0;
+        issue_iq0_pick_on_forward_counter = 0;
+
         issue_iq1_pick_valid.reset();
         issue_iq1_pick_en.reset();
+        issue_iq1_pick_on_forward.reset();
 
         std::fill_n(issue_iq1_pick_valid_counter, 6, 0);
         std::fill_n(issue_iq1_pick_en_counter, 6, 0);
 
+        issue_iq1_pick_counter = 0;
+        issue_iq1_pick_on_forward_counter = 0;
+
         issue_iq2_pick_valid.reset();
         issue_iq2_pick_en.reset();
+        issue_iq2_pick_on_forward.reset();
 
         std::fill_n(issue_iq2_pick_valid_counter, 6, 0);
         std::fill_n(issue_iq2_pick_en_counter, 6, 0);
 
+        issue_iq2_pick_counter = 0;
+        issue_iq2_pick_on_forward_counter = 0;
+
         issue_iq3_pick_valid.reset();
         issue_iq3_pick_en.reset();
+        issue_iq3_pick_on_forward.reset();
 
         std::fill_n(issue_iq3_pick_valid_counter, 6, 0);
         std::fill_n(issue_iq3_pick_en_counter, 6, 0);
+
+        issue_iq3_pick_counter = 0;
+        issue_iq3_pick_on_forward_counter = 0;
     }
 }
 

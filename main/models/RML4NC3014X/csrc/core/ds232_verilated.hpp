@@ -44,29 +44,49 @@ namespace BullsEye::Draconids3014 {
             std::bitset<6>  issue_iq0_pick_valid;
             std::bitset<6>  issue_iq0_pick_en;
 
+            std::bitset<6>  issue_iq0_pick_on_forward;
+
             uint64_t        issue_iq0_pick_valid_counter    [6];
             uint64_t        issue_iq0_pick_en_counter       [6];
+
+            uint64_t        issue_iq0_pick_counter;
+            uint64_t        issue_iq0_pick_on_forward_counter;
 
             //
             std::bitset<6>  issue_iq1_pick_valid;
             std::bitset<6>  issue_iq1_pick_en;
 
+            std::bitset<6>  issue_iq1_pick_on_forward;
+
             uint64_t        issue_iq1_pick_valid_counter    [6];
             uint64_t        issue_iq1_pick_en_counter       [6];
+
+            uint64_t        issue_iq1_pick_counter;
+            uint64_t        issue_iq1_pick_on_forward_counter;
 
             //
             std::bitset<6>  issue_iq2_pick_valid;
             std::bitset<6>  issue_iq2_pick_en;
 
+            std::bitset<6>  issue_iq2_pick_on_forward;
+
             uint64_t        issue_iq2_pick_valid_counter    [6];
             uint64_t        issue_iq2_pick_en_counter       [6];
+
+            uint64_t        issue_iq2_pick_counter;
+            uint64_t        issue_iq2_pick_on_forward_counter;
 
             //
             std::bitset<6>  issue_iq3_pick_valid;
             std::bitset<6>  issue_iq3_pick_en;
 
+            std::bitset<6>  issue_iq3_pick_on_forward;
+
             uint64_t        issue_iq3_pick_valid_counter    [6];
             uint64_t        issue_iq3_pick_en_counter       [6];
+
+            uint64_t        issue_iq3_pick_counter;
+            uint64_t        issue_iq3_pick_on_forward_counter;
 
         public:
             PPI() noexcept;
