@@ -208,10 +208,12 @@ void PeripheralInjector::OnRefSerialRead(BullsEye::NSCSCCSingle::NSCSCC2023MMUMa
     }
 
     // inject
-    event.SetProxy(true, [&](
+    Jasse::memdata_t dataToInject = inject.GetData();
+
+    event.SetProxy(true, [=](
             Jasse::LA32MOPPath, Jasse::addr_t, Jasse::LA32MOPWidth, 
             Jasse::memdata_t*   data) -> Jasse::LA32MOPOutcome {
-        *data = inject.GetData();
+        *data = dataToInject;
         return { Jasse::LA32MOPStatus::MOP_SUCCESS };
     });
 
@@ -247,7 +249,7 @@ void PeripheralInjector::OnRefSerialWrite(BullsEye::NSCSCCSingle::NSCSCC2023MMUM
     }
 
     // inject
-    event.SetProxy(true, [&](
+    event.SetProxy(true, [](
             Jasse::LA32MOPPath, Jasse::addr_t, Jasse::LA32MOPWidth, 
             Jasse::memdata_t) -> Jasse::LA32MOPOutcome {
         return { Jasse::LA32MOPStatus::MOP_SUCCESS };
@@ -335,10 +337,12 @@ void PeripheralInjector::OnRefClockCounterRead(BullsEye::NSCSCCSingle::NSCSCC202
     }
 
     // inject
-    event.SetProxy(true, [&](
+    Jasse::memdata_t dataToInject = inject.GetData();
+
+    event.SetProxy(true, [=](
             Jasse::LA32MOPPath, Jasse::addr_t, Jasse::LA32MOPWidth, 
             Jasse::memdata_t*   data) -> Jasse::LA32MOPOutcome {
-        *data = inject.GetData();
+        *data = dataToInject;
         return { Jasse::LA32MOPStatus::MOP_SUCCESS };
     });
 
