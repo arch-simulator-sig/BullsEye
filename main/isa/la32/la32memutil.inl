@@ -206,7 +206,7 @@ namespace Jasse {
         , memory    (obj.memory)
     { }
 
-    inline SimpleCircularMemoryInterface::~SimpleCircularMemoryInterface()
+    inline SimpleCircularMemoryInterface::~SimpleCircularMemoryInterface() noexcept
     { }
 
     inline addr_t SimpleCircularMemoryInterface::GetCycle() const noexcept
