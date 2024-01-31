@@ -90,7 +90,24 @@ gen_autoinclude "BE_ROOT" "$K221_BE_ROOT" "BullsEye root"
 
 
 # user specific configuration
+
+# $K221_DS232_VPROJECT_PATH :       DS232 verilog project path
 export K221_DS232_VPROJECT_PATH=
+
+# $K221_CC :                        C compiler path / exec name
+# $K221_CXX :                       C++ compiler path / exec name
+# $K221_LD :                        Linker path / exec name
+# $K221_AR :                        Archiver path / exec name
+export K221_CC="gcc"
+export K221_CXX="g++"
+export K221_LD="ld"
+export K221_AR="ar"
+
+# $K221_CCACHE :                    ccache path / exec name
+export K221_CCACHE="ccache"
+
+# $K221_GLOBAL_CFLAGS :             Global compiler FLAGS
+export K221_GLOBAL_CFLAGS=
 
 source "$K221_BE_ROOT/.globalconfig.user.sh"
 
@@ -159,10 +176,6 @@ export K221_BE_N1_COREMARK_LA32R_ELF="$K221_BE_N1_COREMARK_LA32_BUILD_OUTPUT/cor
 
 #
 export K221_CFLAGS_INC_VERILATOR="-I/usr/local/share/verilator/include -I/usr/local/share/verilator/include/vltstd"
-
-
-#
-export K221_GLOBAL_CFLAGS="-O3 -std=c++20 -flto -fwhole-program"
 
 
 #
