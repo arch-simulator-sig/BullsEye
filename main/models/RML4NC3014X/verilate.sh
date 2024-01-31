@@ -19,7 +19,7 @@ VTOP_FILE="$VPROJECT_PATH/thinpad_verilated.v"
 # *NOTE: It runs better with multi-thread disabled while VCD trace disabled
 VERILATOR_ARGS="--trace -O3 -j `nproc`" 
 
-COMPILE_ARGS="-std=c++20 -flto -fwhole-program"
+COMPILE_ARGS="$K221_GLOBAL_CFLAGS"
 
 
 #

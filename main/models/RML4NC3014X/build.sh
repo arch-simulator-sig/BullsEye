@@ -7,9 +7,11 @@ fi
 source "$K221_BE_GLOBALSCRIPTS"
 
 #
-LD="ld"
-CC="g++"
-AR="ar"
+CCACHE=${K221_CCACHE:="ccache"}
+LD=${K221_LD:="ld"}
+CC=${K221_CC:="gcc"}
+CXX=${K221_CXX:="g++"}
+AR=${K221_AR:="ar"}
 
 CFLAG="$K221_GLOBAL_CFLAGS -pthread -lpthread -latomic"
 
@@ -358,7 +360,7 @@ build_capp () {
     eval "rm -rf $BUILD_PATH"
     eval "mkdir -p $BUILD_PATH"
 
-    eval "$CC $CFLAG -o $BUILD_TARGET $LD_LIBRARY"
+    eval "$CCACHE $CXX $CFLAG -o $BUILD_TARGET $LD_LIBRARY"
 
     echo -e "\033[1;30mLeaving main build task.\033[0m"
 
