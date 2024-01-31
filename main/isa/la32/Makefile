@@ -1,12 +1,11 @@
 RM := rm -rf
 
-GCCPREFIX ?=
+LD := $(K221_LD)
+CC := $(K221_CC)
+CXX := $(K221_CXX)
+AR := $(K221_AR)
 
-LD := $(GCCPREFIX)ld
-CC := $(GCCPREFIX)g++
-AR := $(GCCPREFIX)ar
-
-CCACHE := ccache
+CCACHE := $(K221_CCACHE)
 
 OBJDIR := .obj
 ARCDIR := $(K221_BE_JASSE2_LA32_LD_LIBRARY_PATH)
@@ -89,19 +88,19 @@ endif
 
 
 $(BASE_OBJ): $(BASE_OBJDIR)/%.o : $(BASE_SRCDIR)/%.cpp
-	$(CCACHE) $(CC) -o $@ $< -fPIE -c -I$(GLOBAL_INC) -I. $(CFLAG)
+	$(CCACHE) $(CXX) -o $@ $< -fPIE -c -I$(GLOBAL_INC) -I. $(CFLAG)
 
 
 $(EXT_NSCSCC_OBJ): $(EXT_NSCSCC_OBJDIR)/%.o : $(EXT_NSCSCC_SRCDIR)/%.cpp
-	$(CCACHE) $(CC) -o $@ $< -fPIE -c -I$(GLOBAL_INC) -I. $(CFLAG)
+	$(CCACHE) $(CXX) -o $@ $< -fPIE -c -I$(GLOBAL_INC) -I. $(CFLAG)
 
 
 $(MAIN_OBJ): $(MAIN_OBJDIR)/%.o : $(MAIN_SRCDIR)/%.cpp
-	$(CCACHE) $(CC) -o $@ $< -fPIE -c -I$(GLOBAL_INC) -I. $(CFLAG)
+	$(CCACHE) $(CXX) -o $@ $< -fPIE -c -I$(GLOBAL_INC) -I. $(CFLAG)
 
 
 $(ADDON_OBJ): $(ADDON_OBJDIR)/%.o : $(ADDON_SRCDIR)/%.cpp
-	$(CCACHE) $(CC) -o $@ $< -fPIE -c -I$(GLOBAL_INC) -I. $(CFLAG)
+	$(CCACHE) $(CXX) -o $@ $< -fPIE -c -I$(GLOBAL_INC) -I. $(CFLAG)
 
 
 $(STATICOBJ): $(ARCDIR) $(MAIN_OBJ) $(BASE_OBJ) $(EXT_NSCSCC_OBJ) $(ADDON_OBJ)

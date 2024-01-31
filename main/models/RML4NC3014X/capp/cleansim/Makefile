@@ -1,10 +1,11 @@
 RM := rm -rf
 
-GCCPREFIX ?=
+LD := $(K221_LD)
+CC := $(K221_CC)
+CXX := $(K221_CXX)
+AR := $(K221_AR)
 
-LD := $(GCCPREFIX)ld
-CC := $(GCCPREFIX)g++
-AR := $(GCCPREFIX)ar
+CCACHE := $(K221_CCACHE)
 
 OBJDIR := .obj
 ARCDIR := .build
@@ -55,7 +56,7 @@ endif
 
 $(MAIN_OBJ): $(MAIN_OBJDIR)/%.o : $(MAIN_SRCDIR)/%.cpp
 	@test -d $(dir $@) || mkdir -p $(dir $@)
-	$(CC) $(CFLAG) -o $@ $< -fPIE -c -I. $(GLOBAL_INC)
+	$(CCACHE) $(CXX) $(CFLAG) -o $@ $< -fPIE -c -I. $(GLOBAL_INC)
 
 
 $(MAIN): $(ARCDIR) $(MAIN_OBJ)

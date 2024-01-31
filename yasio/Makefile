@@ -1,10 +1,9 @@
 RM := rm -rf
 
-GCCPREFIX ?=
-
-LD := $(GCCPREFIX)ld
-CC := $(GCCPREFIX)g++
-AR := $(GCCPREFIX)ar
+LD := $(K221_LD)
+CC := $(K221_CC)
+CXX := $(K221_CXX)
+AR := $(K221_AR)
 
 OBJDIR := .obj
 ARCDIR := $(K221_YASIO_LD_LIBRARY_PATH)
@@ -49,7 +48,7 @@ endif
 
 
 $(MAIN_OBJ): $(MAIN_OBJDIR)/%.o : $(MAIN_SRCDIR)/%.cpp
-	$(CC) -o $@ $< -fPIE -c -I.. $(CFLAG)
+	$(CCACHE) $(CXX) -o $@ $< -fPIE -c -I.. $(CFLAG)
 
 
 $(STATICOBJ): $(ARCDIR) $(MAIN_OBJ)
