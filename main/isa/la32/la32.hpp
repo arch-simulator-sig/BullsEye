@@ -54,6 +54,46 @@ namespace Jasse {
         arch32_t        operator[](int index) const noexcept;
     };
 
+
+    // LA32 Branch Progress
+    class LA32BranchProgress {
+    private:
+        bool    taken;
+        pc_t    target;
+
+    public:
+        LA32BranchProgress() noexcept;
+        ~LA32BranchProgress() noexcept;
+
+        bool    IsBranchTaken() const noexcept;
+        pc_t    GetBranchTarget() const noexcept;
+
+        void    SetBranchTaken(bool taken) noexcept;
+        void    SetBranchTarget(pc_t target) noexcept;
+        
+        void    SetBranch(bool taken, pc_t target) noexcept;
+
+        void    ResetBranch() noexcept;
+    };
+
+    // LA32 Evaluation Context
+    class LA32EvaluationContext : public LA32BranchProgress {
+    private:
+        LA32TraceEntity::Reference  fetchTrace;
+
+        unsigned int                eventBusId;
+
+    public:
+        LA32EvaluationContext(unsigned int eventBusId = 0) noexcept;
+        ~LA32EvaluationContext() noexcept;
+
+        LA32TraceEntity::Reference  GetFetchTrace() const noexcept;
+        void                        SetFetchTrace(LA32TraceEntity::Reference trace) noexcept;
+
+        unsigned int                GetEventBusId() const noexcept;
+        void                        SetEventBusId(unsigned int id) noexcept;
+    };
+
     
     // LA32 Architectural State and Interface
     class LA32Architectural {
@@ -196,32 +236,17 @@ namespace Jasse {
 
         LA32TracerContainer         tracers;
 
-        LA32ExecOutcome             lastOutcome;
-
-        bool                        branchTaken;
-        pc_t                        branchTarget;
-
-        LA32TraceEntity::Reference  lastFetchTrace;
-
-        unsigned int                eventBusId;
-
     public:
         LA32Instance(const LA32DecoderCollection&   decoders,
                      const LA32Architectural&       arch,
                      LA32MemoryInterface*           memory,
                      LA32TraceEntity::Pool*         tracePool,
-                     LA32TracerContainer&&          tracers,
-                     unsigned int                   eventBusId) noexcept;
+                     LA32TracerContainer&&          tracers) noexcept;
 
         LA32Instance() = delete;
         LA32Instance(const LA32Instance&) = delete;
 
         ~LA32Instance() noexcept;
-
-        bool                            IsBranchTaken() const noexcept;
-        void                            SetBranchTaken(bool taken) noexcept;
-        pc_t                            GetBranchTarget() const noexcept;
-        void                            SetBranchTarget(bool taken, pc_t target) noexcept;
 
         LA32DecoderCollection&          Decoders() noexcept;
         const LA32DecoderCollection&    Decoders() const noexcept;
@@ -247,15 +272,6 @@ namespace Jasse {
         [[nodiscard("potential memory leak : caller swap object management")]]
         LA32TraceEntity::Pool*          SwapTracePool(LA32TraceEntity::Pool* trace_pool) noexcept;
 
-        LA32ExecOutcome                 Eval();
-
-        LA32ExecOutcome                 GetLastOutcome() const noexcept;
-
-        LA32TraceEntity::Reference      GetLastFetchTrace() const noexcept;
-
-        unsigned int                    GetEventBusId() const noexcept;
-        void                            SetEventBusId(unsigned int id) noexcept;
-        
         void                            operator=(const LA32Instance&) = delete;
     };
 
@@ -288,8 +304,6 @@ namespace Jasse {
         size_t                  memoryTracerDepth;
         size_t                  memoryTracerSize;
 
-        unsigned int            eventBusId;
-
     public:
         Builder() noexcept;
         ~Builder() noexcept;
@@ -304,8 +318,6 @@ namespace Jasse {
         Builder&                        Decoder(const LA32DecoderCollection& decoders) noexcept;
 
         Builder&                        Memory(LA32MemoryInterface* memory) noexcept;
-
-        Builder&                        EventBusId(unsigned int id) noexcept;
 
         //
         Builder&                        EnableTrace(size_t unit, size_t maxFactor) noexcept;
@@ -389,12 +401,30 @@ namespace Jasse {
         size_t                          GetMemoryTracerSize() const noexcept;
         void                            SetMemoryTracerSize(size_t size) noexcept;
 
-        unsigned int                    GetEventBusId() const noexcept;
-        void                            SetEventBusId(unsigned int id) noexcept;
-
         //
         LA32Instance*                   Build() const noexcept;
     };
+
+
+    // LA32 Evaluator for ISA Simulation
+    class LA32Evaluator : public LA32EvaluationContext {
+    private:
+        LA32Instance*               instance;
+
+        LA32ExecOutcome             lastOutcome;
+
+    public:
+        LA32Evaluator(LA32Instance* instance, unsigned int eventBusId = 0) noexcept;
+        ~LA32Evaluator() noexcept;
+
+        LA32Instance*               GetInstance() noexcept;
+        const LA32Instance*         GetInstance() const noexcept;
+
+        LA32ExecOutcome             Eval();
+
+        LA32ExecOutcome             GetLastOutcome() const noexcept;
+    };
+    
 }
 
 

@@ -56,6 +56,12 @@ namespace Jasse {
     // LA32 Instruction Instance (declaration)
     class LA32Instruction;
 
+    // LA32 Branch Progress (declaration)
+    class LA32BranchProgress;
+
+    // LA32 Evaluation Context (declaration)
+    class LA32EvaluationContext;
+
 
     // LA32 VM Instance
     class LA32Instance;
@@ -63,8 +69,11 @@ namespace Jasse {
 
     // LA32 Instruction Execution Status
     typedef enum class __tag_LA32ExecStatus {
+        // Start-up power up & reset.
+        EXEC_RESET = 0,
+
         // Naturally increase the PC. Execute instruction stream in sequence normally.
-        EXEC_SEQUENTIAL = 0,
+        EXEC_SEQUENTIAL,
 
         // PC Branch. PC is changed in instruction execution procedure.
         EXEC_BRANCH,

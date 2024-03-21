@@ -27,7 +27,7 @@ namespace Jasse {
         typedef std::string         (*Textualizer)(const LA32Instruction&);
 
         // LA32 Instruction Executor
-        typedef LA32ExecOutcome     (*Executor)(const LA32Instruction&, LA32Instance&);
+        typedef LA32ExecOutcome     (*Executor)(const LA32Instruction&, LA32Instance&, LA32EvaluationContext&);
 
     private:
         const std::string       name;

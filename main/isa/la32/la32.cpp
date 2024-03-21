@@ -6,21 +6,21 @@
 //
 
 
-// Implementation of: class LA32Instance::Eval
+// Implementation of: class LA32Evaluator::Eval
 namespace Jasse {
 
-    LA32ExecOutcome LA32Instance::Eval()
+    LA32ExecOutcome LA32Evaluator::Eval()
     {
         //
-        if (LA32InstancePreEvalEvent(*this).Fire(GetEventBusId()).IsCancelled())
+        if (LA32InstancePreEvalEvent(*instance).Fire(GetEventBusId()).IsCancelled())
             return (this->lastOutcome = { LA32ExecStatus::EMULATION_CANCELLED, ECANCELED });
 
         // Instruction fetch
-        if (LA32InstructionPreFetchEvent(*this, arch.PC()).Fire(GetEventBusId()).IsCancelled())
+        if (LA32InstructionPreFetchEvent(*instance, instance->Arch().PC()).Fire(GetEventBusId()).IsCancelled())
             return (this->lastOutcome = { LA32ExecStatus::FETCH_EMULATION_CANCELLED, ECANCELED });
 
         memdata_t fetched;
-        LA32MOPOutcome mopoutcome = memory->ReadInsn(arch.PC(), MOPW_WORD, &fetched);
+        LA32MOPOutcome mopoutcome = instance->Memory()->ReadInsn(instance->Arch().PC(), MOPW_WORD, &fetched);
 
         if (mopoutcome.status != LA32MOPStatus::MOP_SUCCESS)
         {
@@ -50,60 +50,60 @@ namespace Jasse {
             return (this->lastOutcome = rexec);
         }
 
-        if (IsTraceEnabled())
+        if (instance->IsTraceEnabled())
         {
-            if (tracers.HasFetchTracer())
+            if (instance->Tracers().HasFetchTracer())
             {
-                LA32TraceEntity::Reference trace_ref = tracePool->Acquire();
+                LA32TraceEntity::Reference trace_ref = instance->TracePool().Acquire();
                 if (trace_ref.IsValid())
                 {
                     LA32TracedInstructionFetch& trace_content
                         = trace_ref->SetContentType(LA32TraceContentLegacyType::INSTRUCTION_FETCH);
 
                     trace_content.insn  = fetched.data32;
-                    trace_content.pc    = arch.PC();
+                    trace_content.pc    = instance->Arch().PC();
 
-                    if (tracers.HasPCTracer())
-                        trace_content.SetTracedAddressSource(*trace_ref, tracers.GetPCTracer()->Get().Get());
+                    if (instance->Tracers().HasPCTracer())
+                        trace_content.SetTracedAddressSource(*trace_ref, instance->Tracers().GetPCTracer()->Get().Get());
 
-                    if (tracers.HasMemoryTracer())
+                    if (instance->Tracers().HasMemoryTracer())
                     {
-                        auto mem_trace = tracers.GetMemoryTracer()->Get(arch.PC());
+                        auto mem_trace = instance->Tracers().GetMemoryTracer()->Get(instance->Arch().PC());
                         if (mem_trace)
                             trace_content.SetTracedMemorySource(*trace_ref, mem_trace->get().Get());
                     }
                 }
 
-                tracers.GetFetchTracer()->Get().Append(trace_ref);
+                instance->Tracers().GetFetchTracer()->Get().Append(trace_ref);
 
-                this->lastFetchTrace = trace_ref;
+                this->SetFetchTrace(trace_ref);
             }
-            else if (tracers.HasPCTracer())
+            else if (instance->Tracers().HasPCTracer())
             {
-                this->lastFetchTrace = tracers.GetPCTracer()->Get().Get();
+                this->SetFetchTrace(instance->Tracers().GetPCTracer()->Get().Get());
             }
         }
 
         LA32Instruction insn(
-            LA32InstructionPostFetchEvent(*this, arch.PC(), fetched.data32).Fire(GetEventBusId()).GetInstruction());
+            LA32InstructionPostFetchEvent(*instance, instance->Arch().PC(), fetched.data32).Fire(GetEventBusId()).GetInstruction());
 
         // Instruction decode
-        if (LA32InstructionPreDecodeEvent(*this, arch.PC(), insn).Fire(GetEventBusId()).IsCancelled())
+        if (LA32InstructionPreDecodeEvent(*instance, instance->Arch().PC(), insn).Fire(GetEventBusId()).IsCancelled())
             return (this->lastOutcome = { LA32ExecStatus::DECODE_EMULATION_CANCELLED, ECANCELED });
 
-        if (!decoders.Decode(insn))
+        if (!instance->Decoders().Decode(insn))
             return (this->lastOutcome = { LA32ExecStatus::EXEC_NOT_DECODED, ECANCELED });
 
         if (!insn.GetExecutor())
             return (this->lastOutcome = { LA32ExecStatus::EXEC_NOT_IMPLEMENTED, ECANCELED });
 
-        LA32InstructionPostDecodeEvent(*this, arch.PC(), insn).Fire(GetEventBusId());
+        LA32InstructionPostDecodeEvent(*instance, instance->Arch().PC(), insn).Fire(GetEventBusId());
 
         // Instruction execution
-        if (LA32InstructionPreExecutionEvent(*this, arch.PC(), insn).Fire(GetEventBusId()).IsCancelled())
+        if (LA32InstructionPreExecutionEvent(*instance, instance->Arch().PC(), insn).Fire(GetEventBusId()).IsCancelled())
             return (this->lastOutcome = { LA32ExecStatus::EXEC_EMULATION_CANCELLED, ECANCELED });
 
-        LA32ExecOutcome outcome_exec = insn.GetExecutor()(insn, *this);
+        LA32ExecOutcome outcome_exec = insn.GetExecutor()(insn, *instance, *this);
 
         // - note: @see LA32ExecStatus
         ASSERT(outcome_exec.status != LA32ExecStatus::FETCH_ACCESS_FAULT);
@@ -113,7 +113,7 @@ namespace Jasse {
         ASSERT(outcome_exec.status != LA32ExecStatus::EXEC_NOT_IMPLEMENTED);
 
         outcome_exec =
-            (LA32InstructionPostExecutionEvent(*this, arch.PC(), insn, outcome_exec).Fire(GetEventBusId())).GetOutcome();
+            (LA32InstructionPostExecutionEvent(*instance, instance->Arch().PC(), insn, outcome_exec).Fire(GetEventBusId())).GetOutcome();
 
         // PC iteration
         pc_t                            new_pc;
@@ -121,7 +121,7 @@ namespace Jasse {
 
         if (outcome_exec.status == LA32ExecStatus::EXEC_SEQUENTIAL)
         {
-            new_pc      = arch.PC() + 4;
+            new_pc      = instance->Arch().PC() + 4;
             pc_action   = LA32PCIterationEvent::Action::SEQUENTIAL;
         }
         else if (outcome_exec.status == LA32ExecStatus::EXEC_BRANCH)
@@ -133,25 +133,24 @@ namespace Jasse {
             }
             else
             {
-                new_pc      = arch.PC() + 4;
+                new_pc      = instance->Arch().PC() + 4;
                 pc_action   = LA32PCIterationEvent::Action::BRANCH_NOT_TAKEN;
             }
         }
 
-        LA32PCIterationEvent(*this, arch.PC(), new_pc, pc_action).Fire(GetEventBusId());
+        LA32PCIterationEvent(*instance, instance->Arch().PC(), new_pc, pc_action).Fire(GetEventBusId());
 
-        arch.SetPC(new_pc);
+        instance->Arch().SetPC(new_pc);
 
         lastOutcome = outcome_exec;
 
         //
-        LA32InstancePostEvalEvent(*this).Fire(GetEventBusId());
+        LA32InstancePostEvalEvent(*instance).Fire(GetEventBusId());
 
         //
         return outcome_exec;
     }
 }
-
 
 
 // Implementation of: class LA32GPRs
@@ -222,6 +221,92 @@ namespace Jasse {
     arch32_t LA32GPRs::operator[](int index) const noexcept
     {
         return index ? this->gpr[index] : 0;
+    }
+}
+
+
+// Implementation of: class LA32BranchProgress
+namespace Jasse {
+    /*
+    bool    taken;
+    pc_t    target;
+    */
+
+    LA32BranchProgress::LA32BranchProgress() noexcept
+        : taken     (false)
+        , target    ()
+    { }
+
+    LA32BranchProgress::~LA32BranchProgress() noexcept
+    { }
+
+    bool LA32BranchProgress::IsBranchTaken() const noexcept
+    {
+        return this->taken;
+    }
+
+    void LA32BranchProgress::SetBranchTaken(bool taken) noexcept
+    {
+        this->taken = taken;
+    }
+
+    pc_t LA32BranchProgress::GetBranchTarget() const noexcept
+    {
+        return this->target;
+    }
+
+    void LA32BranchProgress::SetBranchTarget(pc_t target) noexcept
+    {
+        this->target = target;
+    }
+
+    void LA32BranchProgress::SetBranch(bool taken, pc_t target) noexcept
+    {
+        this->taken     = taken;
+        this->target    = target;
+    }
+
+    void LA32BranchProgress::ResetBranch() noexcept
+    {
+        this->taken     = false;
+    }
+}
+
+
+// Implementation of: class LA32EvaluationContext
+namespace Jasse {
+    /*
+    LA32TraceEntity::Reference  fetchTrace;
+
+    unsigned int                eventBusId;
+    */
+
+    LA32EvaluationContext::LA32EvaluationContext(unsigned int eventBusId) noexcept
+        : fetchTrace    ()
+        , eventBusId    (eventBusId)
+    { }
+
+    LA32EvaluationContext::~LA32EvaluationContext() noexcept
+    { }
+
+    LA32TraceEntity::Reference LA32EvaluationContext::GetFetchTrace() const noexcept
+    {
+        return this->fetchTrace;
+    }
+
+    void LA32EvaluationContext::SetFetchTrace(LA32TraceEntity::Reference trace) noexcept
+    {
+        this->fetchTrace = trace;
+    }
+
+    unsigned int LA32EvaluationContext::GetEventBusId() const noexcept
+    {
+        return this->eventBusId;
+    }
+
+    void LA32EvaluationContext::SetEventBusId(unsigned int id) noexcept
+    {
+        this->eventBusId = id;
     }
 }
 
@@ -529,49 +614,22 @@ namespace Jasse {
     unsigned int                eventBusId;
     */
 
-    LA32Instance::LA32Instance(const LA32DecoderCollection&   decoders,
+    LA32Instance::LA32Instance(const LA32DecoderCollection& decoders,
                                const LA32Architectural&     arch,
                                LA32MemoryInterface*         memory,
                                LA32TraceEntity::Pool*       tracePool,
-                               LA32TracerContainer&&        tracers,
-                               unsigned int                 eventBusId) noexcept
+                               LA32TracerContainer&&        tracers) noexcept
         : decoders          (decoders)
         , arch              (arch)
         , memory            (memory)
         , tracePool         (tracePool)
         , tracers           (std::move(tracers))
-        , lastOutcome       ({ LA32ExecStatus::EXEC_SEQUENTIAL, 0 })
-        , branchTaken       (false)
-        , branchTarget      (0)
-        , lastFetchTrace    ()
-        , eventBusId        (eventBusId)
     { }
 
     LA32Instance::~LA32Instance() noexcept
     { 
         if (this->tracePool)
             delete this->tracePool;
-    }
-
-    bool LA32Instance::IsBranchTaken() const noexcept
-    {
-        return this->branchTaken;
-    }
-
-    void LA32Instance::SetBranchTaken(bool taken) noexcept
-    {
-        this->branchTaken = taken;
-    }
-
-    pc_t LA32Instance::GetBranchTarget() const noexcept
-    {
-        return this->branchTarget;
-    }
-
-    void LA32Instance::SetBranchTarget(bool taken, pc_t target) noexcept
-    {
-        this->branchTaken  = taken;
-        this->branchTarget = target;
     }
 
     LA32DecoderCollection& LA32Instance::Decoders() noexcept
@@ -645,26 +703,6 @@ namespace Jasse {
         std::swap(this->tracePool, trace_pool);
         return trace_pool;
     }
-
-    LA32ExecOutcome LA32Instance::GetLastOutcome() const noexcept
-    {
-        return this->lastOutcome;
-    }
-
-    LA32TraceEntity::Reference LA32Instance::GetLastFetchTrace() const noexcept
-    {
-        return this->lastFetchTrace;
-    }
-
-    unsigned int LA32Instance::GetEventBusId() const noexcept
-    {
-        return this->eventBusId;
-    }
-
-    void LA32Instance::SetEventBusId(unsigned int id) noexcept
-    {
-        this->eventBusId = id;
-    }
 }
 
 
@@ -718,7 +756,6 @@ namespace Jasse {
         , memoryTracerEnabled       (false)
         , memoryTracerDepth         (0)
         , memoryTracerSize          (0)
-        , eventBusId                (0)
     { }
 
     LA32Instance::Builder::~Builder() noexcept
@@ -767,12 +804,6 @@ namespace Jasse {
     LA32Instance::Builder& LA32Instance::Builder::Memory(LA32MemoryInterface* memory) noexcept
     {
         this->memory = memory;
-        return *this;
-    }
-
-    LA32Instance::Builder& LA32Instance::Builder::EventBusId(unsigned int id) noexcept
-    {
-        this->eventBusId = id;
         return *this;
     }
 
@@ -1087,16 +1118,6 @@ namespace Jasse {
         this->memoryTracerSize = size;
     }
 
-    unsigned int LA32Instance::Builder::GetEventBusId() const noexcept
-    {
-        return this->eventBusId;
-    }
-
-    void LA32Instance::Builder::SetEventBusId(unsigned int id) noexcept
-    {
-        this->eventBusId = id;
-    }
-
     LA32Instance* LA32Instance::Builder::Build() const noexcept
     {
         // copy-on-build
@@ -1111,10 +1132,47 @@ namespace Jasse {
                 traceEnabled && executionTracerEnabled ? new LA32ExecutionTracer(executionTracerDepth)         : nullptr,
                 traceEnabled && gprTracerEnabled    ? new LA32GPRTracer(gprTracerDepth)                         : nullptr,
                 traceEnabled && memoryTracerEnabled ? new LA32MemoryTracer(memoryTracerDepth, memoryTracerSize) : nullptr
-            ),
-            eventBusId
+            )
         );
 
         return instance;
+    }
+}
+
+
+// Implementation of: class LA32Evaluator
+namespace Jasse {
+    /*
+    LA32Instance*               instance;
+
+    LA32ExecOutcome             lastOutcome;
+
+    LA32TraceEntity::Reference  lastFetchTrace;
+
+    unsigned int                eventBusId;
+    */
+
+    LA32Evaluator::LA32Evaluator(LA32Instance* instance, unsigned int eventBusId) noexcept
+        : LA32EvaluationContext (eventBusId)
+        , instance              (instance)
+        , lastOutcome           ({ LA32ExecStatus::EXEC_RESET, 0 })
+    { }
+
+    LA32Evaluator::~LA32Evaluator() noexcept
+    { }
+
+    LA32Instance* LA32Evaluator::GetInstance() noexcept
+    {
+        return this->instance;
+    }
+
+    const LA32Instance* LA32Evaluator::GetInstance() const noexcept
+    {
+        return this->instance;
+    }
+
+    LA32ExecOutcome LA32Evaluator::GetLastOutcome() const noexcept
+    {
+        return this->lastOutcome;
     }
 }
