@@ -19,9 +19,6 @@
 #include "gravity_configmacros.hpp"
 
 
-#define CERR_EB3001             "EB-3001: The dedicated type _TEvent is not subclass of Event<_TEvent>"
-
-
 namespace Gravity {
 
     // --> essentials
@@ -75,10 +72,6 @@ namespace Gravity {
     public:
         _TEvent&                        Fire(_TEventBusId busId = 0);
         _TEvent&                        Fire(_TEventBus& eventbus);
-
-    private:
-        static void __STATIC_ASSERT__()
-        { static_assert(std::is_base_of_v<Event<_TEvent, _TEventListener, _TEventBusId, _TEventBus, _TEventBusGroup>, _TEvent>, CERR_EB3001); }
     };
 
     template<template<typename> typename _TListener, class _TEvent>

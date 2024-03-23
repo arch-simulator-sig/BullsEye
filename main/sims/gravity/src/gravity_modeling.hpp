@@ -97,6 +97,11 @@ namespace Gravity {
              class TDimension           = Dimension<TWavefront, TWavefrontCollector>>
     using Dimensions = EventBusGroup<TWavefront, TWavefrontCollector, DimensionId, TDimension>;
 
+    /*
+    Dimension Dispatchment.
+    */
+    using DimensionDispatchment = EventBusDispatchment;
+
 
     /*
     The Wavefront forwarding Architectural Phase progresses.
@@ -110,6 +115,9 @@ namespace Gravity {
     private:
         const std::string       name;
         Phase&                  source;
+
+    public:
+        static DimensionDispatchment&   GetDimensionDispatchment() noexcept;
 
     public:
         Wavefront(const std::string& name, Phase& source) noexcept;
@@ -192,6 +200,13 @@ namespace Gravity {
     const std::string       name;
     Phase&                  source;
     */
+
+    template<class T>
+    DimensionDispatchment& Wavefront<T>::GetDimensionDispatchment() noexcept
+    {
+        static DimensionDispatchment dispatchment;
+        return dispatchment;
+    }
 
     template<class T>
     Wavefront<T>::Wavefront(const std::string& name, Phase& source) noexcept
