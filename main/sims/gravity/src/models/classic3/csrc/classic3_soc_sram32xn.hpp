@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef __BULLSEYE_SIMS_GRAVITY__CLASSIC3_SOC
-#define __BULLSEYE_SIMS_GRAVITY__CLASSIC3_SOC
+#ifndef __BULLSEYE_SIMS_GRAVITY__CLASSIC3_SOC_SRAM32XN
+#define __BULLSEYE_SIMS_GRAVITY__CLASSIC3_SOC_SRAM32XN
 
 
 #include <cstdint>
@@ -21,6 +21,7 @@ namespace Gravity::Classic3 {
 
     public:
         SRAMReadAddressA(Phase& source) noexcept;
+        SRAMReadAddressA(Phase& source, uint32_t address, bool enable) noexcept;
     };
 
     /*
@@ -32,6 +33,7 @@ namespace Gravity::Classic3 {
 
     public:
         SRAMReadDataA(Phase& source) noexcept;
+        SRAMReadDataA(Phase& source, uint32_t data) noexcept;
     };
 
 
@@ -45,6 +47,7 @@ namespace Gravity::Classic3 {
 
     public:
         SRAMReadAddressB(Phase& source) noexcept;
+        SRAMReadAddressB(Phase& source, uint32_t address, bool enable) noexcept;
     };
 
     /*
@@ -56,6 +59,7 @@ namespace Gravity::Classic3 {
 
     public:
         SRAMReadDataB(Phase& source) noexcept;
+        SRAMReadDataB(Phase& source, uint32_t data) noexcept;
     };
 
 
@@ -71,6 +75,7 @@ namespace Gravity::Classic3 {
 
     public:
         SRAMWrite(Phase& source) noexcept;
+        SRAMWrite(Phase& source, uint32_t address, bool enable, uint32_t data, uint32_t bitEnable) noexcept;
     };
 
 
@@ -79,8 +84,8 @@ namespace Gravity::Classic3 {
     */
     class SRAM32Payload {
     protected:
-        uint32_t* const array;
-        size_t    const size;
+        uint32_t*   const array;
+        size_t      const size;
 
     public:
         SRAM32Payload(size_t sizeInWord) noexcept;
@@ -125,12 +130,12 @@ namespace Gravity::Classic3 {
     //
     public:
         SRAM32XN1W2RCPBW(size_t             sizeInWord,
-                         DimensionId          inDimension, 
-                         DimensionId          outDimension) noexcept;
+                         DimensionId        inDimension, 
+                         DimensionId        outDimension) noexcept;
 
         SRAM32XN1W2RCPBW(size_t             sizeInWord, 
-                         DimensionId          inDimension, 
-                         DimensionId          outDimension, 
+                         DimensionId        inDimension, 
+                         DimensionId        outDimension, 
                          const std::string& name) noexcept;
 
         virtual ~SRAM32XN1W2RCPBW() noexcept;
@@ -138,4 +143,4 @@ namespace Gravity::Classic3 {
 }
 
 
-#endif // __BULLSEYE_SIMS_GRAVITY__CLASSIC3_SOC
+#endif // __BULLSEYE_SIMS_GRAVITY__CLASSIC3_SOC_SRAM32XN

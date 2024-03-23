@@ -1,4 +1,4 @@
-#include "classic3_soc.hpp"
+#include "classic3_soc_sram32xn.hpp"
 
 
 // Implementation of: class SRAMReadAddressA
@@ -13,6 +13,12 @@ namespace Gravity::Classic3 {
         , address                       ()
         , enable                        (false)
     { }
+
+    SRAMReadAddressA::SRAMReadAddressA(Phase& source, uint32_t address, bool enable) noexcept
+        : Wavefront<SRAMReadAddressA>   ("Gravity::Classic3::SRAMReadAddressA", source)
+        , address                       (address)
+        , enable                        (enable)
+    { }
 }
 
 
@@ -25,6 +31,11 @@ namespace Gravity::Classic3 {
     SRAMReadDataA::SRAMReadDataA(Phase& source) noexcept
         : Wavefront<SRAMReadDataA>      ("Gravity::Classic3::SRAMReadDataA", source)
         , data                          ()
+    { }
+
+    SRAMReadDataA::SRAMReadDataA(Phase& source, uint32_t data) noexcept
+        : Wavefront<SRAMReadDataA>      ("Gravity::Classic3::SRAMReadDataA", source)
+        , data                          (data)
     { }
 }
 
@@ -41,6 +52,12 @@ namespace Gravity::Classic3 {
         , address                       ()
         , enable                        (false)
     { }
+
+    SRAMReadAddressB::SRAMReadAddressB(Phase& source, uint32_t address, bool enable) noexcept
+        : Wavefront<SRAMReadAddressB>   ("Gravity::Classic3::SRAMReadAddressB", source)
+        , address                       (address)
+        , enable                        (enable)
+    { }
 }
 
 
@@ -54,6 +71,11 @@ namespace Gravity::Classic3 {
         : Wavefront<SRAMReadDataB>      ("Gravity::Classic3::SRAMReadDataB", source)
         , data                          ()
     { }
+
+    SRAMReadDataB::SRAMReadDataB(Phase& source, uint32_t data) noexcept
+        : Wavefront<SRAMReadDataB>      ("Gravity::Classic3::SRAMReadDataB", source)
+        , data                          (data)
+    { }
 }
 
 
@@ -63,6 +85,7 @@ namespace Gravity::Classic3 {
     uint32_t    address;
     bool        enable;
     uint32_t    data;
+    uint32_t    bitEnable;
     */
 
     SRAMWrite::SRAMWrite(Phase& source) noexcept
@@ -70,6 +93,15 @@ namespace Gravity::Classic3 {
         , address                       ()
         , enable                        (false)
         , data                          ()
+        , bitEnable                     ()
+    { }
+
+    SRAMWrite::SRAMWrite(Phase& source, uint32_t address, bool enable, uint32_t data, uint32_t bitEnable) noexcept
+        : Wavefront<SRAMWrite>          ("Gravity::Classic3::SRAMWrite", source)
+        , address                       (address)
+        , enable                        (enable)
+        , data                          (data)
+        , bitEnable                     (bitEnable)
     { }
 }
 
