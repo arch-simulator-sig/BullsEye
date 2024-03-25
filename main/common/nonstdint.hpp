@@ -594,24 +594,23 @@ namespace BullsEye {
     template<class T>
     concept _truncated_bits_concept = std::derived_from<T, _truncated_bits>;
 
+    /*
+    * bit_len_of<T>
+    */
+    template<class T>
+    struct bit_len_of : std::integral_constant<unsigned, sizeof(T) * 8> {};
+
+    template<_truncated_bits_concept T>
+    struct bit_len_of<T> : std::integral_constant<unsigned, T::BITS> {};
+
+    template<class T>
+    inline constexpr unsigned bit_len_of_v = bit_len_of<T>::value;
+
+    /*
+    * is_same_leng<T, U>
+    */
     template<class T, class U>
-    struct is_same_len : std::false_type {};
-
-    template<std::integral T, std::integral U>
-    struct is_same_len<T, U>
-    : std::bool_constant<sizeof(T) == sizeof(U)> {};
-
-    template<std::integral T, _truncated_bits_concept U>
-    struct is_same_len<T, U>
-    : std::bool_constant<sizeof(T) == (U::BITS >> 3) && (U::BITS & 7) == 0> {};
-
-    template<_truncated_bits_concept T, std::integral U>
-    struct is_same_len<T, U>
-    : std::bool_constant<sizeof(U) == (T::BITS >> 3) && (T::BITS & 7) == 0> {};
-
-    template<_truncated_bits_concept T, _truncated_bits_concept U>
-    struct is_same_len<T, U>
-    : std::bool_constant<T::BITS == U::BITS> {};
+    struct is_same_len : std::integral_constant<bool, bit_len_of_v<T> == bit_len_of_v<U>> {};
 
     template<class T, class U>
     inline constexpr bool is_same_len_v = is_same_len<T, U>::value;
